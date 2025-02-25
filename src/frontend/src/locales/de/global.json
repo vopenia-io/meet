@@ -22,7 +22,8 @@
   },
   "logout": "",
   "notFound": {
-    "heading": ""
+    "heading": "",
+    "body": ""
   },
   "submit": "OK",
   "footer": {

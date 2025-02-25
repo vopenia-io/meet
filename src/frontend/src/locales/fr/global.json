@@ -22,7 +22,8 @@
   },
   "logout": "Se déconnecter",
   "notFound": {
-    "heading": "Page introuvable"
+    "heading": "Vérifier votre code de réunion",
+    "body": "Vérifiez que vous avez saisi le code de réunion correct dans l'URL. Exemple :"
   },
   "submit": "OK",
   "footer": {
