@@ -22,7 +22,8 @@
   },
   "logout": "Logout",
   "notFound": {
-    "heading": "Page not found"
+    "heading": "Verify your meeting code",
+    "body": "Check that you have entered the correct meeting code in the URL. Example:"
   },
   "submit": "OK",
   "footer": {
