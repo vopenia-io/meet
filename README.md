@@ -45,26 +45,26 @@ Powered by [LiveKit](https://livekit.io/), Visio offers Zoom-level performance w
   - SVC codecs (VP9, AV1)
 
 
-Visio is fully self-hostable and released under the MIT License, ensuring complete control and flexibility. It's free to [get started](https://visio.numerique.gouv.fr/) or [request a demo](mailto:visio@numerique.gouv.fr). 
+Visio is fully self-hostable and released under the MIT License, ensuring complete control and flexibility. It's simple to [get started](https://visio.numerique.gouv.fr/) or [request a demo](mailto:visio@numerique.gouv.fr). 
 
 We’re continuously adding new features to enhance your experience, with the latest updates coming soon!
 
 
 ## Table of Contents
 
-- [Get started for free](#get-started-for-free)
+- [Get started](#get-started)
 - [Docs](#docs)
 - [Contributing](#contributing)
 - [Philosophy](#philosophy)
-- [Open-source](#open-source)
+- [Open source](#open-source)
 
 
-## Get started for free
+## Get started
 
 ### Visio Cloud (Recommended)
-Sign up for Visio Cloud, designed for European public servants. Hosted on SecNumCloud-compliant providers and accessible via government SSO, [ProConnect](https://www.proconnect.gouv.fr/). Start for free. Reach out if your entity isn't connected yet to our sso.
+Sign up for Visio Cloud, designed for European public servants. Hosted on SecNumCloud-compliant providers and accessible via government SSO, [ProConnect](https://www.proconnect.gouv.fr/). The easiest way to try our product. Reach out if your entity isn't connected yet to our sso.
 
-### Open-source deploy (Advanced)
+### Open-source deployment (Advanced)
 
 Deploy Visio on your own infrastructure using [our self-hosting guide](https://github.com/suitenumerique/meet/blob/main/docs/installation.md). Our open-source deployment is optimized for Kubernetes, and we're working on supporting additional deployment options. Keycloak integration and any SSO are supported. We offer customer support for open-source setups—just reach out for assistance.  
 
@@ -74,7 +74,7 @@ We're currently working on both technical and user documentation for Visio. In t
 
 ## Contributing
 
-We <3 contributions big and small:
+We <3 contributions of any kind, big and small:
 
 - Vote on features or get early access to beta functionality in our [roadmap](https://github.com/orgs/suitenumerique/projects/3/views/2)
 - Open a PR (see our instructions on [developing Visio locally](https://github.com/suitenumerique/meet/blob/main/docs/developping_locally.md))
@@ -94,7 +94,7 @@ Most of the heavy engineering is handled by the incredible LiveKit team, allowin
 
 Gov 🇫🇷 supports open source! This project is available under [MIT license](https://github.com/suitenumerique/meet/blob/0cc2a7b7b4f4821e2c4d9d790efa739622bb6601/LICENSE).
 
-All features we develop will always remain free, and we are committed to contributing back to the LiveKit community whenever feasible.
+All features we develop will always remain open-source, and we are committed to contributing back to the LiveKit community whenever feasible.
 To learn more, don't hesitate to [reach out](mailto:visio@numerique.gouv.fr).
 
 ### Help us!
@@ -111,3 +111,9 @@ Come help us make Visio even better. We're growing fast and [would love some hel
 ## Credits 
 
 We're using the awesome [LiveKit](https://livekit.io/) implementation. We're also thankful to the teams behind [Django Rest Framework](https://www.django-rest-framework.org/), [Vite.js](https://vite.dev/), and [React Aria](https://github.com/adobe/react-spectrum) — Thanks for your amazing work!
+
+## License
+
+Code in this repository is published under the MIT license by DINUM (Direction interministériel du numérique).
+Documentation (in the docs/) directory is released under the [Etalab-2.0 license](https://spdx.org/licenses/etalab-2.0.html).
+
