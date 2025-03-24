@@ -37,7 +37,14 @@ export const Admin = () => {
       flexDirection="column"
       alignItems="start"
     >
-      <Text variant="note" wrap="pretty" margin="md">
+      <Text
+        variant="note"
+        wrap="pretty"
+        className={css({
+          textStyle: 'sm',
+        })}
+        margin={'md'}
+      >
         {t('description')}
       </Text>
       <RACSeparator
