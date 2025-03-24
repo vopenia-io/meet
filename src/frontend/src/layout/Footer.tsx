@@ -106,7 +106,7 @@ const Marianne = () => {
         className={css({
           letterSpacing: '-.01em',
           textTransform: 'uppercase',
-          fontWeight: '600',
+          fontWeight: '700',
           fontFamily: 'Marianne',
           fontSize: '1.25rem',
           lineHeight: '1.75rem',

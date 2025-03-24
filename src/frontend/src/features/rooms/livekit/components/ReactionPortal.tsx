@@ -75,7 +75,7 @@ export function FloatingReaction({
     >
       <span
         className={css({
-          lineHeight: '45px',
+          lineHeight: '57px',
         })}
       >
         {emoji}
@@ -89,9 +89,10 @@ export function FloatingReaction({
             textAlign: 'center',
             borderRadius: '20px',
             paddingX: '0.5rem',
-            paddingY: '0.15rem',
+            paddingBottom: '0.3125rem',
+            paddingTop: '0.15rem',
             boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-            lineHeight: '14px',
+            lineHeight: '16px',
           })}
         >
           {name}

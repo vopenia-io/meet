@@ -120,7 +120,7 @@ const Separator = styled('div', {
 
 const Heading = styled('h1', {
   base: {
-    fontWeight: '600',
+    fontWeight: '700',
     fontStyle: 'normal',
     fontStretch: 'normal',
     fontOpticalSizing: 'auto',
