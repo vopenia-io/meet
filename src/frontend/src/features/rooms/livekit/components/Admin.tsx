@@ -68,8 +68,8 @@ export const Admin = () => {
       </Text>
       <Field
         type="radioGroup"
-        label="Type d'accès à la réunion"
-        aria-label="Type d'accès à la réunion"
+        label={t('access.type')}
+        aria-label={t('access.type')}
         labelProps={{
           className: css({
             fontSize: '1rem',

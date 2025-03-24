@@ -188,6 +188,7 @@
     "access": {
       "title": "Accès à la réunion",
       "description": "Ces paramètres s'appliqueront également aux futures occurrences de cette réunion.",
+      "type": "Type d'accès à la réunion",
       "levels": {
         "public": {
           "label": "Ouvrir",
