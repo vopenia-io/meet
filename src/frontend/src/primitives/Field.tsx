@@ -218,8 +218,10 @@ export const Field = <T extends object>({
                   {item.description && (
                     <Text
                       variant="note"
+                      wrap={'pretty'}
                       className={css({
                         textStyle: 'sm',
+                        marginBottom: '0.5rem',
                       })}
                     >
                       {item.description}
