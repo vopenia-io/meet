@@ -189,6 +189,7 @@
     "access": {
       "title": "",
       "description": "",
+      "type": "",
       "levels": {
         "public": {
           "label": "",

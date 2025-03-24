@@ -188,6 +188,7 @@
     "access": {
       "title": "Toegang tot vergadering",
       "description": "Deze instellingen zijn ook van toepassing op toekomstige sessies van deze vergadering.",
+      "type": "Vergaderings toegangstypen",
       "levels": {
         "public": {
           "label": "Open",
