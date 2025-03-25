@@ -12,7 +12,12 @@ from django.conf import settings
 from django.core.cache import cache
 
 from asgiref.sync import async_to_sync
-from livekit.api import LiveKitAPI, SendDataRequest, TwirpError  # pylint: disable=E0611
+from livekit.api import (  # pylint: disable=E0611
+    ListRoomsRequest,
+    LiveKitAPI,
+    SendDataRequest,
+    TwirpError,
+)
 
 from core import models, utils
 
@@ -343,7 +348,18 @@ class LobbyService:
         }
 
         lkapi = LiveKitAPI(**settings.LIVEKIT_CONFIGURATION)
+
         try:
+            room_response = await lkapi.room.list_rooms(
+                ListRoomsRequest(
+                    names=[str(room_id)],
+                )
+            )
+
+            # Check if the room exists
+            if not room_response.rooms:
+                return
+
             await lkapi.room.send_data(
                 SendDataRequest(
                     room=str(room_id),
