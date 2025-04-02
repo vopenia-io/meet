@@ -22,7 +22,7 @@ import { useSidePanel } from '../../hooks/useSidePanel'
 import { LinkButton } from '@/primitives'
 import { useSettingsDialog } from '../../components/controls/SettingsDialogContext'
 import { ResponsiveMenu } from './ResponsiveMenu'
-import { TranscriptToggle } from '../../components/controls/TranscriptToggle'
+import { ToolsToggle } from '../../components/controls/ToolsToggle.tsx'
 import { CameraSwitchButton } from '../../components/controls/CameraSwitchButton'
 
 export function MobileControlBar({
@@ -134,7 +134,7 @@ export function MobileControlBar({
               description={true}
               onPress={() => setIsMenuOpened(false)}
             />
-            <TranscriptToggle
+            <ToolsToggle
               description={true}
               onPress={() => setIsMenuOpened(false)}
             />

@@ -12,6 +12,7 @@ import { Chat } from '../prefabs/Chat'
 import { Transcript } from './Transcript'
 import { Effects } from './effects/Effects'
 import { Admin } from './Admin'
+import { Tools } from '@/features/rooms/livekit/components/Tools.tsx'
 
 type StyledSidePanelProps = {
   title: string
@@ -114,7 +115,7 @@ export const SidePanel = () => {
     isEffectsOpen,
     isChatOpen,
     isSidePanelOpen,
-    isTranscriptOpen,
+    isToolsOpen,
     isAdminOpen,
   } = useSidePanel()
   const { t } = useTranslation('rooms', { keyPrefix: 'sidePanel' })
@@ -137,8 +138,8 @@ export const SidePanel = () => {
       <Panel isOpen={isChatOpen}>
         <Chat />
       </Panel>
-      <Panel isOpen={isTranscriptOpen}>
-        <Transcript />
+      <Panel isOpen={isToolsOpen}>
+        <Tools />
       </Panel>
       <Panel isOpen={isAdminOpen}>
         <Admin />

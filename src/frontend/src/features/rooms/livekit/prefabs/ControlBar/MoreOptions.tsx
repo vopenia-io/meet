@@ -2,7 +2,7 @@ import { css } from '@/styled-system/css'
 import { ChatToggle } from '../../components/controls/ChatToggle'
 import { ParticipantsToggle } from '../../components/controls/Participants/ParticipantsToggle'
 import { SupportToggle } from '../../components/controls/SupportToggle'
-import { TranscriptToggle } from '../../components/controls/TranscriptToggle'
+import { ToolsToggle } from '../../components/controls/ToolsToggle.tsx'
 import { AdminToggle } from '../../components/AdminToggle'
 import { useSize } from '../../hooks/useResizeObserver'
 import { useState, RefObject } from 'react'
@@ -18,7 +18,7 @@ const NavigationControls = ({ onPress }: Partial<ToggleButtonProps>) => (
   <>
     <ChatToggle onPress={onPress} />
     <ParticipantsToggle onPress={onPress} />
-    <TranscriptToggle onPress={onPress} />
+    <ToolsToggle onPress={onPress} />
     <SupportToggle onPress={onPress} />
     <AdminToggle onPress={onPress} />
   </>

@@ -103,9 +103,9 @@
       "open": "Masquer les participants",
       "closed": "Afficher les participants"
     },
-    "transcript": {
-      "open": "Masquer l'assistant IA",
-      "closed": "Afficher l'assistant IA"
+    "tools": {
+      "open": "Masquer plus d'outils",
+      "closed": "Afficher plus d'outils"
     },
     "admin": {
       "open": "Masquer l'admin",
@@ -167,14 +167,14 @@
       "participants": "Participants",
       "effects": "Effets",
       "chat": "Messages dans l'appel",
-      "transcript": "Assistant IA",
+      "tools": "Plus d'outils",
       "admin": "Commandes de l'organisateur"
     },
     "content": {
       "participants": "les participants",
       "effects": "les effets",
       "chat": "les messages",
-      "transcript": "l'assistant IA",
+      "tools": "plus d'outils",
       "admin": "Commandes de l'organisateur"
     },
     "closeButton": "Masquer {{content}}"

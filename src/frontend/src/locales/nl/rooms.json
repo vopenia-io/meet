@@ -103,9 +103,9 @@
       "open": "Verberg iedereen",
       "closed": "Toon iedereen"
     },
-    "transcript": {
-      "open": "Verberg AI-assistent",
-      "closed": "Toon AI-assistant"
+    "tools": {
+      "open": "Meer tools verbergen",
+      "closed": "Meer tools weergeven"
     },
     "admin": {
       "open": "Verberg beheerder",
@@ -167,14 +167,14 @@
       "participants": "Deelnemers",
       "effects": "Effecten",
       "chat": "Berichten in de chat",
-      "transcript": "AI-assistent",
+      "tools": "Meer tools",
       "admin": "Beheerdersbediening"
     },
     "content": {
       "participants": "deelnemers",
       "effects": "effecten",
       "chat": "berichten",
-      "transcript": "AI-assistent",
+      "tools": "meer tools",
       "admin": "Beheerdersbediening"
     },
     "closeButton": "Verberg {{content}}"

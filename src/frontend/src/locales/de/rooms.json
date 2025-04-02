@@ -104,7 +104,7 @@
       "open": "",
       "closed": ""
     },
-    "transcript": {
+    "tools": {
       "open": "",
       "closed": ""
     },
@@ -168,14 +168,14 @@
       "participants": "",
       "effects": "",
       "chat": "",
-      "transcript": "",
+      "tools": "",
       "admin": ""
     },
     "content": {
       "participants": "",
       "effects": "",
       "chat": "",
-      "transcript": "",
+      "tools": "",
       "admin": ""
     },
     "closeButton": ""

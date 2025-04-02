@@ -103,9 +103,9 @@
       "open": "Hide everyone",
       "closed": "See everyone"
     },
-    "transcript": {
-      "open": "Hide AI assistant",
-      "closed": "Show AI assistant"
+    "tools": {
+      "open": "Hide more tools",
+      "closed": "Show more tools"
     },
     "admin": {
       "open": "Hide admin",
@@ -167,14 +167,14 @@
       "participants": "Participants",
       "effects": "Effects",
       "chat": "Messages in the chat",
-      "transcript": "AI Assistant",
+      "tools": "More tools",
       "admin": "Admin settings"
     },
     "content": {
       "participants": "participants",
       "effects": "effects",
       "chat": "messages",
-      "transcript": "AI assistant",
+      "tools": "more tools",
       "admin": "Admin settings"
     },
     "closeButton": "Hide {{content}}"
