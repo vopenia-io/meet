@@ -5,6 +5,7 @@ import { RiFileTextFill } from '@remixicon/react'
 import { Transcript } from '@/features/rooms/livekit/components/Transcript'
 import { useSidePanel } from '@/features/rooms/livekit/hooks/useSidePanel'
 import { useTranslation } from 'react-i18next'
+import { useIsTranscriptEnabled } from '@/features/rooms/livekit/hooks/useIsTranscriptEnabled.ts'
 
 const CRISP_HELP_ARTICLE =
   'https://lasuite.crisp.help/fr/article/visio-tools-bvxj23'
@@ -58,8 +59,9 @@ const ActionButton = ({ icon, title, description, onPress }) => {
 export const Tools = () => {
   const { openTranscript, isTranscriptOpen } = useSidePanel()
   const { t } = useTranslation('rooms', { keyPrefix: 'moreTools' })
+  const isTranscriptEnabled = useIsTranscriptEnabled()
 
-  if (isTranscriptOpen) {
+  if (isTranscriptOpen && isTranscriptEnabled) {
     return <Transcript />
   }
 
@@ -87,12 +89,14 @@ export const Tools = () => {
         </A>
         .
       </Text>
-      <ActionButton
-        icon={<RiFileTextFill size={24} color="white" />}
-        title={t('tools.transcript.title')}
-        description={t('tools.transcript.body')}
-        onPress={() => openTranscript()}
-      />
+      {isTranscriptEnabled && (
+        <ActionButton
+          icon={<RiFileTextFill size={24} color="white" />}
+          title={t('tools.transcript.title')}
+          description={t('tools.transcript.body')}
+          onPress={() => openTranscript()}
+        />
+      )}
     </Div>
   )
 }
