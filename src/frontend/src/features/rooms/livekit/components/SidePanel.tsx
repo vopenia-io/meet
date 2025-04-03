@@ -3,7 +3,7 @@ import { css } from '@/styled-system/css'
 import { Heading } from 'react-aria-components'
 import { text } from '@/primitives/Text'
 import { Button, Div } from '@/primitives'
-import { RiCloseLine } from '@remixicon/react'
+import { RiArrowLeftLine, RiCloseLine } from '@remixicon/react'
 import { useTranslation } from 'react-i18next'
 import { ParticipantsList } from './controls/Participants/ParticipantsList'
 import { useSidePanel } from '../hooks/useSidePanel'
@@ -20,6 +20,8 @@ type StyledSidePanelProps = {
   onClose: () => void
   isClosed: boolean
   closeButtonTooltip: string
+  isSubmenu: boolean
+  onBack: () => void
 }
 
 const StyledSidePanel = ({
@@ -28,6 +30,8 @@ const StyledSidePanel = ({
   onClose,
   isClosed,
   closeButtonTooltip,
+  isSubmenu = false,
+  onBack,
 }: StyledSidePanelProps) => (
   <div
     className={css({
@@ -62,9 +66,22 @@ const StyledSidePanel = ({
       style={{
         paddingLeft: '1.5rem',
         paddingTop: '1rem',
-        display: isClosed ? 'none' : undefined,
+        display: isClosed ? 'none' : 'flex',
+        justifyContent: 'start',
+        alignItems: 'center',
       }}
     >
+      {isSubmenu && (
+        <Button
+          variant="secondaryText"
+          size={'sm'}
+          square
+          className={css({ marginRight: '0.5rem' })}
+          onPress={onBack}
+        >
+          <RiArrowLeftLine size={20} />
+        </Button>
+      )}
       {title}
     </Heading>
     <Div
@@ -117,17 +134,23 @@ export const SidePanel = () => {
     isSidePanelOpen,
     isToolsOpen,
     isAdminOpen,
+    isSubPanelOpen,
+    activeSubPanelId,
   } = useSidePanel()
   const { t } = useTranslation('rooms', { keyPrefix: 'sidePanel' })
-
   return (
     <StyledSidePanel
-      title={t(`heading.${activePanelId}`)}
-      onClose={() => (layoutStore.activePanelId = null)}
+      title={t(`heading.${activeSubPanelId || activePanelId}`)}
+      onClose={() => {
+        layoutStore.activePanelId = null
+        layoutStore.activeSubPanelId = null
+      }}
       closeButtonTooltip={t('closeButton', {
-        content: t(`content.${activePanelId}`),
+        content: t(`content.${activeSubPanelId || activePanelId}`),
       })}
       isClosed={!isSidePanelOpen}
+      isSubmenu={isSubPanelOpen}
+      onBack={() => (layoutStore.activeSubPanelId = null)}
     >
       <Panel isOpen={isParticipantsOpen}>
         <ParticipantsList />
