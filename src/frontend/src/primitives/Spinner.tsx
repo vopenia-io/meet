@@ -1,18 +1,25 @@
 import { ProgressBar } from 'react-aria-components'
 import { css } from '@/styled-system/css'
 
-export const Spinner = () => {
+export const Spinner = ({
+  size = 56,
+  variant = 'light',
+}: {
+  size: number
+  variant: 'light' | 'dark'
+}) => {
   const center = 14
   const strokeWidth = 3
   const r = 14 - strokeWidth
   const c = 2 * r * Math.PI
+
   return (
     <ProgressBar aria-label="Loading…" value={30}>
       {({ percentage }) => (
         <>
           <svg
-            width={56}
-            height={56}
+            width={size}
+            height={size}
             viewBox="0 0 28 28"
             fill="none"
             strokeWidth={strokeWidth}
@@ -25,9 +32,8 @@ export const Spinner = () => {
               strokeDashoffset={0}
               strokeLinecap="round"
               className={css({
-                stroke: 'primary.100',
+                stroke: variant == 'light' ? 'primary.100' : 'primaryDark.100',
               })}
-              style={{}}
             />
             <circle
               cx={center}
@@ -37,7 +43,7 @@ export const Spinner = () => {
               strokeDashoffset={percentage && c - (percentage / 100) * c}
               strokeLinecap="round"
               className={css({
-                stroke: 'primary.800',
+                stroke: variant == 'light' ? 'primary.800' : 'white',
               })}
               style={{
                 animation: `rotate 1s ease-in-out infinite`,
