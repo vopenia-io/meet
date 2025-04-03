@@ -41,6 +41,7 @@ export const buttonRecipe = cva({
     variant: {
       primary: {
         backgroundColor: 'primary.800',
+        fontWeight: '500 !important',
         color: 'white',
         '&[data-hovered]': {
           backgroundColor: 'primary.action',
