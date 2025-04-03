@@ -7,8 +7,9 @@ const link = cva({
     textUnderlineOffset: '2',
     cursor: 'pointer',
     borderRadius: 2,
-    transition: 'all 0.2s',
+    fontWeight: 'normal',
     '&[data-hovered]': {
+      fontWeight: 500,
       textDecorationThickness: '2px',
     },
     '&[data-pressed]': {
