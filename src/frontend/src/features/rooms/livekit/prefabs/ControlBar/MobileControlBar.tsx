@@ -24,6 +24,7 @@ import { useSettingsDialog } from '../../components/controls/SettingsDialogConte
 import { ResponsiveMenu } from './ResponsiveMenu'
 import { ToolsToggle } from '../../components/controls/ToolsToggle.tsx'
 import { CameraSwitchButton } from '../../components/controls/CameraSwitchButton'
+import { GRIST_FORM } from '@/utils/constants'
 
 export function MobileControlBar({
   onDeviceError,
@@ -155,7 +156,7 @@ export function MobileControlBar({
               <RiAccountBoxLine size={20} />
             </Button>
             <LinkButton
-              href="https://grist.incubateur.net/o/docs/forms/1YrfNP1QSSy8p2gCxMFnSf/4"
+              href={GRIST_FORM}
               variant="primaryTextDark"
               tooltip={t('options.items.feedback')}
               aria-label={t('options.items.feedback')}
