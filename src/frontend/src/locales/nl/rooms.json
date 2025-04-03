@@ -287,7 +287,9 @@
     }
   },
   "recording": {
-    "transcript": "Transcriptie bezig"
+    "transcriptStarted": "Transcriptie bezig",
+    "transcriptStarting": "Transcriptie begint",
+    "transcriptStopping": "Transcriptie stopt"
   },
   "participantTileFocus": {
     "pin": {

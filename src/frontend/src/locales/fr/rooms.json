@@ -287,7 +287,9 @@
     }
   },
   "recording": {
-    "transcript": "Transcription en cours"
+    "transcriptStarted": "Transcription en cours",
+    "transcriptStarting": "Démarrage de la transcription",
+    "transcriptStopping": "Arrêt de la transcription"
   },
   "participantTileFocus": {
     "pin": {

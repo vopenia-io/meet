@@ -288,7 +288,9 @@
     }
   },
   "recording": {
-    "transcript": ""
+    "transcriptStarted": "",
+    "transcriptStarting": "",
+    "transcriptStopping": ""
   },
   "participantTileFocus": {
     "pin": {

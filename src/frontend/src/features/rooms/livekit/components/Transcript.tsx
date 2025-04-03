@@ -2,8 +2,6 @@ import { A, Button, Div, Text } from '@/primitives'
 
 import thirdSlide from '@/assets/intro-slider/3_resume.png'
 import { css } from '@/styled-system/css'
-
-import { useHasTranscriptAccess } from '../hooks/useHasTranscriptAccess'
 import { useRoomId } from '@/features/rooms/livekit/hooks/useRoomId'
 import { useRoomContext } from '@livekit/components-react'
 import {
@@ -11,9 +9,17 @@ import {
   useStartRecording,
 } from '@/features/rooms/api/startRecording'
 import { useStopRecording } from '@/features/rooms/api/stopRecording'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { RoomEvent } from 'livekit-client'
 import { useTranslation } from 'react-i18next'
+import { NotificationPayload } from '@/features/notifications/NotificationPayload.ts'
+import { NotificationType } from '@/features/notifications/NotificationType.ts'
+import { useSnapshot } from 'valtio/index'
+import {
+  TranscriptionStatus,
+  transcriptionStore,
+} from '@/stores/transcription.ts'
+import { useHasTranscriptAccess } from '../hooks/useHasTranscriptAccess.ts'
 
 const CRISP_HELP_ARTICLE =
   'https://lasuite.crisp.help/fr/article/visio-transcript-1sjq43x'
@@ -28,6 +34,8 @@ export const Transcript = () => {
   const { mutateAsync: startRecordingRoom } = useStartRecording()
   const { mutateAsync: stopRecordingRoom } = useStopRecording()
 
+  const transcriptionSnap = useSnapshot(transcriptionStore)
+
   const room = useRoomContext()
 
   useEffect(() => {
@@ -40,6 +48,17 @@ export const Transcript = () => {
     }
   }, [room])
 
+  const notifyParticipant = async (status) => {
+    const encoder = new TextEncoder()
+    const payload: NotificationPayload = {
+      type: status,
+    }
+    const data = encoder.encode(JSON.stringify(payload))
+    await room.localParticipant.publishData(data, {
+      reliable: true,
+    })
+  }
+
   const handleTranscript = async () => {
     if (!roomId) {
       console.warn('No room ID found')
@@ -49,8 +68,12 @@ export const Transcript = () => {
       setIsLoading(true)
       if (room.isRecording) {
         await stopRecordingRoom({ id: roomId })
+        await notifyParticipant(NotificationType.TranscriptionStopped)
+        transcriptionStore.status = TranscriptionStatus.STOPPING
       } else {
         await startRecordingRoom({ id: roomId, mode: RecordingMode.Transcript })
+        await notifyParticipant(NotificationType.TranscriptionStarted)
+        transcriptionStore.status = TranscriptionStatus.STARTING
       }
     } catch (error) {
       console.error('Failed to handle transcript:', error)
@@ -58,7 +81,13 @@ export const Transcript = () => {
     }
   }
 
-  if (!hasTranscriptAccess) return
+  const isDisabled = useMemo(
+    () =>
+      isLoading ||
+      transcriptionSnap.status === TranscriptionStatus.STARTING ||
+      transcriptionSnap.status === TranscriptionStatus.STOPPING,
+    [isLoading, transcriptionSnap]
+  )
 
   return (
     <Div
@@ -77,9 +106,9 @@ export const Transcript = () => {
           marginBottom: '1rem',
         })}
       />
-      {room.isRecording ? (
+      {!hasTranscriptAccess ? (
         <>
-          <Text>{t('stop.heading')}</Text>
+          <Text>Join the beta</Text>
           <Text
             variant="note"
             wrap={'pretty'}
@@ -92,44 +121,67 @@ export const Transcript = () => {
           >
             {t('stop.body')}
           </Text>
-          <Button
-            isDisabled={isLoading}
-            onPress={() => handleTranscript()}
-            data-attr="stop-transcript"
-            size="sm"
-            variant="tertiary"
-          >
-            {t('stop.button')}
+          <Button size="sm" variant="tertiary">
+            Join the beta
           </Button>
         </>
       ) : (
         <>
-          <Text>{t('start.heading')}</Text>
-          <Text
-            variant="note"
-            wrap={'pretty'}
-            centered
-            className={css({
-              textStyle: 'sm',
-              maxWidth: '90%',
-              marginBottom: '2.5rem',
-              marginTop: '0.25rem',
-            })}
-          >
-            {t('start.body')} <br />{' '}
-            <A href={CRISP_HELP_ARTICLE} target="_blank">
-              {t('start.linkMore')}
-            </A>
-          </Text>
-          <Button
-            isDisabled={isLoading}
-            onPress={() => handleTranscript()}
-            data-attr="start-transcript"
-            size="sm"
-            variant="tertiary"
-          >
-            {t('start.button')}
-          </Button>
+          {room.isRecording ? (
+            <>
+              <Text>{t('stop.heading')}</Text>
+              <Text
+                variant="note"
+                wrap={'pretty'}
+                centered
+                className={css({
+                  textStyle: 'sm',
+                  marginBottom: '2.5rem',
+                  marginTop: '0.25rem',
+                })}
+              >
+                {t('stop.body')}
+              </Text>
+              <Button
+                isDisabled={isDisabled}
+                onPress={() => handleTranscript()}
+                data-attr="stop-transcript"
+                size="sm"
+                variant="tertiary"
+              >
+                {t('stop.button')}
+              </Button>
+            </>
+          ) : (
+            <>
+              <Text>{t('start.heading')}</Text>
+              <Text
+                variant="note"
+                wrap={'pretty'}
+                centered
+                className={css({
+                  textStyle: 'sm',
+                  maxWidth: '90%',
+                  marginBottom: '2.5rem',
+                  marginTop: '0.25rem',
+                })}
+              >
+                {t('start.body')} <br />{' '}
+                <A href={CRISP_HELP_ARTICLE} target="_blank">
+                  {t('start.linkMore')}
+                </A>
+              </Text>
+              <Button
+                isDisabled={isDisabled}
+                onPress={() => handleTranscript()}
+                data-attr="start-transcript"
+                size="sm"
+                variant="tertiary"
+              >
+                {t('start.button')}
+              </Button>
+            </>
+          )}
         </>
       )}
     </Div>
