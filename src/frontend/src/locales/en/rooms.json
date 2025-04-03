@@ -168,25 +168,38 @@
       "effects": "Effects",
       "chat": "Messages in the chat",
       "tools": "More tools",
-      "admin": "Admin settings"
+      "admin": "Admin settings",
+      "transcript": "Transcription"
     },
     "content": {
       "participants": "participants",
       "effects": "effects",
       "chat": "messages",
       "tools": "more tools",
-      "admin": "Admin settings"
+      "admin": "Admin settings",
+      "transcript": "Transcription"
     },
     "closeButton": "Hide {{content}}"
   },
   "chat": {
     "disclaimer": "The messages are visible to participants only at the time they are sent. All messages are deleted at the end of the call."
   },
+  "moreTools": {
+    "body": "Access more tools in Visio to enhance your meetings,",
+    "moreLink": "learn more",
+    "tools": {
+      "transcript": {
+        "title": "Transcription",
+        "body": "Transcribe your meeting for later"
+      }
+    }
+  },
   "transcript": {
     "start": {
-      "heading": "Start the Assistant!",
-      "body": "The assistant automatically starts recording your meeting audio (limited to 1 hour). At the end, you'll receive a clear and concise summary of the discussion directly via email.",
-      "button": "Start"
+      "heading": "Transcribe this call",
+      "body": "Automatically transcribe this call and receive the summary in Docs,",
+      "button": "Start transcription",
+      "linkMore": "Learn more"
     },
     "stop": {
       "heading": "Recording in Progress...",

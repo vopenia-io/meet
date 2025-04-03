@@ -168,25 +168,38 @@
       "effects": "Effecten",
       "chat": "Berichten in de chat",
       "tools": "Meer tools",
-      "admin": "Beheerdersbediening"
+      "admin": "Beheerdersbediening",
+      "transcript": "Transcriptie"
     },
     "content": {
       "participants": "deelnemers",
       "effects": "effecten",
       "chat": "berichten",
       "tools": "meer tools",
-      "admin": "Beheerdersbediening"
+      "admin": "Beheerdersbediening",
+      "transcript": "Transcriptie"
     },
     "closeButton": "Verberg {{content}}"
   },
   "chat": {
     "disclaimer": "De berichten zijn alleen voor de deelnemers zichtbaar op het moment dat ze worden verzonden. Alle berichten worden verwijderd aan het einde van het gesprek."
   },
+  "moreTools": {
+    "body": "Toegang tot meer tools in Visio om je vergaderingen te verbeteren,",
+    "moreLink": "lees meer",
+    "tools": {
+      "transcript": {
+        "title": "Transcriptie",
+        "body": "Transcribeer je vergadering voor later"
+      }
+    }
+  },
   "transcript": {
     "start": {
-      "heading": "Start de assistent!",
-      "body": "De assistent begint automatisch de audio van uw vergadering op te nemen (beperkt tot 1 uur). Na afloop krijgt u direct een heldere en beknopte samenvatting van de discussies in uw e-mail.",
-      "button": "Start"
+      "heading": "Dit gesprek transcriberen",
+      "body": "Transcribeer dit gesprek automatisch en ontvang de samenvatting in Docs.",
+      "button": "Start transcriberen",
+      "linkMore": "Meer informatie"
     },
     "stop": {
       "heading": "Opname loopt ...",

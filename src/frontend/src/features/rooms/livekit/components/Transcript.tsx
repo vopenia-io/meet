@@ -1,10 +1,9 @@
-import { Button, Div, H, Text } from '@/primitives'
+import { A, Button, Div, Text } from '@/primitives'
 
 import thirdSlide from '@/assets/intro-slider/3_resume.png'
 import { css } from '@/styled-system/css'
 
 import { useHasTranscriptAccess } from '../hooks/useHasTranscriptAccess'
-import { RiRecordCircleLine, RiStopCircleLine } from '@remixicon/react'
 import { useRoomId } from '@/features/rooms/livekit/hooks/useRoomId'
 import { useRoomContext } from '@livekit/components-react'
 import {
@@ -16,13 +15,14 @@ import { useEffect, useState } from 'react'
 import { RoomEvent } from 'livekit-client'
 import { useTranslation } from 'react-i18next'
 
+const CRISP_HELP_ARTICLE =
+  'https://lasuite.crisp.help/fr/article/visio-transcript-1sjq43x'
+
 export const Transcript = () => {
   const [isLoading, setIsLoading] = useState(false)
-
   const { t } = useTranslation('rooms', { keyPrefix: 'transcript' })
 
   const hasTranscriptAccess = useHasTranscriptAccess()
-
   const roomId = useRoomId()
 
   const { mutateAsync: startRecordingRoom } = useStartRecording()
@@ -69,36 +69,65 @@ export const Transcript = () => {
       flexDirection="column"
       alignItems="center"
     >
-      <img src={thirdSlide} alt={'wip'} />
+      <img
+        src={thirdSlide}
+        alt={''}
+        className={css({
+          minHeight: '309px',
+          marginBottom: '1rem',
+        })}
+      />
       {room.isRecording ? (
         <>
-          <H lvl={2}>{t('stop.heading')}</H>
-          <Text variant="sm" centered wrap="balance">
+          <Text>{t('stop.heading')}</Text>
+          <Text
+            variant="note"
+            wrap={'pretty'}
+            centered
+            className={css({
+              textStyle: 'sm',
+              marginBottom: '2.5rem',
+              marginTop: '0.25rem',
+            })}
+          >
             {t('stop.body')}
           </Text>
-          <div className={css({ height: '2rem' })} />
           <Button
             isDisabled={isLoading}
             onPress={() => handleTranscript()}
             data-attr="stop-transcript"
+            size="sm"
+            variant="tertiary"
           >
-            <RiStopCircleLine style={{ marginRight: '0.5rem' }} />{' '}
             {t('stop.button')}
           </Button>
         </>
       ) : (
         <>
-          <H lvl={2}>{t('start.heading')}</H>
-          <Text variant="sm" centered wrap="balance">
-            {t('start.body')}
+          <Text>{t('start.heading')}</Text>
+          <Text
+            variant="note"
+            wrap={'pretty'}
+            centered
+            className={css({
+              textStyle: 'sm',
+              maxWidth: '90%',
+              marginBottom: '2.5rem',
+              marginTop: '0.25rem',
+            })}
+          >
+            {t('start.body')} <br />{' '}
+            <A href={CRISP_HELP_ARTICLE} target="_blank">
+              {t('start.linkMore')}
+            </A>
           </Text>
-          <div className={css({ height: '2rem' })} />
           <Button
             isDisabled={isLoading}
             onPress={() => handleTranscript()}
             data-attr="start-transcript"
+            size="sm"
+            variant="tertiary"
           >
-            <RiRecordCircleLine style={{ marginRight: '0.5rem' }} />{' '}
             {t('start.button')}
           </Button>
         </>

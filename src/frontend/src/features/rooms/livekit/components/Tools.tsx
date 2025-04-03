@@ -1,7 +1,13 @@
-import { A, Div, H, P, Text } from '@/primitives'
+import { A, Div, Text } from '@/primitives'
 import { css } from '@/styled-system/css'
 import { Button as RACButton } from 'react-aria-components'
-import { RiFileTextFill, RiLiveFill } from '@remixicon/react'
+import { RiFileTextFill } from '@remixicon/react'
+import { Transcript } from '@/features/rooms/livekit/components/Transcript'
+import { useSidePanel } from '@/features/rooms/livekit/hooks/useSidePanel'
+import { useTranslation } from 'react-i18next'
+
+const CRISP_HELP_ARTICLE =
+  'https://lasuite.crisp.help/fr/article/visio-tools-bvxj23'
 
 const ActionButton = ({ icon, title, description, onPress }) => {
   return (
@@ -41,7 +47,7 @@ const ActionButton = ({ icon, title, description, onPress }) => {
         <Text margin={false} as="h3">
           {title}
         </Text>
-        <Text as={'p'} variant={'smNote'} wrap={'pretty'}>
+        <Text as="p" variant="smNote" wrap="pretty">
           {description}
         </Text>
       </div>
@@ -50,6 +56,13 @@ const ActionButton = ({ icon, title, description, onPress }) => {
 }
 
 export const Tools = () => {
+  const { openTranscript, isTranscriptOpen } = useSidePanel()
+  const { t } = useTranslation('rooms', { keyPrefix: 'moreTools' })
+
+  if (isTranscriptOpen) {
+    return <Transcript />
+  }
+
   return (
     <Div
       display="flex"
@@ -66,25 +79,20 @@ export const Tools = () => {
           textStyle: 'sm',
           paddingX: '0.75rem',
         })}
-        margin={'md'}
+        margin="md"
       >
-        Nous essayons d'intégrer plus d'outils dans visio blablabzlab,{' '}
-        <A href="/">En savoir plus</A>.
+        {t('body')}{' '}
+        <A href={CRISP_HELP_ARTICLE} target="_blank">
+          {t('moreLink')}
+        </A>
+        .
       </Text>
       <ActionButton
-        icon={<RiFileTextFill size={24} color={'white'} />}
-        title={'Transcription'}
-        description={
-          'Transcrivez votre réunion et recevez son résultat à la fin.'
-        }
+        icon={<RiFileTextFill size={24} color="white" />}
+        title={t('tools.transcript.title')}
+        description={t('tools.transcript.body')}
+        onPress={() => openTranscript()}
       />
-      <ActionButton
-        icon={<RiLiveFill size={24} color={'white'} />}
-        title={'Enregistrement'}
-        description={'Enregistrer votre réunion pour la rejouer à la demande.'}
-      />
-      {/*<ActionButton />*/}
-      {/*<ActionButton />*/}
     </Div>
   )
 }

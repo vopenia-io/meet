@@ -169,25 +169,38 @@
       "effects": "",
       "chat": "",
       "tools": "",
-      "admin": ""
+      "admin": "",
+      "transcript": ""
     },
     "content": {
       "participants": "",
       "effects": "",
       "chat": "",
       "tools": "",
-      "admin": ""
+      "admin": "",
+      "transcript": ""
     },
     "closeButton": ""
   },
   "chat": {
     "disclaimer": ""
   },
+  "moreTools": {
+    "body": "",
+    "moreLink": "",
+    "tools": {
+      "transcript": {
+        "title": "",
+        "body": ""
+      }
+    }
+  },
   "transcript": {
     "start": {
       "heading": "",
       "body": "",
-      "button": ""
+      "button": "",
+      "linkMore": ""
     },
     "stop": {
       "heading": "",
