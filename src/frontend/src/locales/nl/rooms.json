@@ -205,6 +205,11 @@
       "heading": "Opname loopt ...",
       "body": "Uw vergadering wordt momenteel opgenomen. U ontvangt een samenvatting via e-mail, zo gauw de vergarding gesloten wordt.",
       "button": "Stop met opname"
+    },
+    "beta": {
+      "heading": "Word beta tester",
+      "body": "Neem je vergadering op voor later. Je ontvangt een samenvatting per e-mail zodra de vergadering is afgelopen.",
+      "button": "Schrijf je in"
     }
   },
   "admin": {

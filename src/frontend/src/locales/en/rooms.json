@@ -205,6 +205,11 @@
       "heading": "Recording in Progress...",
       "body": "Your meeting is currently being recorded. You will receive a summary via email once the meeting ends.",
       "button": "Stop Recording"
+    },
+    "beta": {
+      "heading": "Become a beta tester",
+      "body": "Record your meeting for later. You will receive a summary by email once the meeting is finished.",
+      "button": "Sign up"
     }
   },
   "admin": {

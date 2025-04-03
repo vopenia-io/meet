@@ -1,4 +1,4 @@
-import { A, Button, Div, Text } from '@/primitives'
+import { A, Button, Div, LinkButton, Text } from '@/primitives'
 
 import thirdSlide from '@/assets/intro-slider/3_resume.png'
 import { css } from '@/styled-system/css'
@@ -20,6 +20,7 @@ import {
   transcriptionStore,
 } from '@/stores/transcription.ts'
 import { useHasTranscriptAccess } from '../hooks/useHasTranscriptAccess.ts'
+import { BETA_USERS_FORM_URL } from '@/utils/constants.ts'
 
 const CRISP_HELP_ARTICLE =
   'https://lasuite.crisp.help/fr/article/visio-transcript-1sjq43x'
@@ -108,7 +109,7 @@ export const Transcript = () => {
       />
       {!hasTranscriptAccess ? (
         <>
-          <Text>Join the beta</Text>
+          <Text>{t('beta.heading')}</Text>
           <Text
             variant="note"
             wrap={'pretty'}
@@ -119,11 +120,19 @@ export const Transcript = () => {
               marginTop: '0.25rem',
             })}
           >
-            {t('stop.body')}
+            {t('beta.body')}{' '}
+            <A href={CRISP_HELP_ARTICLE} target="_blank">
+              {t('start.linkMore')}
+            </A>
           </Text>
-          <Button size="sm" variant="tertiary">
-            Join the beta
-          </Button>
+          <LinkButton
+            size="sm"
+            variant="tertiary"
+            href={BETA_USERS_FORM_URL}
+            target="_blank"
+          >
+            {t('beta.button')}
+          </LinkButton>
         </>
       ) : (
         <>

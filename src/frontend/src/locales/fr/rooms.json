@@ -205,6 +205,11 @@
       "heading": "Enregistrement en cours …",
       "body": "L'enregistrement de votre réunion est en cours. Vous recevrez un compte-rendu par email une fois la réunion terminée.",
       "button": "Arrêter la transcription"
+    },
+    "beta": {
+      "heading": "Devenez beta testeur",
+      "body": "Enregistrer votre réunion pour plus tard. Vous recevrez un compte-rendu par email une fois la réunion terminée.",
+      "button": "Inscrivez-vous"
     }
   },
   "admin": {
