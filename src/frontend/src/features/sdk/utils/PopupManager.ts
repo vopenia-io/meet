@@ -39,6 +39,11 @@ export class PopupManager {
     this.messageParent(ClientMessageType.STATE_CLEAR, {})
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public sendRoomData(data: { room: any }) {
+    this.messageParent(ClientMessageType.ROOM_CREATED, data)
+  }
+
   public setupMessageListener(
     onCallbackId: (id: string) => void,
     onRoomData: (data: CallbackCreationRoomData) => void
@@ -54,7 +59,7 @@ export class PopupManager {
         case PopupMessageType.ROOM_DATA:
           if (!data?.room) return
           onRoomData(data.room)
-          this.messageParent(ClientMessageType.ROOM_CREATED, {
+          this.sendRoomData({
             room: {
               url: getRouteUrl('room', data.room.slug),
               ...data.room,
