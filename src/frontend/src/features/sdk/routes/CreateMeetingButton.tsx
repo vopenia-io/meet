@@ -48,6 +48,12 @@ export const CreateMeetingButton = () => {
     setRoom(data.room)
     setCallbackId(undefined)
     setIsPending(false)
+    popupManager.sendRoomData({
+      room: {
+        url: getRouteUrl('room', data.room.slug),
+        ...data.room,
+      },
+    })
   }, [data])
 
   useEffect(() => {
