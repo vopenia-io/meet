@@ -292,7 +292,7 @@
       }
     }
   },
-  "recording": {
+  "recordingToast": {
     "transcript": {
       "started": "",
       "starting": "",

@@ -291,7 +291,7 @@
       }
     }
   },
-  "recording": {
+  "recordingToast": {
     "transcript": {
       "started": "Transcriptie bezig",
       "starting": "Transcriptie begint",
