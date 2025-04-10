@@ -594,7 +594,7 @@ class RecordingViewSet(
             )
 
         try:
-            recording = models.Recording.objects.get(id=recording_id)
+            recording = models.Recording.objects.select_related('room').get(id=recording_id)
         except models.Recording.DoesNotExist as e:
             raise drf_exceptions.NotFound("No recording found for this event.") from e
 
@@ -680,23 +680,23 @@ class RecordingViewSet(
 
         user = request.user
         recording_id = url_params['recording']
-        key = f"recordings/{recording_id:s}{url_params['extension']:s}"
 
         try:
             recording = models.Recording.objects.get(id=recording_id)
         except models.Recording.DoesNotExist as e:
             raise drf_exceptions.NotFound("No recording found for this event.") from e
 
-        has_access = models.RecordingAccess.objects.filter(
-            user=user,
-            recording_id=recording.id
-        ).exists()
+        abilities = recording.get_abilities(user)
 
-        if not has_access:
+        if not abilities["retrieve"]:
             logger.debug("User '%s' lacks permission for attachment", user)
             raise drf_exceptions.PermissionDenied()
 
+        if not recording.is_saved:
+            logger.debug("Recording '%s' has not been saved", recording)
+            raise drf_exceptions.PermissionDenied()
+
         # Generate S3 authorization headers using the extracted URL parameters
-        request = utils.generate_s3_authorization_headers(key)
+        request = utils.generate_s3_authorization_headers(recording.key)
 
         return drf_response.Response("authorized", headers=request.headers, status=200)
