@@ -76,6 +76,7 @@ export const Tools = () => {
   const { t } = useTranslation('rooms', { keyPrefix: 'moreTools' })
   const isTranscriptEnabled = useIsRecordingEnabled(RecordingMode.Transcript)
 
+  // FIXME - use settings returned by backend
   const isRecordingEnabled = true
 
   switch (activeSubPanelId) {
