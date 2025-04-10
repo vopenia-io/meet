@@ -577,6 +577,13 @@ class Recording(BaseModel):
         }
 
     @property
+    def is_saved(self) -> bool:
+        """Wip"""
+        return self.status in {
+            RecordingStatusChoices.SAVED,
+        }
+
+    @property
     def key(self):
         """Wip."""
         extension = "ogg" if self.mode == RecordingModeChoices.TRANSCRIPT else "mp4"
