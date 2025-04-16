@@ -366,7 +366,7 @@ class RoomViewSet(
 
     @decorators.action(
         detail=True,
-        methods=["POST"],
+        methods=["post"],
         url_path="request-entry",
         permission_classes=[],
         throttle_classes=[RequestEntryAnonRateThrottle],
@@ -449,7 +449,7 @@ class RoomViewSet(
 
     @decorators.action(
         detail=False,
-        methods=["POST"],
+        methods=["post"],
         url_path="webhooks-livekit",
         permission_classes=[],
     )
@@ -475,7 +475,7 @@ class RoomViewSet(
 
     @decorators.action(
         detail=False,
-        methods=["POST"],
+        methods=["post"],
         url_path="creation-callback",
         permission_classes=[],
         throttle_classes=[CreationCallbackAnonRateThrottle],
