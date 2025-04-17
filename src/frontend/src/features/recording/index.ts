@@ -7,7 +7,7 @@ export { useIsRecordingActive } from './hooks/useIsRecordingActive'
 // api
 export { useStartRecording } from './api/startRecording'
 export { useStopRecording } from './api/stopRecording'
-export { RecordingMode } from './types'
+export { RecordingMode, RecordingStatus } from './types'
 
 // components
 export { RecordingStateToast } from './components/RecordingStateToast'
