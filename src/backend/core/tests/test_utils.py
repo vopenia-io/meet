@@ -45,9 +45,11 @@ def test_create_livekit_client_ssl_disabled(
 @mock.patch("asyncio.get_running_loop")
 @mock.patch("core.utils.LiveKitAPI")
 def test_create_livekit_client_custom_configuration(
-    mock_livekit_api, mock_get_running_loop
+    mock_livekit_api, mock_get_running_loop, settings
 ):
     """Test LiveKitAPI client creation with custom configuration."""
+    settings.LIVEKIT_VERIFY_SSL = True
+
     mock_get_running_loop.return_value = mock.MagicMock()
     custom_configuration = {
         "api_key": "mock_key",
