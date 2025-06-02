@@ -11,6 +11,7 @@ import {
   RiSpeakerLine,
 } from '@remixicon/react'
 import { AccountTab } from './tabs/AccountTab'
+import { CaptionsTab } from './tabs/CaptionsTab'
 import { NotificationsTab } from './tabs/NotificationsTab'
 import { GeneralTab } from './tabs/GeneralTab'
 import { AudioTab } from './tabs/AudioTab'
@@ -75,14 +76,18 @@ export const SettingsDialogExtended = (props: SettingsDialogExtended) => {
               {isWideScreen && t('tabs.account')}
             </Tab>
             <Tab icon highlight id="2">
+              <RiAccountCircleLine />
+              {isWideScreen && t('tabs.captions')}
+            </Tab>
+            <Tab icon highlight id="3">
               <RiSpeakerLine />
               {isWideScreen && t('tabs.audio')}
             </Tab>
-            <Tab icon highlight id="3">
+            <Tab icon highlight id="4">
               <RiSettings3Line />
               {isWideScreen && t('tabs.general')}
             </Tab>
-            <Tab icon highlight id="4">
+            <Tab icon highlight id="5">
               <RiNotification3Line />
               {isWideScreen && t('tabs.notifications')}
             </Tab>
@@ -90,9 +95,10 @@ export const SettingsDialogExtended = (props: SettingsDialogExtended) => {
         </div>
         <div className={tabPanelContainerStyle}>
           <AccountTab id="1" onOpenChange={props.onOpenChange} />
-          <AudioTab id="2" />
-          <GeneralTab id="3" />
-          <NotificationsTab id="4" />
+          <CaptionsTab id="2" />
+          <AudioTab id="3" />
+          <GeneralTab id="4" />
+          <NotificationsTab id="5" />
         </div>
       </Tabs>
     </Dialog>

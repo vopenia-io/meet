@@ -7,6 +7,10 @@
     "authentication": "Authenticatie",
     "nameError": "Uw naam mag niet leeg zijn"
   },
+   "captions": {
+    "heading": "Captions",
+    "label": "Language of the meeting"
+  },
   "audio": {
     "microphone": {
       "heading": "Microfoon",
@@ -53,6 +57,7 @@
   "settingsButtonLabel": "Instellingen",
   "tabs": {
     "account": "Profiel",
+    "captions": "Ondertitels",
     "audio": "Audio",
     "general": "Algemeen",
     "notifications": "Meldingen"
