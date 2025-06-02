@@ -6,6 +6,10 @@
     "nameLabel": "Your Name",
     "authentication": "Authentication"
   },
+  "captions": {
+    "heading": "Captions",
+    "label": "Language of the meeting"
+  },
   "audio": {
     "microphone": {
       "heading": "Microphone",
@@ -42,6 +46,7 @@
   "settingsButtonLabel": "Settings",
   "tabs": {
     "account": "Profile",
+    "captions": "Captions",
     "audio": "Audio",
     "general": "General",
     "notifications": "Notifications"
