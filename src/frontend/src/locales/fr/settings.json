@@ -8,8 +8,8 @@
     "nameError": "Votre Nom ne peut pas être vide"
   },
    "captions": {
-    "heading": "Captions",
-    "label": "Language of the meeting"
+    "heading": "Sous-titres",
+    "label": "Langue de la réunion"
   },
   "audio": {
     "microphone": {

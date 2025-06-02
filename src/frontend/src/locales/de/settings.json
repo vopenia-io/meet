@@ -8,8 +8,8 @@
     "nameError": "Ihr Name darf nicht leer sein"
   },
     "captions": {
-    "heading": "Captions",
-    "label": "Language of the meeting"
+  "heading": "Untertitel",
+  "label": "Sprache der Besprechung"
   },
   "audio": {
     "microphone": {

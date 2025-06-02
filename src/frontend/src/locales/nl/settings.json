@@ -7,9 +7,9 @@
     "authentication": "Authenticatie",
     "nameError": "Uw naam mag niet leeg zijn"
   },
-   "captions": {
-    "heading": "Captions",
-    "label": "Language of the meeting"
+  "captions": {
+  "heading": "Ondertiteling",
+  "label": "Taal van de vergadering"
   },
   "audio": {
     "microphone": {
