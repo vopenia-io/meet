@@ -28,10 +28,12 @@ import { FocusLayout } from '../components/FocusLayout'
 import { ParticipantTile } from '../components/ParticipantTile'
 import { SidePanel } from '../components/SidePanel'
 import { useSidePanel } from '../hooks/useSidePanel'
+import { useLayout } from '../hooks/useLayout'
 import { RecordingStateToast } from '@/features/recording'
 import { ScreenShareErrorModal } from '../components/ScreenShareErrorModal'
 import { useConnectionObserver } from '../hooks/useConnectionObserver'
 import { useNoiseReduction } from '../hooks/useNoiseReduction'
+import {Segments} from "@/features/rooms/livekit/components/subtitles/Segments.tsx";
 
 const LayoutWrapper = styled(
   'div',
@@ -155,6 +157,7 @@ export function VideoConference({ ...props }: VideoConferenceProps) {
   /* eslint-enable react-hooks/exhaustive-deps */
 
   const { isSidePanelOpen } = useSidePanel()
+  const { isSubtitleOpen } = useLayout()
 
   const [isShareErrorVisible, setIsShareErrorVisible] = useState(false)
 
@@ -183,6 +186,7 @@ export function VideoConference({ ...props }: VideoConferenceProps) {
                 ? 'var(--lk-grid-gap) calc(358px + 3rem) calc(80px + var(--lk-grid-gap)) 16px'
                 : 'var(--lk-grid-gap) var(--lk-grid-gap) calc(80px + var(--lk-grid-gap))',
               transition: 'inset .5s cubic-bezier(0.4,0,0.2,1) 5ms',
+              paddingBottom: isSubtitleOpen ? '170px' : undefined,
             }}
           >
             <LayoutWrapper>
@@ -219,6 +223,7 @@ export function VideoConference({ ...props }: VideoConferenceProps) {
               </div>
             </LayoutWrapper>
             <MainNotificationToast />
+            <Segments />
           </div>
           <ControlBar
             onDeviceError={(e) => {
