@@ -211,6 +211,7 @@ services:
     depends_on:
       - redis
       - livekit-egress
+      - livekit-ingress
 
   livekit-egress:
       image: livekit/egress
@@ -221,3 +222,12 @@ services:
         - ./docker/livekit/out:/out
       depends_on:
         - redis
+
+  livekit-ingress:
+    image: livekit/ingress
+    environment:
+      INGRESS_CONFIG_FILE: ./livekit-ingress.yaml
+    volumes:
+      - ./docker/livekit/config/livekit-ingress.yaml:/livekit-ingress.yaml
+    depends_on:
+      - redis

@@ -1,0 +1,16 @@
+redis:
+    address: redis:6379
+api_key: devkey
+api_secret: secret
+ws_url: ws://livekit:7880
+rtmp_port: 1935
+whip_port: 8080
+http_relay_port: 9090
+logging:
+    json: false
+    level: ""
+development: true
+rtc_config:
+    udp_port: 7885
+    use_external_ip: true
+    enable_loopback_candidate: false
