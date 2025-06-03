@@ -4,10 +4,13 @@ import { useSnapshot } from "valtio";
 import {useMaybeRoomContext} from "@livekit/components-react";
 import {useEffect, useState} from "react";
 import {Participant, RoomEvent, TextStreamReader, TrackPublication, TranscriptionSegment} from "livekit-client";
-import {ParticipantInfo} from "@livekit/protocol"
+import { useTranslation } from "react-i18next";
 
 interface Segment {
   id: string,
+  language: string
+  participantId: string,
+  participantName: string,
   text: string,
   timestamp: number
 }
@@ -15,6 +18,7 @@ interface Segment {
 export const Segments = () => {
 
   const room = useMaybeRoomContext()
+  const { t, i18n } = useTranslation('settings')
   const [transcriptions, setTranscriptions] = useState<{[id: string]: Segment}>({})
 
   useEffect(() => {
@@ -22,32 +26,18 @@ export const Segments = () => {
       return
     }
 
-    // const updateTranscriptions = (
-    //   segments: TranscriptionSegment[],
-    //   participant?: Participant,
-    //   publication?: TrackPublication
-    // ) => {
-    //   setTranscriptions((prev) => {
-    //     const newTranscriptions = { ...prev }
-    //     for (const segment of segments) {
-    //       newTranscriptions[segment.id] = segment
-    //     }
-    //     return newTranscriptions
-    //   })
-    // }
-
     const updateTranscriptions = async (reader: TextStreamReader, participantInfo: {identity: string}) => {
       const message = await reader.readAll();
+
       console.log(reader.info);
-      if (reader.info.attributes['lk.transcribed_track_id']) {
-        console.log(`New transcription from ${participantInfo.identity}: ${message}`);
-      } else {
-        console.log(`New message from ${participantInfo.identity}: ${message}`);
-      }
 
       const newSegment: Segment = {
-        id: reader.info.attributes['lk.segment_id'],
+        id: reader.info.attributes?.['lk.segment_id'] ?? "",
         text: message,
+        language: reader.info.attributes?.['lk.language'] ?? "",
+        participantId: reader.info.attributes?.['lk.transcribed_participant_id'] ?? "",
+        participantName: reader.info.attributes?.['lk.transcribed_participant_name'] ?? "",
+
         timestamp: reader.info.timestamp
       }
 
@@ -62,7 +52,6 @@ export const Segments = () => {
     room.registerTextStreamHandler('lk.transcription', updateTranscriptions);
 
     return () => {
-    //room.off(RoomEvent.TranscriptionReceived, updateTranscriptions)
       room.unregisterTextStreamHandler("lk.transcription");
     }
   }, [room])
@@ -82,8 +71,9 @@ export const Segments = () => {
       <ul>
         {Object.values(transcriptions)
           .sort((a, b) => b.timestamp - a.timestamp)
+          .filter(a => a.language === i18n.language)
           .map((segment) => (
-            <li key={segment.id}>{segment.text}</li>
+            <li key={segment.id}>{segment.participantName} - {segment.text}</li>
           ))}
       </ul>
     </div>
