@@ -5,6 +5,7 @@ import {useMaybeRoomContext} from "@livekit/components-react";
 import {useEffect, useState} from "react";
 import {Participant, RoomEvent, TextStreamReader, TrackPublication, TranscriptionSegment} from "livekit-client";
 import { useTranslation } from "react-i18next";
+import { captionPreferenceStore } from "@/stores/captionPreference";
 
 interface Segment {
   id: string,
@@ -18,6 +19,7 @@ interface Segment {
 export const Segments = () => {
 
   const room = useMaybeRoomContext()
+  const preference = useSnapshot(captionPreferenceStore)
   const { t, i18n } = useTranslation('settings')
   const [transcriptions, setTranscriptions] = useState<{[id: string]: Segment}>({})
 
@@ -71,7 +73,7 @@ export const Segments = () => {
       <ul>
         {Object.values(transcriptions)
           .sort((a, b) => b.timestamp - a.timestamp)
-          .filter(a => a.language === i18n.language)
+          .filter(a => a.language === preference.language)
           .map((segment) => (
             <li key={segment.id}>{segment.participantName} - {segment.text}</li>
           ))}
