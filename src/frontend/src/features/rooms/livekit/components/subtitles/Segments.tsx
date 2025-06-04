@@ -3,9 +3,11 @@ import { layoutStore } from "@/stores/layout.ts";
 import { useSnapshot } from "valtio";
 import {useMaybeRoomContext} from "@livekit/components-react";
 import {useEffect, useState} from "react";
-import {Participant, RoomEvent, TextStreamReader, TrackPublication, TranscriptionSegment} from "livekit-client";
+import { TextStreamReader } from "livekit-client";
 import { useTranslation } from "react-i18next";
 import { captionPreferenceStore } from "@/stores/captionPreference";
+import {Avatar} from "@/components/Avatar.tsx";
+import { Text } from '@/primitives'
 
 interface Segment {
   id: string,
@@ -64,18 +66,36 @@ export const Segments = () => {
 
   return (
     <div className={css({
-      backgroundColor: 'white',
       height: '150px',
       width: '100%',
       position: 'absolute',
-      bottom: '0px'
+      bottom: '0px',
+      color: 'white'
     })}>
-      <ul>
+      <ul className={css(
+        {
+          width: '80%',
+          margin: 'auto'
+        }
+      )}>
         {Object.values(transcriptions)
           .sort((a, b) => b.timestamp - a.timestamp)
           .filter(a => a.language === preference.language)
           .map((segment) => (
-            <li key={segment.id}>{segment.participantName} - {segment.text}</li>
+            <li key={segment.id} className={css({
+              display: "flex",
+              flexDirection: 'column'
+            })}>
+              <span className={css({
+                display: 'flex',
+                flexDirection: 'row'
+              })}><Avatar name={segment.participantName} bgColor={'red'} context="list" notification /> <span className={css({
+                marginLeft: "10px"
+              })}>{segment.participantName}</span></span>
+              <Text className={css({
+                fontSize: '24px'
+              })}>{segment.text}</Text>
+            </li>
           ))}
       </ul>
     </div>
