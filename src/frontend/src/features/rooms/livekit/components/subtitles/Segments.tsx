@@ -75,7 +75,9 @@ export const Segments = () => {
       <ul className={css(
         {
           width: '80%',
-          margin: 'auto'
+          height: '100%',
+          margin: 'auto',
+          overflowY: 'auto'
         }
       )}>
         {Object.values(transcriptions)
