@@ -43,6 +43,11 @@ export const routes: Record<
   feedback: {
     name: 'feedback',
     path: '/feedback',
+    to: (params: { duplicateIdentity?: false }) =>
+      '/feedback' +
+      (params.duplicateIdentity
+        ? `?duplicateIdentity=${params?.duplicateIdentity}`
+        : ''),
     Component: FeedbackRoute,
   },
   legalTerms: {

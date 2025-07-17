@@ -127,7 +127,9 @@ export const Conference = ({
           })}
           onDisconnected={(e) => {
             if (e == DisconnectReason.CLIENT_INITIATED) {
-              navigateTo('feedback')
+              navigateTo('feedback', { duplicateIdentity: false })
+            } else if (e == DisconnectReason.DUPLICATE_IDENTITY) {
+              navigateTo('feedback', { duplicateIdentity: true })
             }
           }}
         >
