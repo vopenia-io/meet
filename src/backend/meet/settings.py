@@ -492,6 +492,11 @@ class Base(Configuration):
         ),
         "url": values.Value(environ_name="LIVEKIT_API_URL", environ_prefix=None),
     }
+    LIVEKIT_ENABLE_FIREFOX_PROXY_WORKAROUND = values.BooleanValue(
+        environ_name="LIVEKIT_ENABLE_FIREFOX_PROXY_WORKAROUND",
+        environ_prefix=None,
+        default=False,
+    )
     LIVEKIT_VERIFY_SSL = values.BooleanValue(
         True, environ_name="LIVEKIT_VERIFY_SSL", environ_prefix=None
     )
