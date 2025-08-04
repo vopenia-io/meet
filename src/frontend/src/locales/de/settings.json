@@ -11,6 +11,10 @@
   "heading": "Untertitel",
   "label": "Sprache der Besprechung"
   },
+    "captions": {
+  "heading": "Untertitel",
+  "label": "Sprache der Besprechung"
+  },
   "audio": {
     "microphone": {
       "heading": "Mikrofon",

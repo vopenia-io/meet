@@ -11,6 +11,10 @@
   "heading": "Ondertiteling",
   "label": "Taal van de vergadering"
   },
+  "captions": {
+  "heading": "Ondertiteling",
+  "label": "Taal van de vergadering"
+  },
   "audio": {
     "microphone": {
       "heading": "Microfoon",

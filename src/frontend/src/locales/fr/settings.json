@@ -11,6 +11,10 @@
     "heading": "Sous-titres",
     "label": "Langue de la réunion"
   },
+   "captions": {
+    "heading": "Sous-titres",
+    "label": "Langue de la réunion"
+  },
   "audio": {
     "microphone": {
       "heading": "Micro",

@@ -11,6 +11,10 @@
     "heading": "Captions",
     "label": "Language of the meeting"
   },
+  "captions": {
+    "heading": "Captions",
+    "label": "Language of the meeting"
+  },
   "audio": {
     "microphone": {
       "heading": "Microphone",
