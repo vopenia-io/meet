@@ -4,7 +4,12 @@
     "heading": "Account",
     "youAreNotLoggedIn": "You are not logged in.",
     "nameLabel": "Your Name",
-    "authentication": "Authentication"
+    "authentication": "Authentication",
+    "nameError": "Your name cannot be empty"
+  },
+  "captions": {
+    "heading": "Captions",
+    "label": "Language of the meeting"
   },
   "captions": {
     "heading": "Captions",
@@ -13,13 +18,23 @@
   "audio": {
     "microphone": {
       "heading": "Microphone",
-      "label": "Select your audio input"
+      "label": "Select your audio input",
+      "disabled": "Microphone disabled"
+    },
+    "noiseReduction": {
+      "label": "Noise reduction",
+      "heading": "Noise reduction",
+      "ariaLabel": {
+        "enable": "Enable noise reduction",
+        "disable": "Disable noise reduction"
+      }
     },
     "speakers": {
       "heading": "Speakers",
       "label": "Select your audio output",
       "test": "Test",
-      "ongoingTest": "Testing sound…"
+      "ongoingTest": "Testing sound…",
+      "safariWarning": "Speaker selection is not available yet on Safari due to browser limitations."
     },
     "permissionsRequired": "Permissions required"
   },

@@ -1,6 +1,9 @@
 {
   "feedback": {
-    "heading": "You have left the meeting",
+    "heading": {
+      "normal": "You have left the meeting",
+      "duplicateIdentity": "You have joined the meeting from another device"
+    },
     "home": "Return to home",
     "back": "Rejoin the meeting"
   },
@@ -56,6 +59,19 @@
     "heading": "Your meeting is ready",
     "description": "Share this link with people you want to invite to the meeting.",
     "permissions": "People with this link do not need your permission to join this meeting."
+  },
+  "mediaErrorDialog": {
+    "DeviceInUse": {
+      "title": {
+        "audioinput": "Microphone Activation Failed",
+        "videoinput": "Camera Activation Failed"
+      },
+      "body": {
+        "audioinput": "Your microphone is already in use by another tab or application, which prevents it from being activated in this video call. If you wish, close the other tab or application to use it here.",
+        "videoinput": "Your camera is already in use by another tab or application, which prevents it from being activated in this video call. If you wish, close the other tab or application to use it here."
+      }
+    },
+    "close": "OK"
   },
   "error": {
     "createRoom": {
@@ -141,6 +157,7 @@
     "activateCamera": "Your camera is disabled. Choose an option to enable it.",
     "notAvailable": "Video effects will be available soon on your browser. We're working on it! In the meantime, you can use Google Chrome for best performance or Firefox :(",
     "heading": "Blur",
+    "clear": "Disable effect",
     "blur": {
       "title": "Background blur",
       "light": "Light blur",
@@ -192,8 +209,8 @@
     "disclaimer": "The messages are visible to participants only at the time they are sent. All messages are deleted at the end of the call."
   },
   "moreTools": {
-    "body": "Access more tools in Visio to enhance your meetings,",
-    "moreLink": "learn more",
+    "body": "Access more tools to enhance your meetings.",
+    "moreLink": "Learn more",
     "tools": {
       "transcript": {
         "title": "Transcription",
@@ -212,6 +229,10 @@
         "ariaLabel": "Copy your meeting address",
         "copy": "Copy address",
         "copied": "Address copied"
+      },
+      "phone": {
+        "call": "Call:",
+        "pinCode": "Code:"
       }
     }
   },
@@ -313,7 +334,7 @@
     }
   },
   "openFeedback": {
-    "question": "What can we do to improve Visio?",
+    "question": "What can we do to improve ourselves?",
     "placeholder": "Describe your bugs or share your suggestions…",
     "submit": "Submit",
     "skip": "Skip"
@@ -374,6 +395,12 @@
     },
     "any": {
       "started": "Recording in progress"
+    },
+    "limitReachedAlert": {
+      "title": "Recording limit exceeded",
+      "description": "The recording has exceeded the maximum allowed duration{{duration_message}}. It will now be saved automatically.",
+      "durationMessage": " of {{duration}}",
+      "button": "OK"
     }
   },
   "participantTileFocus": {

@@ -1,23 +1,32 @@
 """Celery workers."""
 
+# ruff: noqa: PLR0913
+
 import json
 import os
 import tempfile
+import time
 from pathlib import Path
+from typing import Optional
 
 import openai
 import sentry_sdk
 from celery import Celery, signals
 from celery.utils.log import get_task_logger
 from minio import Minio
-from requests import Session
+from mutagen import File
+from requests import Session, exceptions
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 
+from summary.core.analytics import MetadataManager, get_analytics
 from summary.core.config import get_settings
 from summary.core.prompt import get_instructions
 
 settings = get_settings()
+analytics = get_analytics()
+
+metadata_manager = MetadataManager()
 
 logger = get_task_logger(__name__)
 
@@ -27,6 +36,8 @@ celery = Celery(
     backend=settings.celery_result_backend,
     broker_connection_retry_on_startup=True,
 )
+
+celery.config_from_object("summary.core.celery_config")
 
 if settings.sentry_dsn and settings.sentry_is_enabled:
 
@@ -56,6 +67,12 @@ Quelques points que nous vous conseillons de vérifier :
 - L’enregistrement dure-t-il plus de 30 secondes ?
 
 """
+
+
+class AudioValidationError(Exception):
+    """Custom exception for audio validation errors."""
+
+    pass
 
 
 def save_audio_stream(audio_stream, chunk_size=32 * 1024):
@@ -120,6 +137,25 @@ def post_with_retries(url, data):
         session.close()
 
 
+@signals.task_prerun.connect
+def task_started(task_id=None, task=None, args=None, **kwargs):
+    """Signal handler called before task execution begins."""
+    task_args = args or []
+    metadata_manager.create(task_id, task_args)
+
+
+@signals.task_retry.connect
+def task_retry_handler(request=None, reason=None, einfo=None, **kwargs):
+    """Signal handler called when task execution retries."""
+    metadata_manager.retry(request.id)
+
+
+@signals.task_failure.connect
+def task_failure_handler(task_id, exception=None, **kwargs):
+    """Signal handler called when task execution fails permanently."""
+    metadata_manager.capture(task_id, settings.posthog_event_failure)
+
+
 @celery.task(max_retries=settings.celery_max_retries)
 def process_audio_transcribe_summarize(filename: str, email: str, sub: str):
     """Process an audio file by transcribing it and generating a summary.
@@ -149,18 +185,20 @@ def process_audio_transcribe_summarize(filename: str, email: str, sub: str):
     temp_file_path = save_audio_stream(audio_file_stream)
     logger.debug("Recording successfully downloaded, filepath: %s", temp_file_path)
 
-    logger.debug("Initiating OpenAI client")
+    logger.info("Initiating OpenAI client")
+
     openai_client = openai.OpenAI(
-        api_key=settings.openai_api_key, base_url=settings.openai_base_url
+        api_key=settings.openai_api_key,
+        base_url=settings.openai_base_url,
+        max_retries=settings.openai_max_retries,
     )
 
     try:
-        logger.debug("Querying transcription …")
+        logger.info("Querying transcription …")
         with open(temp_file_path, "rb") as audio_file:
             transcription = openai_client.audio.transcriptions.create(
                 model=settings.openai_asr_model, file=audio_file
             )
-
             transcription = transcription.text
 
             logger.debug("Transcription: \n %s", transcription)
@@ -194,8 +232,21 @@ def process_audio_transcribe_summarize(filename: str, email: str, sub: str):
     logger.debug("Response body: %s", response.text)
 
 
-@celery.task(max_retries=settings.celery_max_retries)
-def process_audio_transcribe_summarize_v2(filename: str, email: str, sub: str):
+@celery.task(
+    bind=True,
+    autoretry_for=[exceptions.HTTPError],
+    max_retries=settings.celery_max_retries,
+)
+def process_audio_transcribe_summarize_v2(
+    self,
+    filename: str,
+    email: str,
+    sub: str,
+    received_at: float,
+    room: Optional[str],
+    recording_date: Optional[str],
+    recording_time: Optional[str],
+):
     """Process an audio file by transcribing it and generating a summary.
 
     This Celery task performs the following operations:
@@ -206,6 +257,8 @@ def process_audio_transcribe_summarize_v2(filename: str, email: str, sub: str):
     """
     logger.info("Notification received")
     logger.debug("filename: %s", filename)
+
+    task_id = self.request.id
 
     minio_client = Minio(
         settings.aws_s3_endpoint_url,
@@ -221,20 +274,47 @@ def process_audio_transcribe_summarize_v2(filename: str, email: str, sub: str):
     )
 
     temp_file_path = save_audio_stream(audio_file_stream)
-    logger.debug("Recording successfully downloaded, filepath: %s", temp_file_path)
 
-    logger.debug("Initiating OpenAI client")
+    logger.info("Recording successfully downloaded")
+    logger.debug("Recording filepath: %s", temp_file_path)
+
+    audio_file = File(temp_file_path)
+    metadata_manager.track(task_id, {"audio_length": audio_file.info.length})
+
+    if (
+        settings.recording_max_duration is not None
+        and audio_file.info.length > settings.recording_max_duration
+    ):
+        error_msg = "Recording too long: %.2fs > %.2fs limit" % (
+            audio_file.info.length,
+            settings.recording_max_duration,
+        )
+        logger.error(error_msg)
+        raise AudioValidationError(error_msg)
+
+    logger.info("Initiating OpenAI client")
     openai_client = openai.OpenAI(
-        api_key=settings.openai_api_key, base_url=settings.openai_base_url
+        api_key=settings.openai_api_key,
+        base_url=settings.openai_base_url,
+        max_retries=settings.openai_max_retries,
     )
 
     try:
-        logger.debug("Querying transcription …")
+        logger.info("Querying transcription …")
+        transcription_start_time = time.time()
         with open(temp_file_path, "rb") as audio_file:
             transcription = openai_client.audio.transcriptions.create(
                 model=settings.openai_asr_model, file=audio_file
             )
-
+            metadata_manager.track(
+                task_id,
+                {
+                    "transcription_time": round(
+                        time.time() - transcription_start_time, 2
+                    )
+                },
+            )
+            logger.info("Transcription received.")
             logger.debug("Transcription: \n %s", transcription)
     finally:
         if os.path.exists(temp_file_path):
@@ -247,8 +327,18 @@ def process_audio_transcribe_summarize_v2(filename: str, email: str, sub: str):
         else format_segments(transcription)
     )
 
+    metadata_manager.track_transcription_metadata(task_id, transcription)
+
+    if not room or not recording_date or not recording_time:
+        title = settings.document_default_title
+    else:
+        title = settings.document_title_template.format(
+            room=room,
+            room_recording_date=recording_date,
+            room_recording_time=recording_time,
+        )
     data = {
-        "title": "Transcription",
+        "title": title,
         "content": formatted_transcription,
         "email": email,
         "sub": sub,
@@ -261,5 +351,7 @@ def process_audio_transcribe_summarize_v2(filename: str, email: str, sub: str):
 
     logger.info("Webhook submitted successfully. Status: %s", response.status_code)
     logger.debug("Response body: %s", response.text)
+
+    metadata_manager.capture(task_id, settings.posthog_event_success)
 
     # TODO - integrate summarize the transcript and create a new document.

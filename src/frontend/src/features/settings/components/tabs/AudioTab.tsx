@@ -1,4 +1,4 @@
-import { DialogProps, Field, H } from '@/primitives'
+import { DialogProps, Field, H, Switch, Text } from '@/primitives'
 
 import { TabPanel, TabPanelProps } from '@/primitives/Tabs'
 import {
@@ -11,17 +11,48 @@ import { useTranslation } from 'react-i18next'
 import { SoundTester } from '@/components/SoundTester'
 import { HStack } from '@/styled-system/jsx'
 import { ActiveSpeaker } from '@/features/rooms/components/ActiveSpeaker'
+import { usePersistentUserChoices } from '@/features/rooms/livekit/hooks/usePersistentUserChoices'
 import { ReactNode } from 'react'
+import { css } from '@/styled-system/css'
+import posthog from 'posthog-js'
+import { useNoiseReductionAvailable } from '@/features/rooms/livekit/hooks/useNoiseReductionAvailable'
 
 type RowWrapperProps = {
   heading: string
   children: ReactNode[]
+  beta?: boolean
 }
 
-const RowWrapper = ({ heading, children }: RowWrapperProps) => {
+const BetaBadge = () => (
+  <span
+    className={css({
+      content: '"Beta"',
+      display: 'block',
+      letterSpacing: '-0.02rem',
+      padding: '0 0.25rem',
+      backgroundColor: '#E8EDFF',
+      color: '#0063CB',
+      fontSize: '12px',
+      fontWeight: 500,
+      margin: '0 0 0.9375rem 0.3125rem',
+      lineHeight: '1rem',
+      borderRadius: '4px',
+      width: 'fit-content',
+      height: 'fit-content',
+      marginTop: { base: '10px', sm: '5px' },
+    })}
+  >
+    Beta
+  </span>
+)
+
+const RowWrapper = ({ heading, children, beta }: RowWrapperProps) => {
   return (
     <>
-      <H lvl={2}>{heading}</H>
+      <HStack>
+        <H lvl={2}>{heading}</H>
+        {beta && <BetaBadge />}
+      </HStack>
       <HStack
         gap={0}
         style={{
@@ -59,6 +90,12 @@ type DeviceItems = Array<{ value: string; label: string }>
 export const AudioTab = ({ id }: AudioTabProps) => {
   const { t } = useTranslation('settings')
   const { localParticipant } = useRoomContext()
+
+  const {
+    userChoices: { noiseReductionEnabled },
+    saveAudioInputDeviceId,
+    saveNoiseReductionEnabled,
+  } = usePersistentUserChoices()
 
   const isSpeaking = useIsSpeaking(localParticipant)
 
@@ -106,6 +143,8 @@ export const AudioTab = ({ id }: AudioTabProps) => {
     return defaultItem.value
   }
 
+  const noiseReductionAvailable = useNoiseReductionAvailable()
+
   return (
     <TabPanel padding={'md'} flex id={id}>
       <RowWrapper heading={t('audio.microphone.heading')}>
@@ -116,7 +155,10 @@ export const AudioTab = ({ id }: AudioTabProps) => {
           defaultSelectedKey={
             activeDeviceIdIn || getDefaultSelectedKey(itemsIn)
           }
-          onSelectionChange={(key) => setActiveMediaDeviceIn(key as string)}
+          onSelectionChange={(key) => {
+            setActiveMediaDeviceIn(key as string)
+            saveAudioInputDeviceId(key as string)
+          }}
           {...disabledProps}
           style={{
             width: '100%',
@@ -126,13 +168,13 @@ export const AudioTab = ({ id }: AudioTabProps) => {
           {localParticipant.isMicrophoneEnabled ? (
             <ActiveSpeaker isSpeaking={isSpeaking} />
           ) : (
-            <span>Micro désactivé</span>
+            <span>{t('audio.microphone.disabled')}</span>
           )}
         </>
       </RowWrapper>
       {/* Safari has a known limitation where its implementation of 'enumerateDevices' does not include audio output devices.
         To prevent errors or an empty selection list, we only render the speakers selection field on non-Safari browsers. */}
-      {!isSafari() && (
+      {!isSafari() ? (
         <RowWrapper heading={t('audio.speakers.heading')}>
           <Field
             type="select"
@@ -150,6 +192,30 @@ export const AudioTab = ({ id }: AudioTabProps) => {
             }}
           />
           <SoundTester />
+        </RowWrapper>
+      ) : (
+        <RowWrapper heading={t('audio.speakers.heading')}>
+          <Text variant="warning" margin="md">
+            {t('audio.speakers.safariWarning')}
+          </Text>
+          <div />
+        </RowWrapper>
+      )}
+      {noiseReductionAvailable && (
+        <RowWrapper heading={t('audio.noiseReduction.heading')} beta>
+          <Switch
+            aria-label={t(
+              `audio.noiseReduction.ariaLabel.${noiseReductionEnabled ? 'disable' : 'enable'}`
+            )}
+            isSelected={noiseReductionEnabled}
+            onChange={(v) => {
+              saveNoiseReductionEnabled(v)
+              if (v) posthog.capture('noise-reduction-init')
+            }}
+          >
+            {t('audio.noiseReduction.label')}
+          </Switch>
+          <div />
         </RowWrapper>
       )}
     </TabPanel>

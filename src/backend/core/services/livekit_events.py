@@ -1,13 +1,25 @@
 """LiveKit Events Service"""
 
+# pylint: disable=E1101
+
 import uuid
 from enum import Enum
+from logging import getLogger
 
 from django.conf import settings
 
 from livekit import api
 
+from core import models
+from core.recording.services.recording_events import (
+    RecordingEventsError,
+    RecordingEventsService,
+)
+
 from .lobby import LobbyService
+from .telephony import TelephonyException, TelephonyService
+
+logger = getLogger(__name__)
 
 
 class LiveKitWebhookError(Exception):
@@ -77,6 +89,8 @@ class LiveKitEventsService:
         )
         self.webhook_receiver = api.WebhookReceiver(token_verifier)
         self.lobby_service = LobbyService()
+        self.telephony_service = TelephonyService()
+        self.recording_events = RecordingEventsService()
 
     def receive(self, request):
         """Process webhook and route to appropriate handler."""
@@ -108,10 +122,77 @@ class LiveKitEventsService:
         # pylint: disable=not-callable
         handler(data)
 
-    def _handle_room_finished(self, data):
-        """Handle 'room_finished' event."""
+    def _handle_egress_ended(self, data):
+        """Handle 'egress_ended' event."""
+
+        try:
+            recording = models.Recording.objects.get(
+                worker_id=data.egress_info.egress_id
+            )
+        except models.Recording.DoesNotExist as err:
+            raise ActionFailedError(
+                f"Recording with worker ID {data.egress_info.egress_id} does not exist"
+            ) from err
+
+        if (
+            data.egress_info.status == api.EgressStatus.EGRESS_LIMIT_REACHED
+            and recording.status == models.RecordingStatusChoices.ACTIVE
+        ):
+            try:
+                self.recording_events.handle_limit_reached(recording)
+            except RecordingEventsError as e:
+                raise ActionFailedError(
+                    f"Failed to process limit reached event for recording {recording}"
+                ) from e
+
+    def _handle_room_started(self, data):
+        """Handle 'room_started' event."""
+
         try:
             room_id = uuid.UUID(data.room.name)
+        except ValueError as e:
+            logger.warning(
+                "Ignoring room event: room name '%s' is not a valid UUID format.",
+                data.room.name,
+            )
+            raise ActionFailedError("Failed to process room started event") from e
+
+        try:
+            room = models.Room.objects.get(id=room_id)
+        except models.Room.DoesNotExist as err:
+            raise ActionFailedError(f"Room with ID {room_id} does not exist") from err
+
+        if settings.ROOM_TELEPHONY_ENABLED:
+            try:
+                self.telephony_service.create_dispatch_rule(room)
+            except TelephonyException as e:
+                raise ActionFailedError(
+                    f"Failed to create telephony dispatch rule for room {room_id}"
+                ) from e
+
+    def _handle_room_finished(self, data):
+        """Handle 'room_finished' event."""
+
+        try:
+            room_id = uuid.UUID(data.room.name)
+        except ValueError as e:
+            logger.warning(
+                "Ignoring room event: room name '%s' is not a valid UUID format.",
+                data.room.name,
+            )
+            raise ActionFailedError("Failed to process room finished event") from e
+
+        if settings.ROOM_TELEPHONY_ENABLED:
+            try:
+                self.telephony_service.delete_dispatch_rule(room_id)
+            except TelephonyException as e:
+                raise ActionFailedError(
+                    f"Failed to delete telephony dispatch rule for room {room_id}"
+                ) from e
+
+        try:
             self.lobby_service.clear_room_cache(room_id)
         except Exception as e:
-            raise ActionFailedError("Failed to process room finished event") from e
+            raise ActionFailedError(
+                f"Failed to clear room cache for room {room_id}"
+            ) from e

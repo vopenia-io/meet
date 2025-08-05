@@ -86,7 +86,7 @@ class MinioParser:
 
         # pylint: disable=line-too-long
         self._filepath_regex = re.compile(
-            r"(?P<url_encoded_folder_path>(?:[^%]+%2F)*)?(?P<recording_id>[0-9a-fA-F\-]{36})\.(?P<extension>[a-zA-Z0-9]+)"
+            r"(?P<url_encoded_folder_path>(?:[^%]+%2F)+)?(?P<recording_id>[0-9a-fA-F\-]{36})\.(?P<extension>[a-zA-Z0-9]+)"
         )
 
     @staticmethod
@@ -123,7 +123,7 @@ class MinioParser:
                 f"Invalid bucket: expected {self._bucket_name}, got {event_data.bucket_name}"
             )
 
-        if not event_data.filetype in self._allowed_filetypes:
+        if event_data.filetype not in self._allowed_filetypes:
             raise InvalidFileTypeError(
                 f"Invalid file type, expected {self._allowed_filetypes},"
                 f"got '{event_data.filetype}'"

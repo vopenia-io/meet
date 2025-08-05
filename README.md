@@ -33,9 +33,9 @@ Powered by [LiveKit](https://livekit.io/), La Suite Meet offers Zoom-level perfo
 - Support for multiple screen sharing streams
 - Non-persistent, secure chat
 - End-to-end encryption (coming soon)
-- Meeting recording (coming soon)
+- Meeting recording
 - Meeting transcription (currently in beta)
-- Telephony integration (in development)
+- Telephony integration
 - Secure participation with robust authentication and access control
 - LiveKit Advances features including :
   - speaker detection 
@@ -111,6 +111,7 @@ Come help us make La Suite Meet even better. We're growing fast and [would love 
 ## Credits 
 
 We're using the awesome [LiveKit](https://livekit.io/) implementation. We're also thankful to the teams behind [Django Rest Framework](https://www.django-rest-framework.org/), [Vite.js](https://vite.dev/), and [React Aria](https://github.com/adobe/react-spectrum) — Thanks for your amazing work!
+This project is tested with BrowserStack.
 
 ## License
 

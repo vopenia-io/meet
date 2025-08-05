@@ -1,6 +1,6 @@
 {
   "name": "mail_mjml",
-  "version": "0.1.23",
+  "version": "0.1.33",
   "description": "An util to generate html and text django's templates from mjml templates",
   "type": "module",
   "dependencies": {
@@ -14,7 +14,7 @@
     "build": "npm run build-mjml-to-html && npm run build-html-to-plain-text"
   },
   "volta": {
-    "node": "22.15.0"
+    "node": "22.17.0"
   },
   "repository": "https://github.com/numerique-gouv/meet",
   "author": "DINUM",

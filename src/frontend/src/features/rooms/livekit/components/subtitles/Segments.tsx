@@ -4,7 +4,7 @@ import { useSnapshot } from "valtio";
 import {useMaybeRoomContext} from "@livekit/components-react";
 import {useEffect, useState} from "react";
 import { TextStreamReader } from "livekit-client";
-import { useTranslation } from "react-i18next";
+// import { useTranslation } from "react-i18next";
 import { captionPreferenceStore } from "@/stores/captionPreference";
 import {Avatar} from "@/components/Avatar.tsx";
 import { Text } from '@/primitives'
@@ -22,7 +22,7 @@ export const Segments = () => {
 
   const room = useMaybeRoomContext()
   const preference = useSnapshot(captionPreferenceStore)
-  const { t, i18n } = useTranslation('settings')
+//   const { t, i18n } = useTranslation('settings')
   const [transcriptions, setTranscriptions] = useState<{[id: string]: Segment}>({})
 
   useEffect(() => {
@@ -30,7 +30,7 @@ export const Segments = () => {
       return
     }
 
-    const updateTranscriptions = async (reader: TextStreamReader, participantInfo: {identity: string}) => {
+    const updateTranscriptions = async (reader: TextStreamReader, _participantInfo: {identity: string}) => {
       const message = await reader.readAll();
 
       console.log(reader.info);

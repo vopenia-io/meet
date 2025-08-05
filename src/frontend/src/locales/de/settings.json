@@ -4,7 +4,12 @@
     "heading": "Konto",
     "youAreNotLoggedIn": "Sie sind nicht angemeldet.",
     "nameLabel": "Ihr Name",
-    "authentication": "Authentifizierung"
+    "authentication": "Authentifizierung",
+    "nameError": "Ihr Name darf nicht leer sein"
+  },
+    "captions": {
+  "heading": "Untertitel",
+  "label": "Sprache der Besprechung"
   },
     "captions": {
   "heading": "Untertitel",
@@ -13,13 +18,23 @@
   "audio": {
     "microphone": {
       "heading": "Mikrofon",
-      "label": "Wählen Sie Ihre Audioeingabe"
+      "label": "Wählen Sie Ihre Audioeingabe",
+      "disabled": "Mikrofon deaktiviert"
+    },
+    "noiseReduction": {
+      "label": "Rauschunterdrückung",
+      "heading": "Rauschunterdrückung",
+      "ariaLabel": {
+        "enable": "Rauschunterdrückung aktivieren",
+        "disable": "Rauschunterdrückung deaktivieren"
+      }
     },
     "speakers": {
       "heading": "Lautsprecher",
       "label": "Wählen Sie Ihre Audioausgabe",
       "test": "Testen",
-      "ongoingTest": "Soundtest läuft…"
+      "ongoingTest": "Soundtest läuft…",
+      "safariWarning": "Die Lautsprecherauswahl ist auf Safari aufgrund von Browser-Einschränkungen noch nicht verfügbar."
     },
     "permissionsRequired": "Berechtigungen erforderlich"
   },

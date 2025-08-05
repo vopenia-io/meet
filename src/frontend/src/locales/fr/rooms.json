@@ -1,6 +1,9 @@
 {
   "feedback": {
-    "heading": "Vous avez quitté la réunion",
+    "heading": {
+      "normal": "Vous avez quitté la réunion",
+      "duplicateIdentity": "Vous avez rejoint la réunion depuis un autre appareil"
+    },
     "home": "Retourner à l'accueil",
     "back": "Réintégrer la réunion"
   },
@@ -56,6 +59,19 @@
     "heading": "Votre réunion est prête",
     "description": "Partagez ce lien avec les personnes que vous souhaitez inviter à la réunion.",
     "permissions": "Les personnes disposant de ce lien n'ont pas besoin de votre autorisation pour rejoindre cette réunion."
+  },
+  "mediaErrorDialog": {
+    "DeviceInUse": {
+      "title": {
+        "audioinput": "Activation microphone impossible",
+        "videoinput": "Activation caméra impossible"
+      },
+      "body": {
+        "audioinput": "Votre microphone est déjà utilisé dans un autre onglet ou une autre application, ce qui empêche son activation dans cette visioconférence. Si vous le souhaitez, fermez l'autre onglet ou application pour l'utiliser ici.",
+        "videoinput": "Votre caméra est déjà utilisée dans un autre onglet ou une autre application, ce qui empêche son activation dans cette visioconférence. Si vous le souhaitez, fermez l'autre onglet ou application pour l'utiliser ici."
+      }
+    },
+    "close": "OK"
   },
   "error": {
     "createRoom": {
@@ -141,6 +157,7 @@
     "activateCamera": "Votre caméra est désactivée. Choisissez une option pour l'activer.",
     "notAvailable": "Les effets vidéo seront bientôt disponibles sur votre navigateur. Nous y travaillons ! En attendant, vous pouvez utiliser Google Chrome pour de meilleures performances ou Firefox :(",
     "heading": "Flou",
+    "clear": "Désactiver l'effect",
     "blur": {
       "title": "Flou d'arrière-plan",
       "light": "Flou léger",
@@ -192,8 +209,8 @@
     "disclaimer": "Les messages sont visibles par les participants uniquement au moment de\nleur envoi. Tous les messages sont supprimés à la fin de l'appel."
   },
   "moreTools": {
-    "body": "Accèder à d'avantage d'outils dans Visio pour améliorer vos réunions,",
-    "moreLink": "en savoir plus",
+    "body": "Accèder à d'avantage d'outils pour améliorer vos réunions.",
+    "moreLink": "En savoir plus",
     "tools": {
       "transcript": {
         "title": "Transcription",
@@ -212,6 +229,10 @@
         "ariaLabel": "Copier l'adresse de votre réunion",
         "copy": "Copier l'adresse",
         "copied": "Adresse copiée"
+      },
+      "phone": {
+        "call": "Appelez le :",
+        "pinCode": "Code :"
       }
     }
   },
@@ -313,7 +334,7 @@
     }
   },
   "openFeedback": {
-    "question": "Que pouvons-nous faire pour améliorer Visio ?",
+    "question": "Que pouvons-nous faire pour nous améliorer ?",
     "placeholder": "Décrivez vos bugs ou partagez vos suggestions …",
     "submit": "Envoyer",
     "skip": "Passer"
@@ -374,6 +395,12 @@
     },
     "any": {
       "started": "Enregistrement en cours"
+    },
+    "limitReachedAlert": {
+      "title": "Limite d'enregistrement dépassée",
+      "description": "L'enregistrement a dépassé la durée maximale autorisée{{duration_message}}. Il va maintenant être automatiquement sauvegardé.",
+      "durationMessage": " de {{duration}}",
+      "button": "OK"
     }
   },
   "participantTileFocus": {

@@ -8,9 +8,8 @@ import { useSnapshot } from 'valtio'
 export type CaptionsTabProps = Pick<TabPanelProps, 'id'>
 
 export const CaptionsTab = ({ id }: CaptionsTabProps) => {
-
   const { t } = useTranslation('settings', { keyPrefix: 'captions' })
-  const { languagesList, currentLanguage } = useLanguageLabels()
+  const { languagesList } = useLanguageLabels()
   const preference = useSnapshot(captionPreferenceStore)
 
   return (
@@ -22,8 +21,8 @@ export const CaptionsTab = ({ id }: CaptionsTabProps) => {
         items={languagesList}
         defaultSelectedKey={preference.language}
         onSelectionChange={(lang) => {
-        // TODO Set new language transcription
-          captionPreferenceStore.language = lang.toString()
+          // TODO Set new language transcription
+          captionPreferenceStore.language = lang?.toString() || ''
         }}
       />
     </TabPanel>

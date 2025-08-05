@@ -4,7 +4,12 @@
     "heading": "Compte",
     "youAreNotLoggedIn": "Vous n'êtes pas connecté.",
     "nameLabel": "Votre Nom",
-    "authentication": "Authentification"
+    "authentication": "Authentification",
+    "nameError": "Votre Nom ne peut pas être vide"
+  },
+   "captions": {
+    "heading": "Sous-titres",
+    "label": "Langue de la réunion"
   },
    "captions": {
     "heading": "Sous-titres",
@@ -13,13 +18,23 @@
   "audio": {
     "microphone": {
       "heading": "Micro",
-      "label": "Sélectionner votre entrée audio"
+      "label": "Sélectionner votre entrée audio",
+      "disabled": "Micro désactivé"
+    },
+    "noiseReduction": {
+      "label": "Réduction de bruit",
+      "heading": "Réduction de bruit",
+      "ariaLabel": {
+        "enable": "Activer la réduction du bruit",
+        "disable": "Désactiver la réduction du bruit"
+      }
     },
     "speakers": {
       "heading": "Haut-parleurs",
       "label": "Sélectionner votre sortie audio",
       "test": "Tester",
-      "ongoingTest": "Test du son…"
+      "ongoingTest": "Test du son…",
+      "safariWarning": "La sélection du haut-parleur n'est pas encore disponible sur Safari en raison de limitations du navigateur."
     },
     "permissionsRequired": "Autorisations nécessaires"
   },

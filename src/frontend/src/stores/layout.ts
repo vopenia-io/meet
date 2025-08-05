@@ -7,7 +7,7 @@ import {
 type State = {
   showHeader: boolean
   showFooter: boolean
-  showSubtitle: false,
+  showSubtitle: boolean,
   activePanelId: PanelId | null
   activeSubPanelId: SubPanelId | null
 }

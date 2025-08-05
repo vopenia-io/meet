@@ -95,7 +95,7 @@ backend:
         key: BREVO_API_KEY
     BREVO_API_CONTACT_LIST_IDS: 8
     ROOM_TELEPHONY_ENABLED: True
-    SSL_CERT_FILE: /usr/local/lib/python3.12/site-packages/certifi/cacert.pem
+    SSL_CERT_FILE: /usr/local/lib/python3.13/site-packages/certifi/cacert.pem
 
 
   migrate:
@@ -103,6 +103,13 @@ backend:
       - "/bin/sh"
       - "-c"
       - |
+        while ! python manage.py check --database default > /dev/null 2>&1
+        do
+          echo "Database not ready"
+          sleep 2
+        done
+        echo "Database is ready"
+
         python manage.py migrate --no-input &&
         python manage.py create_demo --force
     restartPolicy: Never
@@ -119,13 +126,20 @@ backend:
       - "/bin/sh"
       - "-c"
       - |
+        while ! python manage.py check --database default > /dev/null 2>&1
+        do
+          echo "Database not ready"
+          sleep 2
+        done
+        echo "Database is ready"
+
         python manage.py createsuperuser --email admin@example.com --password admin
     restartPolicy: Never
 
   # Extra volume mounts to manage our local custom CA and avoid to set ssl_verify: false
   extraVolumeMounts:
     - name: certs
-      mountPath: /usr/local/lib/python3.12/site-packages/certifi/cacert.pem
+      mountPath: /usr/local/lib/python3.13/site-packages/certifi/cacert.pem
       subPath: cacert.pem
 
   # Extra volumes to manage our local custom CA and avoid to set ssl_verify: false
@@ -139,6 +153,7 @@ backend:
 
 frontend:
   envVars:
+    VITE_APP_TITLE: "LaSuite Meet"
     VITE_PORT: 8080
     VITE_HOST: 0.0.0.0
     VITE_API_BASE_URL: https://meet.127.0.0.1.nip.io/

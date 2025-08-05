@@ -1,5 +1,6 @@
 """API routes related to application tasks."""
 
+import time
 from typing import Optional
 
 from celery.result import AsyncResult
@@ -19,6 +20,9 @@ class TaskCreation(BaseModel):
     email: str
     sub: str
     version: Optional[int] = 2
+    room: Optional[str]
+    recording_date: Optional[str]
+    recording_time: Optional[str]
 
 
 router = APIRouter(prefix="/tasks")
@@ -32,8 +36,16 @@ async def create_task(request: TaskCreation):
             request.filename, request.email, request.sub
         )
     else:
-        task = process_audio_transcribe_summarize_v2.delay(
-            request.filename, request.email, request.sub
+        task = process_audio_transcribe_summarize_v2.apply_async(
+            args=[
+                request.filename,
+                request.email,
+                request.sub,
+                time.time(),
+                request.room,
+                request.recording_date,
+                request.recording_time,
+            ]
         )
 
     return {"id": task.id, "message": "Task created"}

@@ -1,6 +1,9 @@
 {
   "feedback": {
-    "heading": "Je hebt de vergadering verlaten",
+    "heading": {
+      "normal": "Je hebt de vergadering verlaten",
+      "duplicateIdentity": "U heeft de vergadering via een ander apparaat geopend"
+    },
     "home": "Keer terug naar het hoofdscherm",
     "back": "Sluit weer bij de vergadering aan"
   },
@@ -56,6 +59,19 @@
     "heading": "Uw vergadering is klaar",
     "description": "Deel deze link met mensen die u wilt uitnodigen voor de vergadering.",
     "permissions": "Mensen met deze link hebben uw toestemming niet nodig om deel te nemen aan deze vergadering."
+  },
+  "mediaErrorDialog": {
+    "DeviceInUse": {
+      "title": {
+        "audioinput": "Microfoon activeren mislukt",
+        "videoinput": "Camera activeren mislukt"
+      },
+      "body": {
+        "audioinput": "Je microfoon wordt al gebruikt door een ander tabblad of een andere toepassing, waardoor deze niet geactiveerd kan worden in dit videogesprek. Sluit indien gewenst het andere tabblad of de toepassing om je microfoon hier te gebruiken.",
+        "videoinput": "Je camera wordt al gebruikt door een ander tabblad of een andere toepassing, waardoor deze niet geactiveerd kan worden in dit videogesprek. Sluit indien gewenst het andere tabblad of de toepassing om je camera hier te gebruiken."
+      }
+    },
+    "close": "OK"
   },
   "error": {
     "createRoom": {
@@ -141,6 +157,7 @@
     "activateCamera": "Uw camera is uitgeschakeld. Kies een optie om deze in te schakelen.",
     "notAvailable": "Video-effecten zijn binnenkort beschikbaar in uw browser. We werken eraan! In de tussentijd kunt u Google Chrome gebruiken voor de beste prestaties of Firefox :(",
     "heading": "Vervaging",
+    "clear": "Effect uitschakelen",
     "blur": {
       "title": "Achtergrondvervaging",
       "light": "Lichte vervaging",
@@ -192,8 +209,8 @@
     "disclaimer": "De berichten zijn alleen voor de deelnemers zichtbaar op het moment dat ze worden verzonden. Alle berichten worden verwijderd aan het einde van het gesprek."
   },
   "moreTools": {
-    "body": "Toegang tot meer tools in Visio om je vergaderingen te verbeteren,",
-    "moreLink": "lees meer",
+    "body": "Je krijgt toegang tot meer tools om je vergaderingen te verbeteren.",
+    "moreLink": "Lees meer",
     "tools": {
       "transcript": {
         "title": "Transcriptie",
@@ -212,6 +229,10 @@
         "ariaLabel": "Kopieer je vergaderadres",
         "copy": "Adres kopiëren",
         "copied": "Adres gekopieerd"
+      },
+      "phone": {
+        "call": "Bel:",
+        "pinCode": "Code:"
       }
     }
   },
@@ -313,7 +334,7 @@
     }
   },
   "openFeedback": {
-    "question": "Wat kunnen we doen om Visio te verbeteren?",
+    "question": "Wat kunnen we doen om ons te verbeteren?",
     "placeholder": "Beschrijf uw problemen of deel uw suggesties ...",
     "submit": "Indienen",
     "skip": "Overslaan"
@@ -374,6 +395,12 @@
     },
     "any": {
       "started": "Opname bezig"
+    },
+    "limitReachedAlert": {
+      "title": "Opnamelimiet overschreden",
+      "description": "De opname heeft de maximaal toegestane duur{{duration_message}} overschreden. Deze wordt nu automatisch opgeslagen.",
+      "durationMessage": " van {{duration}}",
+      "button": "OK"
     }
   },
   "participantTileFocus": {

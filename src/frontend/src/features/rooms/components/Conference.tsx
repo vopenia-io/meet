@@ -2,7 +2,12 @@ import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { LiveKitRoom } from '@livekit/components-react'
-import { Room, RoomOptions } from 'livekit-client'
+import {
+  DisconnectReason,
+  MediaDeviceFailure,
+  Room,
+  RoomOptions,
+} from 'livekit-client'
 import { keys } from '@/api/queryKeys'
 import { queryClient } from '@/api/queryClient'
 import { Screen } from '@/layout/Screen'
@@ -13,10 +18,14 @@ import { ApiRoom } from '../api/ApiRoom'
 import { useCreateRoom } from '../api/createRoom'
 import { InviteDialog } from './InviteDialog'
 import { VideoConference } from '../livekit/prefabs/VideoConference'
-import posthog from 'posthog-js'
 import { css } from '@/styled-system/css'
-import { LocalUserChoices } from '../routes/Room'
 import { BackgroundProcessorFactory } from '../livekit/components/blur'
+import { LocalUserChoices } from '@/stores/userChoices'
+import { navigateTo } from '@/navigation/navigateTo'
+import { MediaDeviceErrorAlert } from './MediaDeviceErrorAlert'
+import { usePostHog } from 'posthog-js/react'
+import { useConfig } from '@/api/useConfig'
+import { isFireFox } from '@/utils/livekit'
 
 export const Conference = ({
   roomId,
@@ -29,10 +38,15 @@ export const Conference = ({
   mode?: 'join' | 'create'
   initialRoomData?: ApiRoom
 }) => {
+  const posthog = usePostHog()
+  const { data: apiConfig } = useConfig()
+
   useEffect(() => {
     posthog.capture('visit-room', { slug: roomId })
-  }, [roomId])
+  }, [roomId, posthog])
   const fetchKey = [keys.room, roomId]
+
+  const [isConnectionWarmedUp, setIsConnectionWarmedUp] = useState(false)
 
   const {
     mutateAsync: createRoom,
@@ -84,7 +98,59 @@ export const Conference = ({
 
   const room = useMemo(() => new Room(roomOptions), [roomOptions])
 
+  useEffect(() => {
+    /**
+     * Warm up connection to LiveKit server before joining room
+     * This prefetch helps reduce initial connection latency by establishing
+     * an early HTTP connection to the WebRTC signaling server
+     *
+     * It should cache DNS and TLS keys.
+     */
+    const prepareConnection = async () => {
+      if (!apiConfig || isConnectionWarmedUp) return
+      await room.prepareConnection(apiConfig.livekit.url)
+
+      if (isFireFox() && apiConfig.livekit.enable_firefox_proxy_workaround) {
+        try {
+          const wssUrl =
+            apiConfig.livekit.url
+              .replace('https://', 'wss://')
+              .replace(/\/$/, '') + '/rtc'
+
+          /**
+           * FIREFOX + PROXY WORKAROUND:
+           *
+           * Issue: On Firefox behind proxy configurations, WebSocket signaling fails to establish.
+           * Symptom: Client receives HTTP 200 instead of expected 101 (Switching Protocols).
+           * Root Cause: Certificate/security issue where the initial request is considered unsecure.
+           *
+           * Solution: Pre-establish a WebSocket connection to the signaling server, which fails.
+           * This "primes" the connection, allowing subsequent WebSocket establishments to work correctly.
+           *
+           * Note: This issue is reproducible on LiveKit's demo app.
+           * Reference: livekit-examples/meet/issues/466
+           */
+          const ws = new WebSocket(wssUrl)
+          // 401 unauthorized response is expected
+          ws.onerror = () => ws.readyState <= 1 && ws.close()
+        } catch (e) {
+          console.debug('Firefox WebSocket workaround failed.', e)
+        }
+      }
+
+      setIsConnectionWarmedUp(true)
+    }
+    prepareConnection()
+  }, [room, apiConfig, isConnectionWarmedUp])
+
   const [showInviteDialog, setShowInviteDialog] = useState(mode === 'create')
+  const [mediaDeviceError, setMediaDeviceError] = useState<{
+    error: MediaDeviceFailure | null
+    kind: MediaDeviceKind | null
+  }>({
+    error: null,
+    kind: null,
+  })
 
   const { t } = useTranslation('rooms')
   if (isCreateError) {
@@ -109,9 +175,9 @@ export const Conference = ({
       <Screen header={false} footer={false}>
         <LiveKitRoom
           room={room}
-          serverUrl={data?.livekit?.url}
+          serverUrl={apiConfig?.livekit.url}
           token={data?.livekit?.token}
-          connect={true}
+          connect={isConnectionWarmedUp}
           audio={userConfig.audioEnabled}
           video={
             userConfig.videoEnabled && {
@@ -124,6 +190,21 @@ export const Conference = ({
           className={css({
             backgroundColor: 'primaryDark.50 !important',
           })}
+          onError={(e) => {
+            posthog.captureException(e)
+          }}
+          onDisconnected={(e) => {
+            if (e == DisconnectReason.CLIENT_INITIATED) {
+              navigateTo('feedback', { duplicateIdentity: false })
+            } else if (e == DisconnectReason.DUPLICATE_IDENTITY) {
+              navigateTo('feedback', { duplicateIdentity: true })
+            }
+          }}
+          onMediaDeviceFailure={(e, kind) => {
+            if (e == MediaDeviceFailure.DeviceInUse && !!kind) {
+              setMediaDeviceError({ error: e, kind })
+            }
+          }}
         >
           <VideoConference />
           {showInviteDialog && (
@@ -134,6 +215,10 @@ export const Conference = ({
               onClose={() => setShowInviteDialog(false)}
             />
           )}
+          <MediaDeviceErrorAlert
+            {...mediaDeviceError}
+            onClose={() => setMediaDeviceError({ error: null, kind: null })}
+          />
         </LiveKitRoom>
       </Screen>
     </QueryAware>

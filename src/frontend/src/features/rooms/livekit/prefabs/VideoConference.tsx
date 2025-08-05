@@ -31,6 +31,8 @@ import { useSidePanel } from '../hooks/useSidePanel'
 import { useLayout } from '../hooks/useLayout'
 import { RecordingStateToast } from '@/features/recording'
 import { ScreenShareErrorModal } from '../components/ScreenShareErrorModal'
+import { useConnectionObserver } from '../hooks/useConnectionObserver'
+import { useNoiseReduction } from '../hooks/useNoiseReduction'
 import {Segments} from "@/features/rooms/livekit/components/subtitles/Segments.tsx";
 
 const LayoutWrapper = styled(
@@ -76,6 +78,8 @@ export function VideoConference({ ...props }: VideoConferenceProps) {
   const lastAutoFocusedScreenShareTrack =
     React.useRef<TrackReferenceOrPlaceholder | null>(null)
 
+  useConnectionObserver()
+
   const tracks = useTracks(
     [
       { source: Track.Source.Camera, withPlaceholder: true },
@@ -85,6 +89,8 @@ export function VideoConference({ ...props }: VideoConferenceProps) {
   )
 
   const layoutContext = useCreateLayoutContext()
+
+  useNoiseReduction()
 
   const screenShareTracks = tracks
     .filter(isTrackReference)
@@ -180,7 +186,7 @@ export function VideoConference({ ...props }: VideoConferenceProps) {
                 ? 'var(--lk-grid-gap) calc(358px + 3rem) calc(80px + var(--lk-grid-gap)) 16px'
                 : 'var(--lk-grid-gap) var(--lk-grid-gap) calc(80px + var(--lk-grid-gap))',
               transition: 'inset .5s cubic-bezier(0.4,0,0.2,1) 5ms',
-              paddingBottom: isSubtitleOpen && '170px'
+              paddingBottom: isSubtitleOpen ? '170px' : undefined,
             }}
           >
             <LayoutWrapper>

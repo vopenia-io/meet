@@ -1,6 +1,5 @@
 import { A, Button, Dialog, Div, H, LinkButton, P, Text } from '@/primitives'
 
-import thirdSlide from '@/assets/intro-slider/3_resume.png'
 import { css } from '@/styled-system/css'
 import { useRoomId } from '@/features/rooms/livekit/hooks/useRoomId'
 import { useRoomContext } from '@livekit/components-react'
@@ -16,10 +15,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { ConnectionState, RoomEvent } from 'livekit-client'
 import { useTranslation } from 'react-i18next'
 import { RecordingStatus, recordingStore } from '@/stores/recording'
-import {
-  BETA_USERS_FORM_URL,
-  CRISP_HELP_ARTICLE_TRANSCRIPT,
-} from '@/utils/constants'
 import { FeatureFlags } from '@/features/analytics/enums'
 import {
   NotificationType,
@@ -29,8 +24,11 @@ import {
 import posthog from 'posthog-js'
 import { useSnapshot } from 'valtio/index'
 import { Spinner } from '@/primitives/Spinner'
+import { useConfig } from '@/api/useConfig'
 
 export const TranscriptSidePanel = () => {
+  const { data } = useConfig()
+
   const [isLoading, setIsLoading] = useState(false)
   const { t } = useTranslation('rooms', { keyPrefix: 'transcript' })
 
@@ -137,7 +135,7 @@ export const TranscriptSidePanel = () => {
       alignItems="center"
     >
       <img
-        src={thirdSlide}
+        src="/assets/intro-slider/3.png"
         alt={''}
         className={css({
           minHeight: '309px',
@@ -161,9 +159,14 @@ export const TranscriptSidePanel = () => {
               >
                 {t('notAdminOrOwner.body')}
                 <br />
-                <A href={CRISP_HELP_ARTICLE_TRANSCRIPT} target="_blank">
-                  {t('notAdminOrOwner.linkMore')}
-                </A>
+                {data?.support?.help_article_transcript && (
+                  <A
+                    href={data.support.help_article_transcript}
+                    target="_blank"
+                  >
+                    {t('notAdminOrOwner.linkMore')}
+                  </A>
+                )}
               </Text>
             </>
           ) : (
@@ -180,18 +183,25 @@ export const TranscriptSidePanel = () => {
                 })}
               >
                 {t('beta.body')}{' '}
-                <A href={CRISP_HELP_ARTICLE_TRANSCRIPT} target="_blank">
-                  {t('start.linkMore')}
-                </A>
+                {data?.support?.help_article_transcript && (
+                  <A
+                    href={data.support.help_article_transcript}
+                    target="_blank"
+                  >
+                    {t('start.linkMore')}
+                  </A>
+                )}
               </Text>
-              <LinkButton
-                size="sm"
-                variant="tertiary"
-                href={BETA_USERS_FORM_URL}
-                target="_blank"
-              >
-                {t('beta.button')}
-              </LinkButton>
+              {data?.transcript.form_beta_users && (
+                <LinkButton
+                  size="sm"
+                  variant="tertiary"
+                  href={data?.transcript.form_beta_users}
+                  target="_blank"
+                >
+                  {t('beta.button')}
+                </LinkButton>
+              )}
             </>
           )}
         </>
@@ -263,9 +273,14 @@ export const TranscriptSidePanel = () => {
                     })}
                   >
                     {t('start.body')} <br />{' '}
-                    <A href={CRISP_HELP_ARTICLE_TRANSCRIPT} target="_blank">
-                      {t('start.linkMore')}
-                    </A>
+                    {data?.support?.help_article_transcript && (
+                      <A
+                        href={data.support.help_article_transcript}
+                        target="_blank"
+                      >
+                        {t('start.linkMore')}
+                      </A>
+                    )}
                   </Text>
                   <Button
                     isDisabled={isDisabled}

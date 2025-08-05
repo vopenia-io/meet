@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query'
 import { Center, VStack } from '@/styled-system/jsx'
 import { css } from '@/styled-system/css'
 import { useTranslation } from 'react-i18next'
-import fourthSlide from '@/assets/intro-slider/4_record.png'
 import { mediaUrl } from '@/api/mediaUrl'
 import { UserAware, useUser } from '@/features/auth'
 import { Screen } from '@/layout/Screen'
@@ -14,6 +13,28 @@ import { LoadingScreen } from '@/components/LoadingScreen'
 import { fetchRecording } from '../api/fetchRecording'
 import { RecordingStatus } from '@/features/recording'
 import { useConfig } from '@/api/useConfig'
+
+const BetaBadge = () => (
+  <span
+    className={css({
+      content: '"Beta"',
+      display: 'block',
+      letterSpacing: '-0.02rem',
+      padding: '0 0.25rem',
+      backgroundColor: 'primary.100',
+      color: '#0063CB',
+      fontSize: '14px',
+      fontWeight: 500,
+      margin: '0 0.3125rem',
+      lineHeight: '1rem',
+      borderRadius: '4px',
+      width: 'fit-content',
+      height: 'fit-content',
+    })}
+  >
+    Beta
+  </span>
+)
 
 export const RecordingDownload = () => {
   const { t } = useTranslation('recording')
@@ -28,11 +49,11 @@ export const RecordingDownload = () => {
     enabled: !!recordingId,
   })
 
-  if (isLoading || !data || isAuthLoading) {
+  if (isLoggedIn === undefined || isAuthLoading) {
     return <LoadingScreen />
   }
 
-  if (!isLoggedIn) {
+  if (isLoggedIn === false && !isAuthLoading) {
     return (
       <ErrorScreen
         title={t('authentication.title')}
@@ -41,7 +62,11 @@ export const RecordingDownload = () => {
     )
   }
 
-  if (isError) {
+  if (isLoading) {
+    return <LoadingScreen />
+  }
+
+  if (isError || !data) {
     return <ErrorScreen title={t('error.title')} body={t('error.body')} />
   }
 
@@ -69,7 +94,7 @@ export const RecordingDownload = () => {
         <Center>
           <VStack>
             <img
-              src={fourthSlide}
+              src="/assets/intro-slider/4.png"
               alt={''}
               className={css({
                 maxHeight: '309px',
@@ -104,6 +129,28 @@ export const RecordingDownload = () => {
             >
               {t('success.button')}
             </LinkButton>
+            <div
+              className={css({
+                backgroundColor: 'greyscale.50',
+                borderRadius: '5px',
+                paddingY: '1rem',
+                paddingX: '1rem',
+                maxWidth: '80%',
+                marginTop: '1rem',
+                display: 'flex',
+                flexDirection: 'column',
+              })}
+            >
+              <Text
+                className={css({
+                  display: 'flex',
+                  alignItems: 'center',
+                })}
+              >
+                {t('success.warning.title')} <BetaBadge />
+              </Text>
+              <Text variant="smNote">{t('success.warning.body')}</Text>
+            </div>
           </VStack>
         </Center>
       </Screen>

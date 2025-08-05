@@ -7,9 +7,12 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd())
   return {
     plugins: [react(), tsconfigPaths()],
+    build: {
+      sourcemap: env.VITE_BUILD_SOURCEMAP === 'true',
+    },
     server: {
       port: parseInt(env.VITE_PORT) || 3000,
-      host: env.VITE_HOST || 'localhost',
+      host: env.VITE_HOST ?? 'localhost',
       allowedHosts: ['.nip.io'],
     },
   }

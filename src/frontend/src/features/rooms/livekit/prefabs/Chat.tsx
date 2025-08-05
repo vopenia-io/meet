@@ -4,6 +4,7 @@ import {
   formatChatMessageLinks,
   useChat,
   useParticipants,
+  useRoomContext,
 } from '@livekit/components-react'
 import { useTranslation } from 'react-i18next'
 import { useSnapshot } from 'valtio'
@@ -12,6 +13,8 @@ import { Div, Text } from '@/primitives'
 import { ChatInput } from '../components/chat/Input'
 import { ChatEntry } from '../components/chat/Entry'
 import { useSidePanel } from '../hooks/useSidePanel'
+import { LocalParticipant, RemoteParticipant, RoomEvent } from 'livekit-client'
+import { css } from '@/styled-system/css'
 
 export interface ChatProps
   extends React.HTMLAttributes<HTMLDivElement>,
@@ -27,6 +30,7 @@ export function Chat({ ...props }: ChatProps) {
   const inputRef = React.useRef<HTMLTextAreaElement>(null)
   const ulRef = React.useRef<HTMLUListElement>(null)
 
+  const room = useRoomContext()
   const { send, chatMessages, isSending } = useChat()
 
   const { isChatOpen } = useSidePanel()
@@ -36,12 +40,26 @@ export function Chat({ ...props }: ChatProps) {
   const participants = useParticipants()
 
   const lastReadMsgAt = React.useRef<ChatMessage['timestamp']>(0)
+  const previousMessageCount = React.useRef(0)
 
   async function handleSubmit(text: string) {
     if (!send || !text) return
     await send(text)
     inputRef?.current?.focus()
   }
+
+  // TEMPORARY: This is a brittle workaround that relies on message count tracking
+  // due to recent LiveKit useChat changes breaking the previous implementation
+  // (see https://github.com/livekit/components-js/issues/1158)
+  // Remove this once we refactor chat to use the new text stream approach
+  React.useEffect(() => {
+    if (!chatMessages || chatMessages.length <= previousMessageCount.current)
+      return
+    const msg = chatMessages.slice(-1)[0]
+    const from = msg.from as RemoteParticipant | LocalParticipant | undefined
+    room.emit(RoomEvent.ChatMessage, msg, from)
+    previousMessageCount.current = chatMessages.length
+  }, [chatMessages, room])
 
   React.useEffect(() => {
     if (chatMessages.length > 0 && ulRef.current) {
@@ -105,12 +123,12 @@ export function Chat({ ...props }: ChatProps) {
     >
       <Text
         variant="sm"
-        style={{
+        className={css({
           padding: '0.75rem',
-          backgroundColor: '#f3f4f6',
+          backgroundColor: 'greyscale.50',
           borderRadius: 4,
           marginBottom: '0.75rem',
-        }}
+        })}
       >
         {t('disclaimer')}
       </Text>

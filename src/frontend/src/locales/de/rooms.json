@@ -1,6 +1,9 @@
 {
   "feedback": {
-    "heading": "Sie haben das Meeting verlassen",
+    "heading": {
+      "normal": "Sie haben das Meeting verlassen",
+      "duplicateIdentity": "Sie haben dem Meeting von einem anderen Gerät aus beigetreten"
+    },
     "home": "Zur Startseite zurückkehren",
     "back": "Dem Meeting erneut beitreten"
   },
@@ -56,6 +59,19 @@
     "heading": "Ihr Meeting ist bereit",
     "description": "Teilen Sie diesen Link mit Personen, die Sie zum Meeting einladen möchten.",
     "permissions": "Personen mit diesem Link benötigen keine Erlaubnis, um diesem Meeting beizutreten."
+  },
+  "mediaErrorDialog": {
+    "DeviceInUse": {
+      "title": {
+        "audioinput": "Mikrofon konnte nicht aktiviert werden",
+        "videoinput": "Kamera konnte nicht aktiviert werden"
+      },
+      "body": {
+        "audioinput": "Ihr Mikrofon wird bereits in einem anderen Tab oder von einer anderen Anwendung verwendet, was die Aktivierung in diesem Videoanruf verhindert. Wenn Sie möchten, schließen Sie den anderen Tab oder die Anwendung, um es hier zu verwenden.",
+        "videoinput": "Ihre Kamera wird bereits in einem anderen Tab oder von einer anderen Anwendung verwendet, was die Aktivierung in diesem Videoanruf verhindert. Wenn Sie möchten, schließen Sie den anderen Tab oder die Anwendung, um sie hier zu verwenden."
+      }
+    },
+    "close": "OK"
   },
   "error": {
     "createRoom": {
@@ -141,6 +157,7 @@
     "activateCamera": "Ihre Kamera ist deaktiviert. Wählen Sie eine Option, um sie zu aktivieren.",
     "notAvailable": "Videoeffekte werden bald in Ihrem Browser verfügbar sein. Wir arbeiten daran! In der Zwischenzeit können Sie Google Chrome für die beste Leistung oder Firefox verwenden :(",
     "heading": "Unschärfe",
+    "clear": "Effekt deaktivieren",
     "blur": {
       "title": "Hintergrundunschärfe",
       "light": "Leichte Unschärfe",
@@ -192,8 +209,8 @@
     "disclaimer": "Die Nachrichten sind nur für Teilnehmer zum Zeitpunkt des Sendens sichtbar. Alle Nachrichten werden am Ende des Anrufs gelöscht."
   },
   "moreTools": {
-    "body": "Greifen Sie auf weitere Tools in Visio zu, um Ihre Meetings zu verbessern,",
-    "moreLink": "mehr erfahren",
+    "body": "Greifen Sie auf weitere Tools zu, um Ihre Meetings zu verbessern.",
+    "moreLink": "Mehr erfahren",
     "tools": {
       "transcript": {
         "title": "Transkription",
@@ -212,6 +229,10 @@
         "ariaLabel": "Kopiere deine Meeting-Adresse",
         "copy": "Adresse kopieren",
         "copied": "Adresse kopiert"
+      },
+      "phone": {
+        "call": "Rufen Sie an:",
+        "pinCode": "Code:"
       }
     }
   },
@@ -313,7 +334,7 @@
     }
   },
   "openFeedback": {
-    "question": "Was können wir tun, um Visio zu verbessern?",
+    "question": "Was können wir tun, um uns zu verbessern?",
     "placeholder": "Beschreibe deine Fehler oder teile deine Vorschläge…",
     "submit": "Absenden",
     "skip": "Überspringen"
@@ -374,6 +395,12 @@
     },
     "any": {
       "started": "Aufzeichnung läuft"
+    },
+    "limitReachedAlert": {
+      "title": "Aufnahmelimit überschritten",
+      "description": "Die Aufnahme hat die zulässige Höchstdauer{{duration_message}} überschritten. Sie wird jetzt automatisch gespeichert.",
+      "durationMessage": " von {{duration}}",
+      "button": "OK"
     }
   },
   "participantTileFocus": {

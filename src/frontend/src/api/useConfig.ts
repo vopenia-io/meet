@@ -10,16 +10,36 @@ export interface ApiConfig {
   }
   support?: {
     id: string
+    help_article_transcript: string
+    help_article_recording: string
+    help_article_more_tools: string
   }
   feedback: {
     url: string
   }
+  transcript: {
+    form_beta_users: string
+  }
   silence_livekit_debug_logs?: boolean
   is_silent_login_enabled?: boolean
+  custom_css_url?: string
+  use_french_gov_footer?: boolean
+  use_proconnect_button?: boolean
   recording?: {
     is_enabled?: boolean
     available_modes?: RecordingMode[]
     expiration_days?: number
+    max_duration?: number
+  }
+  telephony: {
+    enabled: boolean
+    phone_number?: string
+    default_country?: string
+  }
+  manifest_link?: string
+  livekit: {
+    url: string
+    enable_firefox_proxy_workaround: boolean
   }
 }
 

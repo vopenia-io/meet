@@ -1,23 +1,24 @@
 import { A, Text } from '@/primitives'
 import { useTranslation } from 'react-i18next'
-
-const MANIFEST_LINK =
-  'https://docs.numerique.gouv.fr/docs/1ef86abf-f7e0-46ce-b6c7-8be8b8af4c3d/'
+import { useConfig } from '@/api/useConfig'
 
 export const MoreLink = () => {
   const { t } = useTranslation('home')
+  const { data } = useConfig()
+
+  if (!data?.manifest_link) return
 
   return (
     <Text as={'p'} variant={'sm'} style={{ padding: '1rem 0' }}>
       <A
-        href={MANIFEST_LINK}
+        href={data?.manifest_link}
         target="_blank"
         rel="noopener noreferrer"
         aria-label={t('moreLinkLabel')}
       >
         {t('moreLink')}
       </A>{' '}
-      {t('moreAbout')}
+      {t('moreAbout', { appTitle: `${import.meta.env.VITE_APP_TITLE}` })}
     </Text>
   )
 }

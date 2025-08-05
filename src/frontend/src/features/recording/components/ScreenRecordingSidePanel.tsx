@@ -1,6 +1,5 @@
 import { A, Button, Dialog, Div, H, P, Text } from '@/primitives'
 
-import fourthSlide from '@/assets/intro-slider/4_record.png'
 import { css } from '@/styled-system/css'
 import { useRoomId } from '@/features/rooms/livekit/hooks/useRoomId'
 import { useRoomContext } from '@livekit/components-react'
@@ -14,7 +13,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { ConnectionState, RoomEvent } from 'livekit-client'
 import { useTranslation } from 'react-i18next'
 import { RecordingStatus, recordingStore } from '@/stores/recording'
-import { CRISP_HELP_ARTICLE_RECORDING } from '@/utils/constants'
 
 import {
   NotificationType,
@@ -24,8 +22,10 @@ import {
 import posthog from 'posthog-js'
 import { useSnapshot } from 'valtio/index'
 import { Spinner } from '@/primitives/Spinner'
+import { useConfig } from '@/api/useConfig'
 
 export const ScreenRecordingSidePanel = () => {
+  const { data } = useConfig()
   const [isLoading, setIsLoading] = useState(false)
   const recordingSnap = useSnapshot(recordingStore)
   const { t } = useTranslation('rooms', { keyPrefix: 'screenRecording' })
@@ -125,7 +125,7 @@ export const ScreenRecordingSidePanel = () => {
       alignItems="center"
     >
       <img
-        src={fourthSlide}
+        src="/assets/intro-slider/4.png"
         alt={''}
         className={css({
           minHeight: '309px',
@@ -199,9 +199,11 @@ export const ScreenRecordingSidePanel = () => {
                 })}
               >
                 {t('start.body')} <br />{' '}
-                <A href={CRISP_HELP_ARTICLE_RECORDING} target="_blank">
-                  {t('start.linkMore')}
-                </A>
+                {data?.support?.help_article_recording && (
+                  <A href={data.support.help_article_recording} target="_blank">
+                    {t('start.linkMore')}
+                  </A>
+                )}
               </Text>
               <Button
                 isDisabled={isDisabled}

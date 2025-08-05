@@ -6,7 +6,7 @@ import { css } from '@/styled-system/css'
 import { TabPanel, TabPanelProps } from '@/primitives/Tabs'
 import { HStack } from '@/styled-system/jsx'
 import { useState } from 'react'
-import { ProConnectButton } from '@/components/ProConnectButton'
+import { LoginButton } from '@/components/LoginButton'
 import { usePersistentUserChoices } from '@/features/rooms/livekit/hooks/usePersistentUserChoices'
 
 export type AccountTabProps = Pick<DialogProps, 'onOpenChange'> &
@@ -17,7 +17,11 @@ export const AccountTab = ({ id, onOpenChange }: AccountTabProps) => {
   const { saveUsername } = usePersistentUserChoices()
   const room = useRoomContext()
   const { user, isLoggedIn, logout } = useUser()
-  const [name, setName] = useState(room?.localParticipant.name || '')
+  const [name, setName] = useState(room?.localParticipant.name ?? '')
+  const userDisplay =
+    user?.full_name && user?.email
+      ? `${user.full_name} (${user.email})`
+      : user?.email
 
   const handleOnSubmit = () => {
     if (room) room.localParticipant.setName(name)
@@ -37,7 +41,7 @@ export const AccountTab = ({ id, onOpenChange }: AccountTabProps) => {
         value={name}
         onChange={setName}
         validate={(value) => {
-          return !value ? <p>{'Votre Nom ne peut pas être vide'}</p> : null
+          return !value ? <p>{t('account.nameError')}</p> : null
         }}
       />
       <H lvl={2}>{t('account.authentication')}</H>
@@ -46,7 +50,7 @@ export const AccountTab = ({ id, onOpenChange }: AccountTabProps) => {
           <P>
             <Trans
               i18nKey="settings:account.currentlyLoggedAs"
-              values={{ user: user?.full_name || user?.email }}
+              values={{ user: userDisplay }}
               components={[<Badge />]}
             />
           </P>
@@ -57,7 +61,7 @@ export const AccountTab = ({ id, onOpenChange }: AccountTabProps) => {
       ) : (
         <>
           <P>{t('account.youAreNotLoggedIn')}</P>
-          <ProConnectButton />
+          <LoginButton />
         </>
       )}
       <HStack
