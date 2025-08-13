@@ -8,8 +8,14 @@
     "back": "Rejoin the meeting"
   },
   "join": {
+    "selectDevice": {
+      "loading": "Loading…",
+      "select": "Select a value",
+      "permissionsNeeded": "Permission needed"
+    },
     "videoinput": {
       "choose": "Select camera",
+      "permissionsNeeded": "Select camera - permission needed",
       "disable": "Disable camera",
       "enable": "Enable camera",
       "label": "Camera",
@@ -17,9 +23,14 @@
     },
     "audioinput": {
       "choose": "Select microphone",
+      "permissionsNeeded": "Select microphone - permission needed",
       "disable": "Disable microphone",
       "enable": "Enable microphone",
       "label": "Microphone"
+    },
+    "audiooutput": {
+      "choose": "Select speaker",
+      "permissionsNeeded": "Select speaker - permission needed"
     },
     "effects": {
       "description": "Apply effects",
@@ -37,7 +48,17 @@
       "usernameEmpty": "Your name cannot be empty"
     },
     "cameraDisabled": "Camera is disabled.",
-    "cameraStarting": "Camera is starting.",
+    "cameraStarting": "Camera is starting…",
+    "cameraNotGranted": "Would you like others to be able to see you during the meeting?",
+    "cameraAndMicNotGranted": "Would you like others to be able to see and hear you during the meeting?",
+    "permissionsButton": {
+      "cameraAndMicNotGranted": "Allow access to camera and microphone",
+      "cameraNotGranted": "Allow access to camera"
+    },
+    "videoPreview": {
+      "enabled": "Video preview enabled",
+      "disabled": "Video preview disabled"
+    },
     "waiting": {
       "title": "Requesting to join...",
       "body": "You will be able to join this call when someone authorizes you"
@@ -53,12 +74,16 @@
   },
   "leaveRoomPrompt": "This will make you leave the meeting.",
   "shareDialog": {
-    "copy": "Copy the meeting link",
-    "copyButton": "Copy link",
-    "copied": "Link copied to clipboard",
+    "copy": "Copy information",
+    "copyUrl": "Copy link",
+    "copied": "Information copied to clipboard",
     "heading": "Your meeting is ready",
     "description": "Share this link with people you want to invite to the meeting.",
-    "permissions": "People with this link do not need your permission to join this meeting."
+    "permissions": "People with this link do not need your permission to join this meeting.",
+    "phone": {
+      "call": "Call:",
+      "pinCode": "Code:"
+    }
   },
   "mediaErrorDialog": {
     "DeviceInUse": {
@@ -72,6 +97,30 @@
       }
     },
     "close": "OK"
+  },
+  "permissionErrorDialog": {
+    "heading": {
+      "camera": "{{appTitle}} is not allowed to use your camera",
+      "microphone": "{{appTitle}} is not allowed to use your microphone",
+      "cameraAndMicrophone": "{{appTitle}} is not allowed to use your microphone or camera",
+      "default": "{{appTitle}} is not allowed to use certain permissions"
+    },
+    "body": {
+      "openMenu": {
+        "others": "Click on the settings icon ICON_PLACEHOLDER in your browser’s address bar",
+        "safari": "Click the 'Safari' menu, and open 'Settings for {{appDomain}}'."
+      },
+      "details": {
+        "camera": "Allow access to the camera",
+        "microphone": "Allow access to the microphone",
+        "cameraAndMicrophone": "Allow access to the camera and microphone",
+        "default": "Enable the necessary permissions."
+      }
+    }
+  },
+  "permissionsButton": {
+    "tooltip": "More info",
+    "ariaLabel": "Permissions issue. Show more info"
   },
   "error": {
     "createRoom": {
@@ -226,9 +275,9 @@
     "roomInformation": {
       "title": "Connection Information",
       "button": {
-        "ariaLabel": "Copy your meeting address",
-        "copy": "Copy address",
-        "copied": "Address copied"
+        "ariaLabel": "Copy the information from your meeting",
+        "copy": "Copy information",
+        "copied": "Information copied"
       },
       "phone": {
         "call": "Call:",

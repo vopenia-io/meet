@@ -8,8 +8,14 @@
     "back": "Sluit weer bij de vergadering aan"
   },
   "join": {
+    "selectDevice": {
+      "loading": "Bezig met laden…",
+      "select": "Selecteer een waarde",
+      "permissionsNeeded": "Toestemming vereist"
+    },
     "videoinput": {
       "choose": "Selecteer camera",
+      "permissionsNeeded": "Selecteer camera - Toestemming vereist",
       "disable": "Camera uitschakelen",
       "enable": "Camera inschakelen",
       "label": "Camera",
@@ -17,9 +23,14 @@
     },
     "audioinput": {
       "choose": "Selecteer microfoon",
+      "permissionsNeeded": "Selecteer microfoon - Toestemming vereist",
       "disable": "Microfoon dempen",
       "enable": "Microfoon dempen opheffen",
       "label": "Microfoon"
+    },
+    "audiooutput": {
+      "choose": "Selecteer luidspreker",
+      "permissionsNeeded": "Selecteer luidspreker - Toestemming vereist"
     },
     "effects": {
       "description": "Pas effecten toe",
@@ -37,7 +48,17 @@
       "usernameEmpty": "Uw naam kan niet leeg zijn"
     },
     "cameraDisabled": "Camera is uitgeschakeld.",
-    "cameraStarting": "Camera wordt ingeschakeld.",
+    "cameraStarting": "Camera wordt ingeschakeld…",
+    "cameraNotGranted": "Wilt u dat anderen u tijdens de vergadering kunnen zien?",
+    "cameraAndMicNotGranted": "Wilt u dat anderen u tijdens de vergadering kunnen zien en horen?",
+    "permissionsButton": {
+      "cameraAndMicNotGranted": "Toegang tot camera en microfoon toestaan",
+      "cameraNotGranted": "Toegang tot camera toestaan"
+    },
+    "videoPreview": {
+      "enabled": "Videovoorbeeld ingeschakeld",
+      "disabled": "Videovoorbeeld uitgeschakeld"
+    },
     "waiting": {
       "title": "Verzoek tot deelname...",
       "body": "U kunt deelnemen aan dit gesprek wanneer iemand u toestemming geeft"
@@ -53,12 +74,16 @@
   },
   "leaveRoomPrompt": "Dat zal u de vergadering doen verlaten.",
   "shareDialog": {
-    "copy": "Kopieer de vergaderlink",
-    "copyButton": "Kopieerlink",
-    "copied": "Link gekopieerd naar het klembord",
+    "copy": "Informatie kopiëren",
+    "copyUrl": "Kopieerlink",
+    "copied": "Informatie gekopieerd",
     "heading": "Uw vergadering is klaar",
     "description": "Deel deze link met mensen die u wilt uitnodigen voor de vergadering.",
-    "permissions": "Mensen met deze link hebben uw toestemming niet nodig om deel te nemen aan deze vergadering."
+    "permissions": "Mensen met deze link hebben uw toestemming niet nodig om deel te nemen aan deze vergadering.",
+    "phone": {
+      "call": "Bel:",
+      "pinCode": "Code:"
+    }
   },
   "mediaErrorDialog": {
     "DeviceInUse": {
@@ -72,6 +97,30 @@
       }
     },
     "close": "OK"
+  },
+  "permissionErrorDialog": {
+    "heading": {
+      "camera": "{{appTitle}} mag uw camera niet gebruiken",
+      "microphone": "{{appTitle}} mag uw microfoon niet gebruiken",
+      "cameraAndMicrophone": "{{appTitle}} mag uw microfoon en camera niet gebruiken",
+      "default": "{{appTitle}} heeft geen toestemming voor bepaalde rechten"
+    },
+    "body": {
+      "openMenu": {
+        "others": "Klik op het instellingenpictogram ICON_PLACEHOLDER in de adresbalk van uw browser",
+        "safari": "Klik op het menu 'Safari' en open 'Instellingen voor {{appDomain}}'."
+      },
+      "details": {
+        "camera": "Toegang tot de camera toestaan",
+        "microphone": "Toegang tot de microfoon toestaan",
+        "cameraAndMicrophone": "Toegang tot camera en microfoon toestaan",
+        "default": "Schakel de vereiste machtigingen in."
+      }
+    }
+  },
+  "permissionsButton": {
+    "tooltip": "Meer info",
+    "ariaLabel": "Probleem met machtigingen. Meer info weergeven"
   },
   "error": {
     "createRoom": {
@@ -226,9 +275,9 @@
     "roomInformation": {
       "title": "Verbindingsinformatie",
       "button": {
-        "ariaLabel": "Kopieer je vergaderadres",
-        "copy": "Adres kopiëren",
-        "copied": "Adres gekopieerd"
+        "ariaLabel": "Kopieer de informatie van uw vergadering",
+        "copy": "Informatie kopiëren",
+        "copied": "Informatie gekopieerd"
       },
       "phone": {
         "call": "Bel:",

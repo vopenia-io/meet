@@ -19,10 +19,15 @@
   },
   "laterMeetingDialog": {
     "heading": "Uw verbindingsgegevens",
-    "description": "Stuur deze link naar de mensen die u wilt uitnodigen voor de vergadering. Zij kunnen deelnemen zonder ProConnect.",
-    "copy": "Kopieer de vergaderlink",
-    "copied": "Link gekopieerd naar klembord",
-    "permissions": "Mensen met deze link hebben uw toestemming niet nodig om deel te nemen aan deze vergadering."
+    "description": "Deel deze informatie met de genodigden. Zij kunnen deelnemen aan de vergadering zonder zich aan te melden. Deze vergadering is permanent en kan hergebruikt worden.",
+    "permissions": "Mensen met deze link hebben uw toestemming niet nodig om deel te nemen aan deze vergadering.",
+    "copy": "Informatie kopiëren",
+    "copied": "Informatie gekopieerd",
+    "copyUrl": "Kopieer de vergaderlink",
+    "phone": {
+      "call": "Bel:",
+      "pinCode": "Code:"
+    }
   },
   "introSlider": {
     "previous": {

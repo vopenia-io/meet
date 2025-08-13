@@ -40,9 +40,6 @@ backend:
     DB_USER: dinum
     DB_PASSWORD: pass
     DB_PORT: 5432
-    POSTGRES_DB: meet
-    POSTGRES_USER: dinum
-    POSTGRES_PASSWORD: pass
     REDIS_URL: redis://default:pass@redis-master:6379/1
     STORAGES_STATICFILES_BACKEND: django.contrib.staticfiles.storage.StaticFilesStorage
     {{- with .Values.livekit.keys }}
@@ -52,6 +49,7 @@ backend:
     {{- end }}
     {{- end }}
     LIVEKIT_API_URL: https://livekit.127.0.0.1.nip.io/
+    LIVEKIT_FORCE_WSS_PROTOCOL: True
     LIVEKIT_ENABLE_FIREFOX_PROXY_WORKAROUND: True
     ALLOW_UNREGISTERED_ROOMS: False
     FRONTEND_SILENCE_LIVEKIT_DEBUG: False
@@ -71,6 +69,8 @@ backend:
     SUMMARY_SERVICE_API_TOKEN: password
     SCREEN_RECORDING_BASE_URL: https://meet.127.0.0.1.nip.io/recordings
     ROOM_TELEPHONY_ENABLED: True
+    ROOM_TELEPHONY_DEFAULT_COUNTRY: 'FR'
+    ROOM_TELEPHONY_PHONE_NUMBER: '+33901020304'
     SSL_CERT_FILE: /usr/local/lib/python3.13/site-packages/certifi/cacert.pem
 
 

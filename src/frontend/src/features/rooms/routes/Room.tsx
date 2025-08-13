@@ -1,21 +1,28 @@
-import { useEffect, useState } from 'react'
-import { usePersistentUserChoices } from '@livekit/components-react'
+import { ReactNode, useEffect, useState } from 'react'
 import { useLocation, useParams } from 'wouter'
 import { ErrorScreen } from '@/components/ErrorScreen'
 import { useUser, UserAware } from '@/features/auth'
 import { Conference } from '../components/Conference'
 import { Join } from '../components/Join'
+import { Permissions } from '../components/Permissions'
 import { useKeyboardShortcuts } from '@/features/shortcuts/useKeyboardShortcuts'
 import {
   isRoomValid,
   normalizeRoomId,
 } from '@/features/rooms/utils/isRoomValid'
-import { LocalUserChoices } from '@/stores/userChoices'
+
+const BaseRoom = ({ children }: { children: ReactNode }) => {
+  return (
+    <UserAware>
+      <Permissions />
+      {children}
+    </UserAware>
+  )
+}
 
 export const Room = () => {
   const { isLoggedIn } = useUser()
-  const { userChoices: existingUserChoices } = usePersistentUserChoices()
-  const [userConfig, setUserConfig] = useState<LocalUserChoices | null>(null)
+  const [hasSubmittedEntry, setHasSubmittedEntry] = useState(false)
 
   const { roomId } = useParams()
   const [location, setLocation] = useLocation()
@@ -48,25 +55,21 @@ export const Room = () => {
     return <ErrorScreen />
   }
 
-  if (!userConfig && !skipJoinScreen) {
+  if (!hasSubmittedEntry && !skipJoinScreen) {
     return (
-      <UserAware>
-        <Join onSubmit={setUserConfig} roomId={roomId} />
-      </UserAware>
+      <BaseRoom>
+        <Join enterRoom={() => setHasSubmittedEntry(true)} roomId={roomId} />
+      </BaseRoom>
     )
   }
 
   return (
-    <UserAware>
+    <BaseRoom>
       <Conference
         initialRoomData={initialRoomData}
         roomId={roomId}
         mode={mode}
-        userConfig={{
-          ...existingUserChoices,
-          ...userConfig,
-        }}
       />
-    </UserAware>
+    </BaseRoom>
   )
 }

@@ -5,14 +5,7 @@ import {
   UseTrackToggleProps,
 } from '@livekit/components-react'
 import { Button, Menu, MenuList } from '@/primitives'
-import {
-  RemixiconComponentType,
-  RiArrowDownSLine,
-  RiMicLine,
-  RiMicOffLine,
-  RiVideoOffLine,
-  RiVideoOnLine,
-} from '@remixicon/react'
+import { RiArrowUpSLine } from '@remixicon/react'
 import {
   LocalAudioTrack,
   LocalVideoTrack,
@@ -20,64 +13,25 @@ import {
   VideoCaptureOptions,
 } from 'livekit-client'
 
-import { Shortcut } from '@/features/shortcuts/types'
-
 import { ToggleDevice } from '@/features/rooms/livekit/components/controls/ToggleDevice.tsx'
 import { css } from '@/styled-system/css'
 import { ButtonRecipeProps } from '@/primitives/buttonRecipe'
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { usePersistentUserChoices } from '../../hooks/usePersistentUserChoices'
 import { BackgroundProcessorFactory } from '../blur'
-
-export type ToggleSource = Exclude<
-  Track.Source,
-  Track.Source.ScreenShareAudio | Track.Source.Unknown
->
-
-type SelectToggleSource = Exclude<ToggleSource, Track.Source.ScreenShare>
-
-export type SelectToggleDeviceConfig = {
-  kind: MediaDeviceKind
-  iconOn: RemixiconComponentType
-  iconOff: RemixiconComponentType
-  shortcut?: Shortcut
-  longPress?: Shortcut
-}
-
-type SelectToggleDeviceConfigMap = {
-  [key in SelectToggleSource]: SelectToggleDeviceConfig
-}
-
-const selectToggleDeviceConfig: SelectToggleDeviceConfigMap = {
-  [Track.Source.Microphone]: {
-    kind: 'audioinput',
-    iconOn: RiMicLine,
-    iconOff: RiMicOffLine,
-    shortcut: {
-      key: 'd',
-      ctrlKey: true,
-    },
-    longPress: {
-      key: 'Space',
-    },
-  },
-  [Track.Source.Camera]: {
-    kind: 'videoinput',
-    iconOn: RiVideoOnLine,
-    iconOff: RiVideoOffLine,
-    shortcut: {
-      key: 'e',
-      ctrlKey: true,
-    },
-  },
-}
+import { useSnapshot } from 'valtio'
+import { permissionsStore } from '@/stores/permissions'
+import {
+  TOGGLE_DEVICE_CONFIG,
+  ToggleSource,
+} from '../../config/ToggleDeviceConfig'
 
 type SelectToggleDeviceProps<T extends ToggleSource> =
   UseTrackToggleProps<T> & {
-    track?: LocalAudioTrack | LocalVideoTrack | undefined
+    track?: LocalAudioTrack | LocalVideoTrack
     initialDeviceId?: string
     onActiveDeviceChange: (deviceId: string) => void
-    source: SelectToggleSource
+    source: ToggleSource
     variant?: NonNullable<ButtonRecipeProps>['variant']
     menuVariant?: 'dark' | 'light'
     hideMenu?: boolean
@@ -92,7 +46,7 @@ export const SelectToggleDevice = <T extends ToggleSource>({
   menuVariant = 'light',
   ...props
 }: SelectToggleDeviceProps<T>) => {
-  const config = selectToggleDeviceConfig[props.source]
+  const config = TOGGLE_DEVICE_CONFIG[props.source]
   if (!config) {
     throw new Error('Invalid source')
   }
@@ -100,6 +54,18 @@ export const SelectToggleDevice = <T extends ToggleSource>({
   const trackProps = useTrackToggle(props)
 
   const { userChoices } = usePersistentUserChoices()
+
+  const permissions = useSnapshot(permissionsStore)
+  const isPermissionDeniedOrPrompted = useMemo(() => {
+    switch (config.kind) {
+      case 'audioinput':
+        return (
+          permissions.isMicrophoneDenied || permissions.isMicrophonePrompted
+        )
+      case 'videoinput':
+        return permissions.isCameraDenied || permissions.isCameraPrompted
+    }
+  }, [permissions, config.kind])
 
   const toggle = () => {
     if (props.source === Track.Source.Camera) {
@@ -161,6 +127,7 @@ export const SelectToggleDevice = <T extends ToggleSource>({
         config={config}
         variant={variant}
         toggle={toggle}
+        isPermissionDeniedOrPrompted={isPermissionDeniedOrPrompted}
         toggleButtonProps={{
           ...(hideMenu
             ? {
@@ -172,13 +139,18 @@ export const SelectToggleDevice = <T extends ToggleSource>({
       {!hideMenu && (
         <Menu variant={menuVariant}>
           <Button
+            isDisabled={isPermissionDeniedOrPrompted}
             tooltip={selectLabel}
             aria-label={selectLabel}
             groupPosition="right"
             square
-            variant={trackProps.enabled ? variant : 'error2'}
+            variant={
+              trackProps.enabled && !isPermissionDeniedOrPrompted
+                ? variant
+                : 'error2'
+            }
           >
-            <RiArrowDownSLine />
+            <RiArrowUpSLine />
           </Button>
           <MenuList
             items={devices.map((d) => ({

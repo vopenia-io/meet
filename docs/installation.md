@@ -217,9 +217,6 @@ DB_NAME: meet
 DB_USER: dinum
 DB_PASSWORD: pass
 DB_PORT: 5432
-POSTGRES_DB: meet
-POSTGRES_USER: dinum
-POSTGRES_PASSWORD: pass
 ```
 
 ## Deployment
@@ -339,6 +336,8 @@ These are the environmental options available on meet backend.
 | LIVEKIT_API_SECRET                              | LiveKit API secret                                                                                                                                           |                                                                                                                                                               |
 | LIVEKIT_API_URL                                 | LiveKit API URL                                                                                                                                              |                                                                                                                                                               |
 | LIVEKIT_VERIFY_SSL                              | Verify SSL for LiveKit connections                                                                                                                           | true                                                                                                                                                          |
+| LIVEKIT_FORCE_WSS_PROTOCOL                      | Enables WSS protocol conversion for legacy browser compatibility (Firefox <124, Chrome <125, Edge <125) where HTTPS URLs fail in WebSocket() constructor.    | false                                                                                                                                                         |
+| LIVEKIT_ENABLE_FIREFOX_PROXY_WORKAROUND         | Firefox-only connection warmup: pre-calls WebSocket endpoint (expecting 401) to initialize cache, resolving proxy/network connectivity issues.               | false                                                                                                                                                         |
 | RESOURCE_DEFAULT_ACCESS_LEVEL                   | Default resource access level for rooms                                                                                                                      | public                                                                                                                                                        |
 | ALLOW_UNREGISTERED_ROOMS                        | Allow usage of unregistered rooms                                                                                                                            | true                                                                                                                                                          |
 | RECORDING_ENABLE                                | Record meeting option                                                                                                                                        | false                                                                                                                                                         |

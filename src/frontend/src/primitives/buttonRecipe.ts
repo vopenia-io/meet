@@ -68,6 +68,7 @@ export const buttonRecipe = cva({
       },
       secondaryText: {
         backgroundColor: 'transparent',
+        fontWeight: 'medium !important',
         color: 'primary.800',
         '&[data-hovered]': {
           backgroundColor: 'greyscale.100',
@@ -250,6 +251,20 @@ export const buttonRecipe = cva({
           color: 'error.300',
         },
       },
+      errorCircle: {
+        backgroundColor: 'error.500',
+        width: '56px',
+        height: '56px',
+        borderRadius: '100%',
+        color: 'white',
+        '&[data-hovered]': {
+          backgroundColor: 'error.600',
+        },
+        '&[data-pressed]': {
+          backgroundColor: 'error.700',
+          color: 'error.200',
+        },
+      },
       // @TODO: better handling of colors… this is a mess
       success: {
         colorPalette: 'success',
@@ -268,6 +283,20 @@ export const buttonRecipe = cva({
           background: 'gray.100 !important',
           color: 'primary !important',
         },
+      },
+      permission: {
+        position: 'relative',
+        // background: 'None !important',
+        borderRadius: '100%',
+        // border: 'none !important',
+        color: 'amber.500',
+        width: 'fit-content',
+        height: 'fit-content',
+        padding: '0 !important',
+        margin: '0 !important',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
       },
     },
     invisible: {

@@ -8,8 +8,14 @@
     "back": "Réintégrer la réunion"
   },
   "join": {
+    "selectDevice": {
+      "loading": "Chargement…",
+      "select": "Sélectionnez une valeur",
+      "permissionsNeeded": "Autorisations nécessaires"
+    },
     "videoinput": {
       "choose": "Choisir la webcam",
+      "permissionsNeeded": "Choisir la webcam - autorisations nécessaires",
       "disable": "Désactiver la webcam",
       "enable": "Activer la webcam",
       "label": "Webcam",
@@ -17,9 +23,14 @@
     },
     "audioinput": {
       "choose": "Choisir le micro",
+      "permissionsNeeded": "Choisir le micro - autorisations nécessaires",
       "disable": "Désactiver le micro",
       "enable": "Activer le micro",
       "label": "Microphone"
+    },
+    "audiooutput": {
+      "choose": "Choisir le haut-parleur",
+      "permissionsNeeded": "Choisir le haut-parleur - autorisations nécessaires"
     },
     "heading": "Rejoindre la réunion ?",
     "effects": {
@@ -37,7 +48,17 @@
       "usernameEmpty": "Votre nom ne peut pas être vide"
     },
     "cameraDisabled": "La caméra est désactivée.",
-    "cameraStarting": "La caméra va démarrer.",
+    "cameraStarting": "La caméra va démarrer…",
+    "cameraNotGranted": "Souhaitez-vous que les autres puissent vous voir pendant la réunion ?",
+    "cameraAndMicNotGranted": "Souhaitez-vous que les autres puissent vous voir et vous entendre pendant la réunion ?",
+    "videoPreview": {
+      "enabled": "Apercu vidéo activé",
+      "disabled": "Apercu vidéo désactivé"
+    },
+    "permissionsButton": {
+      "cameraAndMicNotGranted": "Autorisez l'accès à la caméra et au micro",
+      "cameraNotGranted": "Autorisez l'accès à la caméra"
+    },
     "waiting": {
       "title": "Demande de participation…",
       "body": "Vous pourrez participer à cet appel lorsque quelqu'un vous y autorisera"
@@ -53,12 +74,16 @@
   },
   "leaveRoomPrompt": "Revenir à l'accueil vous fera quitter la réunion.",
   "shareDialog": {
-    "copy": "Copier le lien de la réunion",
-    "copyButton": "Copier le lien",
-    "copied": "Lien copié dans le presse-papiers",
+    "copy": "Copier les informations",
+    "copyUrl": "Copier le lien",
+    "copied": "Copiées dans le presse-papiers",
     "heading": "Votre réunion est prête",
-    "description": "Partagez ce lien avec les personnes que vous souhaitez inviter à la réunion.",
-    "permissions": "Les personnes disposant de ce lien n'ont pas besoin de votre autorisation pour rejoindre cette réunion."
+    "description": "Partagez ces informations avec les personnes que vous souhaitez inviter à la réunion.",
+    "permissions": "Les personnes disposant de ce lien n'ont pas besoin de votre autorisation pour rejoindre cette réunion.",
+    "phone": {
+      "call": "Appelez le :",
+      "pinCode": "Code :"
+    }
   },
   "mediaErrorDialog": {
     "DeviceInUse": {
@@ -72,6 +97,30 @@
       }
     },
     "close": "OK"
+  },
+  "permissionErrorDialog": {
+    "heading": {
+      "camera": "{{appTitle}} n'est pas autorisé à utiliser votre caméra",
+      "microphone": "{{appTitle}} n'est pas autorisé à utiliser votre micro",
+      "cameraAndMicrophone": "{{appTitle}} n'est pas autorisé à utiliser votre micro ni votre caméra",
+      "default": "{{appTitle}} n'est pas autorisé à utiliser certaines fonctionnalités nécessaires."
+    },
+    "body": {
+      "openMenu": {
+        "others": "Cliquez sur l'icône des paramètres ICON_PLACEHOLDER dans la barre d'adresse de votre navigateur",
+        "safari": "Cliquez sur le menu \"Safari\", et ouvrez \"Paramètres pour {{appDomain}}\"."
+      },
+      "details": {
+        "camera": "Autorisez l'accès à la caméra",
+        "microphone": "Autorisez l'accès au microphone",
+        "cameraAndMicrophone": "Autorisez l'accès à la caméra et au microphone",
+        "default": "Activez les autorisations nécessaires."
+      }
+    }
+  },
+  "permissionsButton": {
+    "tooltip": "Plus d'infos",
+    "ariaLabel": "Problème de permissions. Afficher plus d'infos"
   },
   "error": {
     "createRoom": {
@@ -226,9 +275,9 @@
     "roomInformation": {
       "title": "Informations de connexions",
       "button": {
-        "ariaLabel": "Copier l'adresse de votre réunion",
-        "copy": "Copier l'adresse",
-        "copied": "Adresse copiée"
+        "ariaLabel": "Copier les informations de votre réunion",
+        "copy": "Copier les informations",
+        "copied": "Informations copiées"
       },
       "phone": {
         "call": "Appelez le :",
