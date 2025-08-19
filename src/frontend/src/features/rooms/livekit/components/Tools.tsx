@@ -16,6 +16,11 @@ import {
 import { FeatureFlags } from '@/features/analytics/enums'
 import { useConfig } from '@/api/useConfig'
 
+import { useStartTranslation } from '@/features/translation/hooks/useStartTranslation'
+import { useStopTranslation } from '@/features/translation/hooks/useStopTranslation'
+import { useRoomId } from '../hooks/useRoomId'
+import useIsTranslationEnabled from '@/features/translation/hooks/useIsTranslationEnabled'
+
 export interface ToolsButtonProps {
   icon: ReactNode
   title: string
@@ -133,6 +138,12 @@ export const Tools = () => {
     RecordingMode.ScreenRecording
   )
 
+  const roomID = useRoomId()
+
+  const { mutateAsync: startTranslation } = useStartTranslation()
+  const { mutateAsync: stopTranslation } = useStopTranslation()
+  const isTranslationEnabled = useIsTranslationEnabled(roomID)
+
   switch (activeSubPanelId) {
     case SubPanelId.TRANSCRIPT:
       return <TranscriptSidePanel />
@@ -190,6 +201,20 @@ export const Tools = () => {
           isActive={isScreenRecordingActive}
         />
       )}
+      <ToolButton
+        icon={<RiFileTextFill size={24} color="white" />}
+        title={t('tools.transcript.title')}
+        description={t('tools.transcript.body')}
+        onPress={() => {
+          if (!isTranslationEnabled) {
+            startTranslation({ roomID: roomID!, payload: { lang: ['en', 'fr'] } })
+          } else {
+            stopTranslation({ roomID: roomID! })
+          }
+        }}
+        isBetaFeature
+        isActive={roomID !== undefined && isTranslationEnabled}
+      />
     </Div>
   )
 }
