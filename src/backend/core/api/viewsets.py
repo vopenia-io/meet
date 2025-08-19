@@ -402,7 +402,7 @@ class RoomViewSet(
         translation_service = TranslationService()
         translation_service.stop_translation(room=room)
 
-        return drf_response.Response()
+        return drf_response.Response(status=drf_status.HTTP_204_NO_CONTENT)
 
     @decorators.action(
         detail=True,
@@ -416,7 +416,9 @@ class RoomViewSet(
         translation_service = TranslationService()
         translation = translation_service.fetch_translation(room=room)
 
-        return drf_response.Response(translation.to_dict() if translation else None)
+        if translation:
+            return drf_response.Response(translation.to_dict())
+        return drf_response.Response(status=drf_status.HTTP_204_NO_CONTENT)
 
     @decorators.action(
         detail=True,
