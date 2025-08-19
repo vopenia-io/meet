@@ -51,6 +51,7 @@ from core.services.lobby import (
     LobbyService,
 )
 from core.services.room_creation import RoomCreation
+from core.services.translation import TranslationMeta, TranslationService
 
 from . import permissions, serializers
 
@@ -367,6 +368,59 @@ class RoomViewSet(
     @decorators.action(
         detail=True,
         methods=["post"],
+        url_path="start-translation",
+        permission_classes=[],
+        throttle_classes=[RequestEntryAnonRateThrottle],
+    )
+    def start_translation(self, request, pk=None):
+        """Add using selery task"""
+
+        serializer = serializers.TranslationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        meta = TranslationMeta(lang=serializer.validated_data["lang"])
+
+        room = self.get_object()
+
+        translation_service = TranslationService()
+        translation = translation_service.start_translation(room=room, meta=meta)
+
+        return drf_response.Response(translation.to_dict())
+
+    @decorators.action(
+        detail=True,
+        methods=["post"],
+        url_path="stop-translation",
+        permission_classes=[],
+        throttle_classes=[RequestEntryAnonRateThrottle],
+    )
+    def stop_translation(self, request, pk=None):
+        """Add using selery task"""
+
+        room = self.get_object()
+
+        translation_service = TranslationService()
+        translation_service.stop_translation(room=room)
+
+        return drf_response.Response()
+
+    @decorators.action(
+        detail=True,
+        methods=["get"],
+        url_path="fetch-translation",
+    )
+    def fetch_translation(self, request, pk=None):
+        """Fetch the current translation for a specific room."""
+        room = self.get_object()
+
+        translation_service = TranslationService()
+        translation = translation_service.fetch_translation(room=room)
+
+        return drf_response.Response(translation.to_dict() if translation else None)
+
+    @decorators.action(
+        detail=True,
+        methods=["post"],
         url_path="request-entry",
         permission_classes=[],
         throttle_classes=[RequestEntryAnonRateThrottle],
@@ -398,7 +452,9 @@ class RoomViewSet(
             permissions.HasPrivilegesOnRoom,
         ],
     )
-    def allow_participant_to_enter(self, request, pk=None):  # pylint: disable=unused-argument
+    def allow_participant_to_enter(
+        self, request, pk=None
+    ):  # pylint: disable=unused-argument
         """Accept or deny a participant's entry request."""
 
         serializer = serializers.ParticipantEntrySerializer(data=request.data)
@@ -435,7 +491,9 @@ class RoomViewSet(
             permissions.HasPrivilegesOnRoom,
         ],
     )
-    def list_waiting_participants(self, request, pk=None):  # pylint: disable=unused-argument
+    def list_waiting_participants(
+        self, request, pk=None
+    ):  # pylint: disable=unused-argument
         """List waiting participants."""
         room = self.get_object()
 
@@ -598,7 +656,9 @@ class RecordingViewSet(
         authentication_classes=[StorageEventAuthentication],
         permission_classes=[permissions.IsStorageEventEnabled],
     )
-    def on_storage_event_received(self, request, pk=None):  # pylint: disable=unused-argument
+    def on_storage_event_received(
+        self, request, pk=None
+    ):  # pylint: disable=unused-argument
         """Handle incoming storage hook events for recordings."""
 
         parser = get_parser()

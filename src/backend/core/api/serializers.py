@@ -264,3 +264,18 @@ class RoomInviteSerializer(serializers.Serializer):
     def update(self, instance, validated_data):
         """Not implemented as this is a validation-only serializer."""
         raise NotImplementedError("RoomInviteSerializer is validation-only")
+
+class TranslationSerializer(serializers.Serializer):
+    """Validate translation data."""
+
+    lang = serializers.MultipleChoiceField(
+        choices=models.TranslationLanguages.choices, required=True
+    )
+
+    def create(self, validated_data):
+        """Not implemented as this is a validation-only serializer."""
+        raise NotImplementedError("TranslationSerializer is validation-only")
+
+    def update(self, instance, validated_data):
+        """Not implemented as this is a validation-only serializer."""
+        raise NotImplementedError("TranslationSerializer is validation-only")

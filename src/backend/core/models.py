@@ -83,6 +83,13 @@ class RecordingModeChoices(models.TextChoices):
     SCREEN_RECORDING = "screen_recording", _("SCREEN_RECORDING")
     TRANSCRIPT = "transcript", _("TRANSCRIPT")
 
+class TranslationLanguages(models.TextChoices):
+    """Translation language choices."""
+
+    EN = "en", _("English")
+    FR = "fr", _("French")
+    ES = "es", _("Spanish")
+    # TODO 24 eu languages from env
 
 class RoomAccessLevel(models.TextChoices):
     """Room access level choices."""
