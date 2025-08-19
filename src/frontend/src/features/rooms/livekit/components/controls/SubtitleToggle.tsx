@@ -7,6 +7,7 @@ import { useSnapshot } from 'valtio'
 import { useLayout } from '../../hooks/useLayout'
 import useIsTranslationEnabled from '@/features/translation/hooks/useIsTranslationEnabled'
 import { useRoomId } from '../../hooks/useRoomId'
+import { useCallback } from 'react'
 
 export const SubtitleToggle = ({
   onPress,
@@ -15,13 +16,13 @@ export const SubtitleToggle = ({
   const layoutSnap = useSnapshot(layoutStore)
 
   const roomID = useRoomId()
-  const { toggleSubtitle } = useLayout()
+  const { toggleSubtitle, displaySubtitle } = useLayout()
 
   const isTranslationEnabled = useIsTranslationEnabled(roomID)
   if (!isTranslationEnabled) {
+    displaySubtitle(false)
     return null
   }
-
   return (
     <div
       className={css({
