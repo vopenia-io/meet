@@ -1,5 +1,4 @@
-import { fetchApi } from '@/api/fetchApi'
-import type { ApiTranslation } from './fetchTranslation'
+import { fetchApiNullable } from '@/api/fetchApi'
 
 export type StopTranslationParams = {
   roomID: string
@@ -7,7 +6,7 @@ export type StopTranslationParams = {
 
 export const stopTranslation = ({
   roomID,
-}: StopTranslationParams): Promise<ApiTranslation> =>
-  fetchApi<ApiTranslation>(`rooms/${roomID}/stop-translation/`, {
+}: StopTranslationParams): Promise<null> =>
+  fetchApiNullable<null>(`rooms/${roomID}/stop-translation/`, {
     method: 'POST',
   })

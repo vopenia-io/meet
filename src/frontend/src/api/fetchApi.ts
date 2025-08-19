@@ -22,6 +22,30 @@ export const fetchApi = async <T = Record<string, unknown>>(
   return result
 }
 
+export const fetchApiNullable = async <T = Record<string, unknown>>(
+  url: string,
+  options?: RequestInit
+): Promise<T | null> => {
+  const csrfToken = getCsrfToken()
+  const response = await fetch(apiUrl(url), {
+    credentials: 'include',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(!!csrfToken && { 'X-CSRFToken': csrfToken }),
+      ...options?.headers,
+    },
+  })
+  if (response.status === 204) {
+    return null
+  }
+  const result = await response.json()
+  if (!response.ok) {
+    throw new ApiError(response.status, result)
+  }
+  return result
+}
+
 const getCsrfToken = () => {
   return document.cookie
     .split(';')
