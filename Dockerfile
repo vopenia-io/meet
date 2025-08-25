@@ -1,14 +1,14 @@
 # Django Meet
 
 # ---- base image to inherit from ----
-FROM python:3.13.5-alpine3.21 AS base
+FROM python:3.13.5-slim AS base
 
 # Upgrade pip to its latest release to speed up dependencies installation
 RUN python -m pip install --upgrade pip setuptools
 
 # Upgrade system packages to install security updates
-RUN apk update && \
-  apk upgrade
+RUN apt update && \
+  apt upgrade -yq
 
 # ---- Back-end builder image ----
 FROM base AS back-builder
@@ -37,8 +37,8 @@ RUN yarn install --frozen-lockfile && \
 FROM base AS link-collector
 ARG MEET_STATIC_ROOT=/data/static
 
-RUN apk add \
-  pango \
+RUN apt install -yq \
+  libpango-1.0-0 \
   rdfind
 
 # Copy installed python dependencies
@@ -62,12 +62,12 @@ FROM base AS core
 
 ENV PYTHONUNBUFFERED=1
 
-RUN apk --no-cache add \
-  cairo \
-  gdk-pixbuf \
+RUN apt install -yq \
+  libcairo2 \
+  libgdk-pixbuf-2.0-0 \
   gettext \
   libffi-dev \
-  pango \
+  libpango-1.0-0 \
   shared-mime-info
 
 
@@ -99,7 +99,7 @@ FROM core AS backend-development
 USER root:root
 
 # Install psql
-RUN apk add postgresql-client
+RUN apt install -yq postgresql-client
 
 # Uninstall Meet and re-install it in editable mode along with development
 # dependencies

@@ -4,6 +4,9 @@ from os import environ
 
 from celery import Celery
 from configurations.importer import install
+from core.agent import TranslationAgent
+
+# from core.agent.setup import register_agents
 
 # Set the default Django settings module for the 'celery' program.
 environ.setdefault("DJANGO_SETTINGS_MODULE", "meet.settings")
@@ -18,6 +21,8 @@ app = Celery("meet")
 # - namespace='CELERY' means all celery-related configuration keys
 #   should have a `CELERY_` prefix.
 app.config_from_object("django.conf:settings", namespace="CELERY")
+
+TranslationAgent.auto_register(app)
 
 # Load task modules from all registered Django apps.
 app.autodiscover_tasks()

@@ -89,6 +89,9 @@ services:
       - ./data/static:/data/static
     depends_on:
       - app-dev
+      - livekit
+    extra_hosts:
+      - "127.0.0.1.nip.io:host-gateway"
 
   app:
     build:
