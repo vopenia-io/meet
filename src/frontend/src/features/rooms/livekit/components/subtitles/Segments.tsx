@@ -31,10 +31,7 @@ export const Segments = () => {
       return
     }
 
-    const updateTranscriptions = async (
-      reader: TextStreamReader,
-      _participantInfo: { identity: string }
-    ) => {
+    const updateTranscriptions = async (reader: TextStreamReader) => {
       const message = await reader.readAll()
 
       console.log(reader.info)

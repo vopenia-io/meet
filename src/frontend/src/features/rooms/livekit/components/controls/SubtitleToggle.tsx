@@ -7,7 +7,6 @@ import { useSnapshot } from 'valtio'
 import { useLayout } from '../../hooks/useLayout'
 import useIsTranslationEnabled from '@/features/translation/hooks/useIsTranslationEnabled'
 import { useRoomId } from '../../hooks/useRoomId'
-import { useCallback } from 'react'
 
 export const SubtitleToggle = ({
   onPress,
