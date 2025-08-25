@@ -21,11 +21,9 @@ from livekit.api import (
 from dataclasses import dataclass, asdict, field
 
 from core import utils
+from django.conf import settings
 
 logger = getLogger(__name__)
-
-TRANSLATION_AGENT_NAME = "translation"
-
 
 class TranslationException(Exception):
     """Exception raised when translation operations fail."""
@@ -92,7 +90,7 @@ class TranslationService:
             raise TranslationException("Could not list dispatch") from e
 
         agents = [
-            agent for agent in agents if agent.agent_name == TRANSLATION_AGENT_NAME
+            agent for agent in agents if agent.agent_name == settings.TRANSLATION_AGENT_NAME
         ]
 
         if not agents or len(agents) == 0:
@@ -106,7 +104,7 @@ class TranslationService:
     @async_to_sync
     async def start_translation(self, room, meta: TranslationMeta) -> Translation:
         request = CreateAgentDispatchRequest(
-            agent_name=TRANSLATION_AGENT_NAME,
+            agent_name=settings.TRANSLATION_AGENT_NAME,
             room=str(room.id),
             metadata=json.dumps(meta.to_dict()),
         )

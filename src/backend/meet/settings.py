@@ -558,6 +558,17 @@ class Base(Configuration):
     SCREEN_RECORDING_BASE_URL = values.Value(
         None, environ_name="SCREEN_RECORDING_BASE_URL", environ_prefix=None
     )
+    
+    # Translation settings
+    TRANSLATION_ENABLED = values.BooleanValue(
+        False, environ_name="TRANSLATION_ENABLED", environ_prefix=None
+    )
+    TRANSLATION_AGENT_NAME = values.Value(
+        "translation-agent", environ_name="TRANSLATION_AGENT_NAME", environ_prefix=None
+    )
+    TRANSLATION_GLADIA_API_KEY = SecretFileValue(
+        None, environ_name="GLADIA_API_KEY", environ_prefix=None
+    )
 
     # Marketing and communication settings
     SIGNUP_NEW_USER_TO_MARKETING_EMAIL = values.BooleanValue(

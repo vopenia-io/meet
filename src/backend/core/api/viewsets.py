@@ -369,7 +369,10 @@ class RoomViewSet(
         detail=True,
         methods=["post"],
         url_path="start-translation",
-        permission_classes=[],
+        permission_classes=[
+            permissions.HasPrivilegesOnRoom,
+            permissions.IsTranslationEnabled,
+        ],
         throttle_classes=[RequestEntryAnonRateThrottle],
     )
     def start_translation(self, request, pk=None):
@@ -391,7 +394,10 @@ class RoomViewSet(
         detail=True,
         methods=["post"],
         url_path="stop-translation",
-        permission_classes=[],
+        permission_classes=[
+            permissions.HasPrivilegesOnRoom,
+            permissions.IsTranslationEnabled,
+        ],
         throttle_classes=[RequestEntryAnonRateThrottle],
     )
     def stop_translation(self, request, pk=None):
@@ -407,6 +413,9 @@ class RoomViewSet(
     @decorators.action(
         detail=True,
         methods=["get"],
+        permission_classes=[
+            permissions.IsTranslationEnabled,
+        ],
         url_path="fetch-translation",
     )
     def fetch_translation(self, request, pk=None):

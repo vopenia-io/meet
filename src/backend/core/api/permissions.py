@@ -119,3 +119,12 @@ class IsStorageEventEnabled(permissions.BasePermission):
     def has_permission(self, request, view):
         """Determine if access is allowed based on settings."""
         return settings.RECORDING_STORAGE_EVENT_ENABLE
+
+class IsTranslationEnabled(permissions.BasePermission):
+    """Check if the translation feature is enabled."""
+
+    message = "Access denied, translation is disabled."
+
+    def has_permission(self, request, view):
+        """Determine if access is allowed based on settings."""
+        return settings.TRANSLATION_ENABLED
