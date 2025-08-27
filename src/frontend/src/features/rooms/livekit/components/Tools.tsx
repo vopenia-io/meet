@@ -16,10 +16,7 @@ import {
 import { FeatureFlags } from '@/features/analytics/enums'
 import { useConfig } from '@/api/useConfig'
 
-import { useStartTranslation } from '@/features/translation/hooks/useStartTranslation'
-import { useStopTranslation } from '@/features/translation/hooks/useStopTranslation'
-import { useRoomId } from '../hooks/useRoomId'
-import useIsTranslationEnabled from '@/features/translation/hooks/useIsTranslationEnabled'
+import { TranslationTool } from '@/features/translation/components/TranslationTool'
 
 export interface ToolsButtonProps {
   icon: ReactNode
@@ -30,7 +27,7 @@ export interface ToolsButtonProps {
   isActive?: boolean
 }
 
-const ToolButton = ({
+export const ToolButton = ({
   icon,
   title,
   description,
@@ -118,7 +115,7 @@ const ToolButton = ({
 }
 
 export const Tools = () => {
-  const { data } = useConfig()
+  const { data: config } = useConfig()
   const { openTranscript, openScreenRecording, activeSubPanelId } =
     useSidePanel()
   const { t } = useTranslation('rooms', { keyPrefix: 'moreTools' })
@@ -137,12 +134,6 @@ export const Tools = () => {
   const isScreenRecordingActive = useIsRecordingActive(
     RecordingMode.ScreenRecording
   )
-
-  const roomID = useRoomId()
-
-  const { mutateAsync: startTranslation } = useStartTranslation()
-  const { mutateAsync: stopTranslation } = useStopTranslation()
-  const isTranslationEnabled = useIsTranslationEnabled(roomID)
 
   switch (activeSubPanelId) {
     case SubPanelId.TRANSCRIPT:
@@ -172,9 +163,9 @@ export const Tools = () => {
         margin="md"
       >
         {t('body')}{' '}
-        {data?.support?.help_article_more_tools && (
+        {config?.support?.help_article_more_tools && (
           <>
-            <A href={data?.support?.help_article_more_tools} target="_blank">
+            <A href={config?.support?.help_article_more_tools} target="_blank">
               {t('moreLink')}
             </A>
             .
@@ -201,20 +192,7 @@ export const Tools = () => {
           isActive={isScreenRecordingActive}
         />
       )}
-      <ToolButton
-        icon={<RiFileTextFill size={24} color="white" />}
-        title={t('tools.transcript.title')}
-        description={t('tools.transcript.body')}
-        onPress={() => {
-          if (!isTranslationEnabled) {
-            startTranslation({ roomID: roomID!, payload: { lang: ['en', 'fr'] } })
-          } else {
-            stopTranslation({ roomID: roomID! })
-          }
-        }}
-        isBetaFeature
-        isActive={roomID !== undefined && isTranslationEnabled}
-      />
+      {config?.translation?.enabled && <TranslationTool />}
     </Div>
   )
 }

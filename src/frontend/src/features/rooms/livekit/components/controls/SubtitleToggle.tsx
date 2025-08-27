@@ -5,7 +5,7 @@ import { ToggleButtonProps } from '@/primitives/ToggleButton'
 import { layoutStore } from '@/stores/layout.ts'
 import { useSnapshot } from 'valtio'
 import { useLayout } from '../../hooks/useLayout'
-import useIsTranslationEnabled from '@/features/translation/hooks/useIsTranslationEnabled'
+import useIsTranslationActive from '@/features/translation/hooks/useIsTranslationActive'
 import { useRoomId } from '../../hooks/useRoomId'
 
 export const SubtitleToggle = ({
@@ -17,7 +17,7 @@ export const SubtitleToggle = ({
   const roomID = useRoomId()
   const { toggleSubtitle, displaySubtitle } = useLayout()
 
-  const isTranslationEnabled = useIsTranslationEnabled(roomID)
+  const isTranslationEnabled = useIsTranslationActive(roomID)
   if (!isTranslationEnabled) {
     displaySubtitle(false)
     return null

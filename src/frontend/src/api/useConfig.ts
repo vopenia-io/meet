@@ -42,6 +42,10 @@ export interface ApiConfig {
     force_wss_protocol: boolean
     enable_firefox_proxy_workaround: boolean
   }
+  translation: {
+    enabled: boolean
+    languages: { [code: string]: string }
+  }
 }
 
 const fetchConfig = (): Promise<ApiConfig> => {

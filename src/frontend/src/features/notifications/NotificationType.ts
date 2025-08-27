@@ -13,4 +13,7 @@ export enum NotificationType {
   ScreenRecordingStopped = 'screenRecordingStopped',
   ScreenRecordingLimitReached = 'screenRecordingLimitReached',
   RecordingSaving = 'recordingSaving',
+  TranslationStarted = 'translationStarted',
+  TranslationStopped = 'translationStopped',
+  TranslationError = 'translationError'
 }
