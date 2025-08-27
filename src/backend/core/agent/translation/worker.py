@@ -43,5 +43,11 @@ class TranslationAgent(AbstractAgent):
                 # when hidden, it will also not be able to publish tracks to the room as it won't be visible.
                 hidden=True,
             ),
-            entrypoint_fnc=entrypoint,
+            entrypoint_fnc=entrypoint if not settings.TRANSLATION_DEBUG_DUMMY else self.dummy_entrypoint,
         )
+
+    async def dummy_entrypoint(self, ctx: JobContext):
+        await ctx.connect()
+        
+        print("Dummy agent started.")
+        print("Dummy agent meta:", ctx.job.metadata)
