@@ -1,6 +1,7 @@
 """Translation service"""
 
 import asyncio
+import enum
 import json
 from logging import getLogger
 
@@ -17,13 +18,16 @@ from livekit.api import (
     CreateAgentDispatchRequest,
     AgentDispatch,
     LiveKitAPI,
+    ListParticipantsRequest,
 )
 from dataclasses import dataclass, asdict, field
 
 from core import utils
 from django.conf import settings
+from enum import Enum
 
 logger = getLogger(__name__)
+
 
 class TranslationException(Exception):
     """Exception raised when translation operations fail."""
@@ -39,6 +43,7 @@ class TranslationMeta:
     @classmethod
     def from_dict(cls, data: dict) -> "TranslationMeta":
         return cls(lang=set(data.get("lang", [])))
+
 
 @dataclass
 class Translation:
@@ -58,6 +63,26 @@ class Translation:
         )
 
 
+class TranslationNotification(Enum):
+    STARTED = "translationStarted"
+    STOPPED = "translationStopped"
+    ERROR = "translationError"
+
+    def to_notification(self, msg: str | None = None):
+        res = {"type": self.value}
+        if msg:
+            res["message"] = msg
+        else:
+            match self.value:
+                case TranslationNotification.STARTED:
+                    res["message"] = "Translation has started."
+                case TranslationNotification.STOPPED:
+                    res["message"] = "Translation has stopped."
+                case TranslationNotification.ERROR:
+                    res["message"] = "An error occurred during translation."
+        return res
+
+
 class TranslationService:
     """Service for managing the translation system."""
 
@@ -66,7 +91,9 @@ class TranslationService:
     ) -> None:
         """Stop the translation agent for a specific room."""
         await lkapi.agent_dispatch.delete_dispatch(dispatch.id, str(room.id))
-        while await lkapi.agent_dispatch.get_dispatch(dispatch.id, str(room.id)) != None:
+        while (
+            await lkapi.agent_dispatch.get_dispatch(dispatch.id, str(room.id)) != None
+        ):
             await asyncio.sleep(0.1)
 
     async def _get_translation_agent_dispatch(
@@ -90,7 +117,9 @@ class TranslationService:
             raise TranslationException("Could not list dispatch") from e
 
         agents = [
-            agent for agent in agents if agent.agent_name == settings.TRANSLATION_AGENT_NAME
+            agent
+            for agent in agents
+            if agent.agent_name == settings.TRANSLATION_AGENT_NAME
         ]
 
         if not agents or len(agents) == 0:
@@ -100,6 +129,27 @@ class TranslationService:
             logger.warning("Multiple dispatch agents found for room %s", room.id)
 
         return agents[0]
+
+    async def _notify_participants(
+        self, room, lkapi: LiveKitAPI, type: TranslationNotification
+    ) -> None:
+        """Notify all participants in the room about the translation status."""
+        notification = type.to_notification()
+        try:
+            await utils.anotify_participants(
+                room_name=str(room.id), notification_data=notification
+            )
+        except utils.NotificationError as e:
+            logger.exception(
+                "Failed to notify participants about translation status change: "
+                "room=%s, type=%s",
+                room.id,
+                type,
+            )
+            raise TranslationException(
+                f"Failed to notify participants in room '{room.id}' about "
+                f"translation status change (type={type})"
+            ) from e
 
     @async_to_sync
     async def start_translation(self, room, meta: TranslationMeta) -> Translation:
@@ -123,6 +173,7 @@ class TranslationService:
                 else:
                     await self._stop_agent(lkapi, room, agent)
             agent = await lkapi.agent_dispatch.create_dispatch(request)
+            await self._notify_participants(room, lkapi, TranslationNotification.STARTED)
             return Translation(meta=meta, roomID=str(room.id), id=agent.id)
         except TwirpError as e:
             logger.exception("Unexpected error creating dispatch for room %s", room.id)
@@ -146,6 +197,7 @@ class TranslationService:
 
             await self._stop_agent(lkapi, room, agent)
             logger.info("Translation agent stopped for room %s", room.id)
+            await self._notify_participants(room, lkapi, TranslationNotification.STOPPED)
             return True
         except TwirpError as e:
             logger.exception("Failed to delete dispatch for room %s", room.id)

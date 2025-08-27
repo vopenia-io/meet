@@ -55,6 +55,10 @@ def get_frontend_configuration(request):
             "force_wss_protocol": settings.LIVEKIT_FORCE_WSS_PROTOCOL,
             "enable_firefox_proxy_workaround": settings.LIVEKIT_ENABLE_FIREFOX_PROXY_WORKAROUND,
         },
+        "translation": {
+            "enabled": settings.TRANSLATION_ENABLED,
+            "languages": settings.TRANSLATION_LANGUAGES_NAME
+        }
     }
     frontend_configuration.update(settings.FRONTEND_CONFIGURATION)
     return Response(frontend_configuration)

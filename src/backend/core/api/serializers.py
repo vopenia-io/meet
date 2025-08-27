@@ -269,7 +269,7 @@ class TranslationSerializer(serializers.Serializer):
     """Validate translation data."""
 
     lang = serializers.MultipleChoiceField(
-        choices=models.TranslationLanguages.choices, required=True
+        choices=models.TranslationLanguagesCode.choices, required=True
     )
 
     def create(self, validated_data):

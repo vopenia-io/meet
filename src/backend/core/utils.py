@@ -175,6 +175,10 @@ class NotificationError(Exception):
 @async_to_sync
 async def notify_participants(room_name: str, notification_data: dict):
     """Send notification data to all participants in a LiveKit room."""
+    await anotify_participants(room_name, notification_data)
+
+async def anotify_participants(room_name: str, notification_data: dict):
+    """Send notification data to all participants in a LiveKit room."""
 
     lkapi = create_livekit_client()
 

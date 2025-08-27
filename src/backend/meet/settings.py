@@ -558,7 +558,7 @@ class Base(Configuration):
     SCREEN_RECORDING_BASE_URL = values.Value(
         None, environ_name="SCREEN_RECORDING_BASE_URL", environ_prefix=None
     )
-    
+
     # Translation settings
     TRANSLATION_ENABLED = values.BooleanValue(
         False, environ_name="TRANSLATION_ENABLED", environ_prefix=None
@@ -569,6 +569,50 @@ class Base(Configuration):
     TRANSLATION_GLADIA_API_KEY = SecretFileValue(
         None, environ_name="GLADIA_API_KEY", environ_prefix=None
     )
+    TRANSLATION_DEBUG_DUMMY = values.BooleanValue(
+        False, environ_name="TRANSLATION_DEBUG_DUMMY", environ_prefix=None
+    )
+    TRANSLATION_SUPPORTED_LANGUAGES = values.DictValue(
+        {
+            # fmt: off
+            "af": _("Afrikaans"), "sq": _("Albanian"), "am": _("Amharic"), "ar": _("Arabic"),
+            "hy": _("Armenian"), "as": _("Assamese"), "ast": _("Asturian"), "az": _("Azerbaijani"),
+            "ba": _("Bashkir"), "eu": _("Basque"), "be": _("Belarusian"), "bn": _("Bengali"),
+            "bs": _("Bosnian"), "br": _("Breton"), "bg": _("Bulgarian"), "mymr": _("Burmese"),
+            "ca": _("Catalan"), "zh": _("Chinese"), "hr": _("Croatian"), "cs": _("Czech"),
+            "da": _("Danish"), "nl": _("Dutch"), "en": _("English"), "et": _("Estonian"),
+            "fo": _("Faroese"), "fi": _("Finnish"), "fr": _("French"), "gl": _("Galician"),
+            "ka": _("Georgian"), "de": _("German"), "el": _("Greek"), "gu": _("Gujarati"),
+            "ht": _("Haitian Creole"), "ha": _("Hausa"), "haw": _("Hawaiian"), "he": _("Hebrew"),
+            "hi": _("Hindi"), "hu": _("Hungarian"), "is": _("Icelandic"), "id": _("Indonesian"),
+            "it": _("Italian"), "ja": _("Japanese"), "jv": _("Javanese"), "kn": _("Kannada"),
+            "kk": _("Kazakh"), "km": _("Khmer"), "ko": _("Korean"), "lo": _("Lao"),
+            "la": _("Latin"), "lv": _("Latvian"), "lb": _("Luxembourgish"), "ln": _("Lingala"),
+            "lt": _("Lithuanian"), "mk": _("Macedonian"), "mg": _("Malagasy"), "ms": _("Malay"),
+            "ml": _("Malayalam"), "mt": _("Maltese"), "mi": _("Maori"), "mr": _("Marathi"),
+            "ro": _("Romanian"), "mn": _("Mongolian"), "ne": _("Nepali"), "no": _("Norwegian"),
+            "nn": _("Nynorsk"), "oc": _("Occitan"), "pa": _("Punjabi"), "ps": _("Pashto"),
+            "fa": _("Persian"), "pl": _("Polish"), "pt": _("Portuguese"), "ru": _("Russian"),
+            "sa": _("Sanskrit"), "sr": _("Serbian"), "sn": _("Shona"), "sd": _("Sindhi"),
+            "si": _("Sinhala"), "sk": _("Slovak"), "sl": _("Slovenian"), "so": _("Somali"),
+            "es": _("Spanish"), "su": _("Sundanese"), "sw": _("Swahili"), "sv": _("Swedish"),
+            "tl": _("Tagalog"), "tg": _("Tajik"), "ta": _("Tamil"), "tt": _("Tatar"),
+            "te": _("Telugu"), "th": _("Thai"), "bo": _("Tibetan"), "tr": _("Turkish"),
+            "tk": _("Turkmen"), "uk": _("Ukrainian"), "ur": _("Urdu"), "uz": _("Uzbek"),
+            "vi": _("Vietnamese"), "cy": _("Welsh"), "yi": _("Yiddish"), "yo": _("Yoruba"),
+        }
+    )
+    TRANSLATION_LANGUAGES = values.ListValue(
+        ["en", "fr", "es"],
+        environ_name="TRANSLATION_LANGUAGES",
+        environ_prefix=None,
+    )
+    @property
+    def TRANSLATION_LANGUAGES_NAME(self):
+        return {
+            lang: self.TRANSLATION_SUPPORTED_LANGUAGES.get(lang, lang)
+            for lang in self.TRANSLATION_LANGUAGES
+        }
 
     # Marketing and communication settings
     SIGNUP_NEW_USER_TO_MARKETING_EMAIL = values.BooleanValue(
