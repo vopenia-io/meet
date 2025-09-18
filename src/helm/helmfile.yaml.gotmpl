@@ -67,3 +67,20 @@ releases:
   - env.d/{{ .Environment.Name }}/values.secrets.yaml
   secrets:
   - env.d/{{ .Environment.Name }}/secrets.enc.yaml
+
+- name: livekit-sip
+  installed: {{ regexMatch "^dev.*" .Environment.Name }}
+  missingFileHandler: Warn
+  namespace: {{ .Namespace }}
+  chart: ./livekit-sip
+  values:
+  - env.d/{{ .Environment.Name }}/values.livekit-sip.yaml.gotmpl
+  - env.d/{{ .Environment.Name }}/values.secrets.yaml
+
+- name: opensips
+  installed: {{ regexMatch "^dev.*" .Environment.Name }}
+  missingFileHandler: Warn
+  namespace: {{ .Namespace }}
+  chart: ./opensips
+  values:
+  - env.d/{{ .Environment.Name }}/values.opensips.yaml.gotmpl

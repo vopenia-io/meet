@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "opensips.fullname" . }}
+  labels:
+    {{- include "opensips.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    {{- include "opensips.selectorLabels" . | nindent 4 }}
+  ports:
+    - name: sip-udp
+      port: {{ .Values.service.sipPort }}
+      protocol: UDP
+      targetPort: sip-udp
+      {{- if and (eq .Values.service.type "NodePort") .Values.service.nodePort }}
+      nodePort: {{ .Values.service.nodePort }}
+      {{- end }}
+    - name: sip-tcp
+      port: {{ .Values.service.sipPort }}
+      protocol: TCP
+      targetPort: sip-tcp

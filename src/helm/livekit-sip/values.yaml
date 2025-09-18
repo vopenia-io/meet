@@ -1,0 +1,51 @@
+image:
+  repository: localhost:5001/livekit-sip
+  tag: latest
+  pullPolicy: Always
+
+replicaCount: 1
+
+service:
+  type: ClusterIP
+  sipPort: 5062
+  httpPort: 5080
+  nodePort:
+    sip: null
+    http: null
+
+resources: {}
+
+affinity: {}
+
+nodeSelector: {}
+
+tolerations: []
+
+config:
+  enabled: true
+  mountPath: /sip
+  fileName: config.yaml
+  body: |
+    port: 5080
+    log_level: info
+    redis:
+      address: redis-master:6379
+    livekit:
+      api_key: devkey
+      api_secret: secret
+      ws_url: ws://livekit-livekit-server:80
+      insecure: true
+    sip_port: 5062
+    use_external_ip: true
+    logging:
+      level: debug
+    media:
+      audio_codecs: ["PCMU", "PCMA", "G722", "opus"]
+      rtp_port_range: 10000-20000
+      audio:
+        sample_rate: 48000
+        channels: 1
+
+extraEnv: []
+extraVolumeMounts: []
+extraVolumes: []

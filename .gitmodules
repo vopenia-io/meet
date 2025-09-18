@@ -1,0 +1,3 @@
+[submodule "src/external/livekit-sip"]
+	path = src/external/livekit-sip
+	url = https://github.com/vopenia-io/livekit-sip

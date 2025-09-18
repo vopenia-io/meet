@@ -95,6 +95,14 @@ docker_build(
 )
 clean_old_images('localhost:5001/meet-livekit')
 
+docker_build(
+    'localhost:5001/livekit-sip:latest',
+    context='../src/external/livekit-sip',
+    dockerfile='../src/external/livekit-sip/build/sip/Dockerfile',
+    only=['./cmd', './pkg', './res', './version', './go.mod', './go.sum', './build/sip/Dockerfile'],
+)
+clean_old_images('localhost:5001/livekit-sip')
+
 k8s_yaml(local('cd ../src/helm && helmfile -n meet -e ${DEV_ENV:-dev} template .'))
 
 k8s_resource('minio-bucket', resource_deps=['minio'])
@@ -103,6 +111,8 @@ k8s_resource('meet-backend-migrate', resource_deps=['meet-backend'])
 k8s_resource('livekit-livekit-server-test-connection', resource_deps=['livekit-livekit-server'])
 k8s_resource('keycloak', resource_deps=['kc-postgresql'])
 k8s_resource('meet-backend-createsuperuser', resource_deps=['meet-backend-migrate'])
+k8s_resource('livekit-sip', resource_deps=['livekit-livekit-server', 'redis'])
+k8s_resource('opensips', resource_deps=['livekit-sip'])
 
 migration = '''
 set -eu

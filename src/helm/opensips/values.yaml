@@ -1,0 +1,41 @@
+image:
+  repository: opensips/opensips
+  tag: latest
+  pullPolicy: IfNotPresent
+
+replicaCount: 1
+
+service:
+  type: ClusterIP
+  sipPort: 5060
+  nodePort: null
+
+resources: {}
+
+affinity: {}
+
+nodeSelector: {}
+
+tolerations: []
+
+config:
+  fileName: opensips.cfg
+  mountPath: /etc/opensips
+  body: |
+    ####### Minimal OpenSIPS config #######
+    log_level=3
+    log_stderror=yes
+    listen=udp:0.0.0.0:5060
+    listen=tcp:0.0.0.0:5060
+    mpath="/usr/lib/x86_64-linux-gnu/opensips/modules/"
+    loadmodule "signaling.so"
+    loadmodule "sl.so"
+    loadmodule "tm.so"
+    loadmodule "rr.so"
+    loadmodule "maxfwd.so"
+    loadmodule "sipmsgops.so"
+    route { exit; }
+
+extraEnv: []
+extraVolumeMounts: []
+extraVolumes: []
