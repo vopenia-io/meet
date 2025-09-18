@@ -9,7 +9,7 @@ This guide gets you from an empty machine to a running Meet stack on Kubernetes 
 brew install docker kind kubectl helm helmfile tilt mkcert age
 ```
 
-### Debian / Ubuntu
+### Linux
 ```bash
 sudo apt-get update
 sudo apt-get install -y docker.io docker-compose-plugin build-essential curl git
@@ -31,6 +31,7 @@ mkcert -install
 ```bash
 git clone git@github.com:vopenia/meet.git
 cd meet
+git submodule update --init --recursive
 ```
 
 ## 3. Prepare local secrets (optional)
