@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     celery_result_backend: str = "redis://redis/0"
     celery_max_retries: int = 1
 
+    transcribe_queue: str = "transcribe-queue"
+    summarize_queue: str = "summarize-queue"
+
     # Minio settings
     aws_storage_bucket_name: str
     aws_s3_endpoint_url: str
@@ -32,11 +35,15 @@ class Settings(BaseSettings):
     aws_s3_secure_access: bool = True
 
     # AI-related settings
-    openai_api_key: str
-    openai_base_url: str = "https://api.openai.com/v1"
-    openai_asr_model: str = "whisper-1"
-    openai_llm_model: str = "gpt-4o"
-    openai_max_retries: int = 0
+    whisperx_api_key: str
+    whisperx_base_url: str = "https://api.openai.com/v1"
+    whisperx_asr_model: str = "whisper-1"
+    whisperx_max_retries: int = 0
+    # ISO 639-1 language code (e.g., "en", "fr", "es")
+    whisperx_default_language: Optional[str] = None
+    llm_base_url: str
+    llm_api_key: str
+    llm_model: str
 
     # Webhook-related settings
     webhook_max_retries: int = 2
@@ -50,6 +57,10 @@ class Settings(BaseSettings):
     document_title_template: Optional[str] = (
         'Réunion "{room}" du {room_recording_date} à {room_recording_time}'
     )
+    summary_title_template: Optional[str] = "Résumé de {title}"
+
+    # Summary related settings
+    is_summary_enabled: bool = True
 
     # Sentry
     sentry_is_enabled: bool = False

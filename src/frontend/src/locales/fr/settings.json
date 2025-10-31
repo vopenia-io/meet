@@ -7,6 +7,13 @@
     "authentication": "Authentification",
     "nameError": "Votre Nom ne peut pas être vide"
   },
+  "preferences": {
+    "title": "Préférences",
+    "idleDisconnectModal": {
+      "label": "Quitter les appels sans autre participant",
+      "description": "Vous fait quitter un appel au bout de quelques minutes si aucun autre participant ne vous rejoint"
+    }
+  },
   "audio": {
     "microphone": {
       "heading": "Micro",
@@ -30,6 +37,37 @@
     },
     "permissionsRequired": "Autorisations nécessaires"
   },
+  "video": {
+    "camera": {
+      "heading": "Caméra",
+      "label": "Sélectionner votre entrée vidéo",
+      "disabled": "Caméra désactivée",
+      "previewAriaLabel": {
+        "enabled": "Aperçu vidéo activé",
+        "disabled": "Aperçu vidéo désactivé"
+      }
+    },
+    "resolution": {
+      "heading": "Résolution",
+      "publish": {
+        "label": "Sélectionner votre résolution d'envoi (max.)",
+        "items": {
+          "high": "Haute définition",
+          "medium": "Définition standard",
+          "low": "Basse définition"
+        }
+      },
+      "subscribe": {
+        "label": "Sélectionner votre résolution de réception (max.)",
+        "items": {
+          "high": "Haute définition (automatique)",
+          "medium": "Définition standard",
+          "low": "Basse définition"
+        }
+      }
+    },
+    "permissionsRequired": "Autorisations nécessaires"
+  },
   "notifications": {
     "heading": "Notifications sonores",
     "label": "la notification sonore pour",
@@ -38,9 +76,15 @@
       "enable": "Activer"
     },
     "items": {
-      "participantJoined": "Un nouveau participant",
-      "handRaised": "Une main levée",
-      "messageReceived": "Un message reçu"
+      "participantJoined": {
+        "label": "Un nouveau participant"
+      },
+      "handRaised": {
+        "label": "Une main levée"
+      },
+      "messageReceived": {
+        "label": "Un message reçu"
+      }
     }
   },
   "dialog": {
@@ -54,6 +98,7 @@
   "tabs": {
     "account": "Profil",
     "audio": "Audio",
+    "video": "Vidéo",
     "general": "Général",
     "notifications": "Notifications"
   }

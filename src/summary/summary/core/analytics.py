@@ -48,6 +48,17 @@ class Analytics:
         except Exception as e:
             raise AnalyticsException("Failed to capture analytics event") from e
 
+    def is_feature_enabled(self, feature_name: str, distinct_id: str = None) -> bool:
+        """Check if a feature flag is enabled for a user."""
+        if self.is_disabled:
+            return False
+
+        try:
+            return self._client.feature_enabled(feature_name, distinct_id)
+        except Exception as e:
+            logger.error("Error checking feature flag %s: %s", feature_name, e)
+            return False
+
 
 @lru_cache
 def get_analytics():
@@ -103,16 +114,16 @@ class MetadataManager:
 
         initial_metadata = {
             "start_time": time.time(),
-            "asr_model": settings.openai_asr_model,
+            "asr_model": settings.whisperx_asr_model,
             "retries": 0,
         }
 
-        _required_args_count = 7
+        _required_args_count = 8
         if len(task_args) != _required_args_count:
-            logger.error("Invalid number of arguments.")
+            logger.error("Invalid number of arguments to enable metadata manager.")
             return
 
-        filename, email, _, received_at, *_ = task_args
+        _, filename, email, _, received_at, *_ = task_args
 
         initial_metadata = {
             **initial_metadata,

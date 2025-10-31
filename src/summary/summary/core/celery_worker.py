@@ -1,13 +1,13 @@
 """Celery workers."""
 
-# ruff: noqa: PLR0913
+# ruff: noqa: PLR0913, PLR0915
 
 import json
 import os
 import tempfile
 import time
 from pathlib import Path
-from typing import Optional
+from typing import Any, Mapping, Optional
 
 import openai
 import sentry_sdk
@@ -21,7 +21,16 @@ from urllib3.util import Retry
 
 from summary.core.analytics import MetadataManager, get_analytics
 from summary.core.config import get_settings
-from summary.core.prompt import get_instructions
+from summary.core.prompt import (
+    FORMAT_NEXT_STEPS,
+    FORMAT_PLAN,
+    PROMPT_SYSTEM_CLEANING,
+    PROMPT_SYSTEM_NEXT_STEP,
+    PROMPT_SYSTEM_PART,
+    PROMPT_SYSTEM_PLAN,
+    PROMPT_SYSTEM_TLDR,
+    PROMPT_USER_PART,
+)
 
 settings = get_settings()
 analytics = get_analytics()
@@ -95,6 +104,68 @@ def create_retry_session():
     return session
 
 
+class LLMException(Exception):
+    """LLM call failed."""
+
+
+class LLMService:
+    """Service for performing calls to the LLM configured in the settings."""
+
+    def __init__(self):
+        """Init the LLMService once."""
+        self._client = openai.OpenAI(
+            base_url=settings.llm_base_url, api_key=settings.llm_api_key
+        )
+
+    def call(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        response_format: Optional[Mapping[str, Any]] = None,
+    ):
+        """Call the LLM service.
+
+        Takes a system prompt and a user prompt, and returns the LLM's response
+        Returns None if the call fails.
+        """
+        try:
+            params: dict[str, Any] = {
+                "model": settings.llm_model,
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+            }
+            if response_format is not None:
+                params["response_format"] = response_format
+
+            response = self._client.chat.completions.create(**params)
+
+            return response.choices[0].message.content
+
+        except Exception as e:
+            logger.exception("LLM call failed: %s", e)
+            raise LLMException("LLM call failed: {e}") from e
+
+
+def format_actions(llm_output: dict) -> str:
+    """Format the actions from the LLM output into a markdown list.
+
+    fomat:
+    - [ ] Action title Assignée à : assignee1, assignee2, Échéance : due_date
+    """
+    lines = []
+    for action in llm_output.get("actions", []):
+        title = action.get("title", "").strip()
+        assignees = ", ".join(action.get("assignees", [])) or "-"
+        due_date = action.get("due_date") or "-"
+        line = f"- [ ] {title} Assignée à : {assignees}, Échéance : {due_date}"
+        lines.append(line)
+    if lines:
+        return "### Prochaines étapes\n\n" + "\n".join(lines)
+    return ""
+
+
 def format_segments(transcription_data):
     """Format transcription segments from WhisperX into a readable conversation format.
 
@@ -137,108 +208,15 @@ def post_with_retries(url, data):
         session.close()
 
 
-@signals.task_prerun.connect
-def task_started(task_id=None, task=None, args=None, **kwargs):
-    """Signal handler called before task execution begins."""
-    task_args = args or []
-    metadata_manager.create(task_id, task_args)
-
-
-@signals.task_retry.connect
-def task_retry_handler(request=None, reason=None, einfo=None, **kwargs):
-    """Signal handler called when task execution retries."""
-    metadata_manager.retry(request.id)
-
-
-@signals.task_failure.connect
-def task_failure_handler(task_id, exception=None, **kwargs):
-    """Signal handler called when task execution fails permanently."""
-    metadata_manager.capture(task_id, settings.posthog_event_failure)
-
-
-@celery.task(max_retries=settings.celery_max_retries)
-def process_audio_transcribe_summarize(filename: str, email: str, sub: str):
-    """Process an audio file by transcribing it and generating a summary.
-
-    This Celery task performs the following operations:
-    1. Retrieves the audio file from MinIO storage
-    2. Transcribes the audio using OpenAI-compliant API's ASR model
-    3. Generates a summary of the transcription using OpenAI-compliant API's LLM
-    4. Sends the results via webhook
-    """
-    logger.info("Notification received")
-    logger.debug("filename: %s", filename)
-
-    minio_client = Minio(
-        settings.aws_s3_endpoint_url,
-        access_key=settings.aws_s3_access_key_id,
-        secret_key=settings.aws_s3_secret_access_key,
-        secure=settings.aws_s3_secure_access,
-    )
-
-    logger.debug("Connection to the Minio bucket successful")
-
-    audio_file_stream = minio_client.get_object(
-        settings.aws_storage_bucket_name, object_name=filename
-    )
-
-    temp_file_path = save_audio_stream(audio_file_stream)
-    logger.debug("Recording successfully downloaded, filepath: %s", temp_file_path)
-
-    logger.info("Initiating OpenAI client")
-
-    openai_client = openai.OpenAI(
-        api_key=settings.openai_api_key,
-        base_url=settings.openai_base_url,
-        max_retries=settings.openai_max_retries,
-    )
-
-    try:
-        logger.info("Querying transcription …")
-        with open(temp_file_path, "rb") as audio_file:
-            transcription = openai_client.audio.transcriptions.create(
-                model=settings.openai_asr_model, file=audio_file
-            )
-            transcription = transcription.text
-
-            logger.debug("Transcription: \n %s", transcription)
-    finally:
-        if os.path.exists(temp_file_path):
-            os.remove(temp_file_path)
-            logger.debug("Temporary file removed: %s", temp_file_path)
-
-    instructions = get_instructions(transcription)
-    summary_response = openai_client.chat.completions.create(
-        model=settings.openai_llm_model, messages=instructions
-    )
-
-    summary = summary_response.choices[0].message.content
-    logger.debug("Summary: \n %s", summary)
-
-    # fixme - generate a title using LLM
-    data = {
-        "title": "Votre résumé",
-        "content": summary,
-        "email": email,
-        "sub": sub,
-    }
-
-    logger.debug("Submitting webhook to %s", settings.webhook_url)
-    logger.debug("Request payload: %s", json.dumps(data, indent=2))
-
-    response = post_with_retries(settings.webhook_url, data)
-
-    logger.info("Webhook submitted successfully. Status: %s", response.status_code)
-    logger.debug("Response body: %s", response.text)
-
-
 @celery.task(
     bind=True,
     autoretry_for=[exceptions.HTTPError],
     max_retries=settings.celery_max_retries,
+    queue=settings.transcribe_queue,
 )
 def process_audio_transcribe_summarize_v2(
     self,
+    owner_id: str,
     filename: str,
     email: str,
     sub: str,
@@ -255,10 +233,15 @@ def process_audio_transcribe_summarize_v2(
     3. Sends the results via webhook
 
     """
-    logger.info("Notification received")
-    logger.debug("filename: %s", filename)
+    logger.info(
+        "Notification received | Owner: %s | Room: %s",
+        owner_id,
+        room,
+    )
 
     task_id = self.request.id
+
+    logger.info("Download recording | Filename: %s", filename)
 
     minio_client = Minio(
         settings.aws_s3_endpoint_url,
@@ -292,29 +275,31 @@ def process_audio_transcribe_summarize_v2(
         logger.error(error_msg)
         raise AudioValidationError(error_msg)
 
-    logger.info("Initiating OpenAI client")
-    openai_client = openai.OpenAI(
-        api_key=settings.openai_api_key,
-        base_url=settings.openai_base_url,
-        max_retries=settings.openai_max_retries,
+    logger.info("Initiating WhisperX client")
+    whisperx_client = openai.OpenAI(
+        api_key=settings.whisperx_api_key,
+        base_url=settings.whisperx_base_url,
+        max_retries=settings.whisperx_max_retries,
     )
 
     try:
-        logger.info("Querying transcription …")
+        logger.info(
+            "Querying transcription for %s seconds of audio …", audio_file.info.length
+        )
         transcription_start_time = time.time()
         with open(temp_file_path, "rb") as audio_file:
-            transcription = openai_client.audio.transcriptions.create(
-                model=settings.openai_asr_model, file=audio_file
+            transcription = whisperx_client.audio.transcriptions.create(
+                model=settings.whisperx_asr_model,
+                file=audio_file,
+                language=settings.whisperx_default_language,
             )
+
+            transcription_time = round(time.time() - transcription_start_time, 2)
             metadata_manager.track(
                 task_id,
-                {
-                    "transcription_time": round(
-                        time.time() - transcription_start_time, 2
-                    )
-                },
+                {"transcription_time": transcription_time},
             )
-            logger.info("Transcription received.")
+            logger.info("Transcription received in %s seconds.", transcription_time)
             logger.debug("Transcription: \n %s", transcription)
     finally:
         if os.path.exists(temp_file_path):
@@ -349,9 +334,121 @@ def process_audio_transcribe_summarize_v2(
 
     response = post_with_retries(settings.webhook_url, data)
 
-    logger.info("Webhook submitted successfully. Status: %s", response.status_code)
-    logger.debug("Response body: %s", response.text)
+    try:
+        response_data = response.json()
+        document_id = response_data.get("id", "N/A")
+    except (json.JSONDecodeError, AttributeError):
+        document_id = "Unable to parse response"
+        response_data = response.text
+
+    logger.info(
+        "Webhook success | Document %s submitted (HTTP %s)",
+        document_id,
+        response.status_code,
+    )
+    logger.debug("Full response: %s", response_data)
 
     metadata_manager.capture(task_id, settings.posthog_event_success)
 
-    # TODO - integrate summarize the transcript and create a new document.
+    if (
+        analytics.is_feature_enabled("summary-enabled", distinct_id=owner_id)
+        and settings.is_summary_enabled
+    ):
+        logger.info("Queuing summary generation task.")
+        summarize_transcription.apply_async(
+            args=[formatted_transcription, email, sub, title],
+            queue=settings.summarize_queue,
+        )
+    else:
+        logger.info("Summary generation not enabled for this user. Skipping.")
+
+
+@signals.task_prerun.connect(sender=process_audio_transcribe_summarize_v2)
+def task_started(task_id=None, task=None, args=None, **kwargs):
+    """Signal handler called before task execution begins."""
+    task_args = args or []
+    metadata_manager.create(task_id, task_args)
+
+
+@signals.task_retry.connect(sender=process_audio_transcribe_summarize_v2)
+def task_retry_handler(request=None, reason=None, einfo=None, **kwargs):
+    """Signal handler called when task execution retries."""
+    metadata_manager.retry(request.id)
+
+
+@signals.task_failure.connect(sender=process_audio_transcribe_summarize_v2)
+def task_failure_handler(task_id, exception=None, **kwargs):
+    """Signal handler called when task execution fails permanently."""
+    metadata_manager.capture(task_id, settings.posthog_event_failure)
+
+
+@celery.task(
+    bind=True,
+    autoretry_for=[LLMException, Exception],
+    max_retries=settings.celery_max_retries,
+    queue=settings.summarize_queue,
+)
+def summarize_transcription(self, transcript: str, email: str, sub: str, title: str):
+    """Generate a summary from the provided transcription text.
+
+    This Celery task performs the following operations:
+    1. Uses an LLM to generate a TL;DR summary of the transcription.
+    2. Breaks the transcription into parts and summarizes each part.
+    3. Cleans up the combined summary
+    4. Generates next steps.
+    5. Sends the final summary via webhook.
+    """
+    logger.info("Starting summarization task")
+
+    llm_service = LLMService()
+
+    tldr = llm_service.call(PROMPT_SYSTEM_TLDR, transcript)
+
+    logger.info("TLDR generated")
+
+    parts = llm_service.call(
+        PROMPT_SYSTEM_PLAN, transcript, response_format=FORMAT_PLAN
+    )
+    logger.info("Plan generated")
+
+    res = json.loads(parts)
+    parts = res.get("titles", [])
+    logger.info("Parts to summarize: %s", parts)
+    parts_summarized = []
+    for part in parts:
+        prompt_user_part = PROMPT_USER_PART.format(part=part, transcript=transcript)
+        logger.info("Summarizing part: %s", part)
+        parts_summarized.append(llm_service.call(PROMPT_SYSTEM_PART, prompt_user_part))
+
+    logger.info("Parts summarized")
+
+    raw_summary = "\n\n".join(parts_summarized)
+
+    next_steps = llm_service.call(
+        PROMPT_SYSTEM_NEXT_STEP, transcript, response_format=FORMAT_NEXT_STEPS
+    )
+
+    next_steps = format_actions(json.loads(next_steps))
+
+    logger.info("Next steps generated")
+
+    cleaned_summary = llm_service.call(PROMPT_SYSTEM_CLEANING, raw_summary)
+    logger.info("Summary cleaned")
+
+    summary = tldr + "\n\n" + cleaned_summary + "\n\n" + next_steps
+
+    data = {
+        "title": settings.summary_title_template.format(
+            title=title,
+        ),
+        "content": summary,
+        "email": email,
+        "sub": sub,
+    }
+
+    logger.debug("Submitting webhook to %s", settings.webhook_url)
+
+    response = post_with_retries(settings.webhook_url, data)
+
+    logger.info("Webhook submitted successfully. Status: %s", response.status_code)
+    logger.debug("Response body: %s", response.text)

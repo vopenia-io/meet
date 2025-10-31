@@ -7,6 +7,13 @@
     "authentication": "Authentifizierung",
     "nameError": "Ihr Name darf nicht leer sein"
   },
+  "preferences": {
+    "title": "Einstellungen",
+    "idleDisconnectModal": {
+      "label": "Anrufe ohne Teilnehmer verlassen",
+      "description": "Verlässt automatisch einen Anruf nach einigen Minuten, wenn kein anderer Teilnehmer beitritt"
+    }
+  },
   "audio": {
     "microphone": {
       "heading": "Mikrofon",
@@ -30,6 +37,37 @@
     },
     "permissionsRequired": "Berechtigungen erforderlich"
   },
+  "video": {
+    "camera": {
+      "heading": "Kamera",
+      "label": "Wählen Sie Ihre Videoeingabe aus",
+      "disabled": "Kamera deaktiviert",
+      "previewAriaLabel": {
+        "enabled": "Videovorschau aktiviert",
+        "disabled": "Videovorschau deaktiviert"
+      }
+    },
+    "resolution": {
+      "heading": "Auflösung",
+      "publish": {
+        "label": "Wählen Sie Ihre maximale Sendeauflösung (max.)",
+        "items": {
+          "high": "Hohe Auflösung",
+          "medium": "Standardauflösung",
+          "low": "Niedrige Auflösung"
+        }
+      },
+      "subscribe": {
+        "label": "Wählen Sie Ihre Empfangsauflösung (max.)",
+        "items": {
+          "high": "Hohe Auflösung (automatisch)",
+          "medium": "Standardauflösung",
+          "low": "Niedrige Auflösung"
+        }
+      }
+    },
+    "permissionsRequired": "Berechtigungen erforderlich"
+  },
   "notifications": {
     "heading": "Tonbenachrichtigungen",
     "label": "Tonbenachrichtigungen für",
@@ -38,9 +76,15 @@
       "enable": "Aktivieren"
     },
     "items": {
-      "participantJoined": "Teilnehmer beigetreten",
-      "handRaised": "Hand gehoben",
-      "messageReceived": "Nachricht erhalten"
+      "participantJoined": {
+        "label": "Teilnehmer beigetreten"
+      },
+      "handRaised": {
+        "label": "Hand gehoben"
+      },
+      "messageReceived": {
+        "label": "Nachricht erhalten"
+      }
     }
   },
   "dialog": {
@@ -54,6 +98,7 @@
   "tabs": {
     "account": "Profil",
     "audio": "Audio",
+    "video": "Video",
     "general": "Allgemein",
     "notifications": "Benachrichtigungen"
   }

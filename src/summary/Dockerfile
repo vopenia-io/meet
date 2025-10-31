@@ -8,15 +8,23 @@ COPY pyproject.toml .
 
 RUN pip3 install --no-cache-dir .
 
+FROM base AS development
+WORKDIR /app
+
+COPY . .
+RUN pip3 install --no-cache-dir -e ".[dev]" || pip3 install --no-cache-dir -e .
+
+CMD ["uvicorn", "summary.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
 FROM base AS production
 
 WORKDIR /app
 
+# Un-privileged user running the application
+ARG DOCKER_USER
+USER ${DOCKER_USER}
+
 COPY --from=builder /usr/local /usr/local
 COPY ./summary /app/summary
-
-# Un-privileged user running the application
-ARG DOCKER_USER=1000:1000
-USER ${DOCKER_USER}
 
 CMD ["uvicorn", "summary.main:app", "--proxy-headers", "--host", "0.0.0.0", "--port", "8000"]

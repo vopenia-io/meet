@@ -38,10 +38,12 @@ ingress:
   hosts: []
   #  - chart-example.local
   ## @param ingress.tls.enabled Weather to enable TLS for the Ingress
+  ## @param ingress.tls.secretName Secret name for TLS config
   ## @skip ingress.tls.additional
   ## @extra ingress.tls.additional[].secretName Secret name for additional TLS config
   ## @extra ingress.tls.additional[].hosts[] Hosts for additional TLS config
   tls:
+    secretName: null
     enabled: true
     additional: []
 
@@ -62,10 +64,12 @@ ingressAdmin:
   hosts: [ ]
   #  - chart-example.local
   ## @param ingressAdmin.tls.enabled Weather to enable TLS for the Ingress
+  ## @param ingressAdmin.tls.secretName Secret name for TLS config
   ## @skip ingressAdmin.tls.additional
   ## @extra ingressAdmin.tls.additional[].secretName Secret name for additional TLS config
   ## @extra ingressAdmin.tls.additional[].hosts[] Hosts for additional TLS config
   tls:
+    secretName: null
     enabled: true
     additional: []
 
@@ -87,8 +91,8 @@ ingressMedia:
   ## @extra ingressMedia.tls.additional[].secretName Secret name for additional TLS config
   ## @extra ingressMedia.tls.additional[].hosts[] Hosts for additional TLS config
   tls:
-    enabled: true
     secretName: null
+    enabled: true
     additional: []
 
   ## @param ingressMedia.annotations.nginx.ingress.kubernetes.io/auth-url
@@ -358,6 +362,7 @@ posthog:
   ## @param posthog.ingress.path URL path prefix for the ingress routes (e.g., /)
   ## @param posthog.ingress.hosts Additional hostnames array to be included in the ingress
   ## @param posthog.ingress.tls.enabled Enable or disable TLS/HTTPS for the ingress
+  ## @param posthog.ingress.tls.secretName Secret name for TLS config
   ## @param posthog.ingress.tls.additional Additional TLS configurations for extra hosts/certificates
   ## @param posthog.ingress.customBackends Custom backend service configurations for the ingress
   ## @param posthog.ingress.annotations Additional Kubernetes annotations to apply to the ingress
@@ -368,6 +373,7 @@ posthog:
     path: /
     hosts: [ ]
     tls:
+      secretName: null
       enabled: true
       additional: [ ]
 
@@ -380,6 +386,7 @@ posthog:
   ## @param posthog.ingressAssets.path URL path prefix for the ingress routes (e.g., /)
   ## @param posthog.ingressAssets.hosts Additional hostnames array to be included in the ingress
   ## @param posthog.ingressAssets.tls.enabled Enable or disable TLS/HTTPS for the ingress
+  ## @param posthog.ingressAssets.tls.secretName Secret name for TLS config
   ## @param posthog.ingressAssets.tls.additional Additional TLS configurations for extra hosts/certificates
   ## @param posthog.ingressAssets.customBackends Custom backend service configurations for the ingress
   ## @param posthog.ingressAssets.annotations Additional Kubernetes annotations to apply to the ingress
@@ -390,6 +397,7 @@ posthog:
     path: /static
     hosts: [ ]
     tls:
+      secretName: null
       enabled: true
       additional: [ ]
 
@@ -420,6 +428,13 @@ posthog:
 ## @section summary
 
 summary:
+  ## @param summary.image.repository Repository to use to pull meet's summary container image
+  ## @param summary.image.tag meet's summary container tag
+  ## @param summary.image.pullPolicy summary container image pull policy
+  image:
+    repository: lasuite/meet-summary
+    pullPolicy: IfNotPresent
+    tag: "latest"
 
   ## @param summary.dpAnnotations Annotations to add to the summary Deployment
   dpAnnotations: {}
@@ -516,95 +531,294 @@ summary:
   pdb:
     enabled: true
 
-## @section celery
+## @section celeryTranscribe
 
-celery:
-  ## @param celery.dpAnnotations Annotations to add to the celery Deployment
+celeryTranscribe:
+  ## @param celeryTranscribe.image.repository Repository to use to pull meet's celeryTranscribe container image
+  ## @param celeryTranscribe.image.tag meet's celeryTranscribe container tag
+  ## @param celeryTranscribe.image.pullPolicy celeryTranscribe container image pull policy
+  image:
+    repository: lasuite/meet-summary
+    pullPolicy: IfNotPresent
+    tag: "latest"
+
+  ## @param celeryTranscribe.dpAnnotations Annotations to add to the celeryTranscribe Deployment
   dpAnnotations: {}
 
-  ## @param celery.command Override the celery container command
-  command: []
+  ## @param celeryTranscribe.command Override the celeryTranscribe container command
+  command:
+    - "celery"
+    - "-A"
+    - "summary.core.celery_worker"
+    - "worker"
+    - "--pool=solo"
+    - "--loglevel=info"
+    - "-Q"
+    - "transcribe-queue"
 
-  ## @param celery.args Override the celery container args
+  ## @param celeryTranscribe.args Override the celeryTranscribe container args
   args: []
 
-  ## @param celery.replicas Amount of celery replicas
+  ## @param celeryTranscribe.replicas Amount of celeryTranscribe replicas
   replicas: 1
 
-  ## @param celery.shareProcessNamespace Enable share process namespace between containers
+  ## @param celeryTranscribe.shareProcessNamespace Enable share process namespace between containers
   shareProcessNamespace: false
 
-  ## @param celery.sidecars Add sidecars containers to celery deployment
+  ## @param celeryTranscribe.sidecars Add sidecars containers to celeryTranscribe deployment
   sidecars: []
 
-  ## @param celery.migrateJobAnnotations Annotations for the migrate job
+  ## @param celeryTranscribe.migrateJobAnnotations Annotations for the migrate job
   migrateJobAnnotations: {}
 
-  ## @param celery.securityContext Configure celery Pod security context
+  ## @param celeryTranscribe.securityContext Configure celeryTranscribe Pod security context
   securityContext: null
 
-  ## @param celery.envVars Configure celery container environment variables
-  ## @extra celery.envVars.BY_VALUE Example environment variable by setting value directly
-  ## @extra celery.envVars.FROM_CONFIGMAP.configMapKeyRef.name Name of a ConfigMap when configuring env vars from a ConfigMap
-  ## @extra celery.envVars.FROM_CONFIGMAP.configMapKeyRef.key Key within a ConfigMap when configuring env vars from a ConfigMap
-  ## @extra celery.envVars.FROM_SECRET.secretKeyRef.name Name of a Secret when configuring env vars from a Secret
-  ## @extra celery.envVars.FROM_SECRET.secretKeyRef.key Key within a Secret when configuring env vars from a Secret
-  ## @skip celery.envVars
+  ## @param celeryTranscribe.envVars Configure celeryTranscribe container environment variables
+  ## @extra celeryTranscribe.envVars.BY_VALUE Example environment variable by setting value directly
+  ## @extra celeryTranscribe.envVars.FROM_CONFIGMAP.configMapKeyRef.name Name of a ConfigMap when configuring env vars from a ConfigMap
+  ## @extra celeryTranscribe.envVars.FROM_CONFIGMAP.configMapKeyRef.key Key within a ConfigMap when configuring env vars from a ConfigMap
+  ## @extra celeryTranscribe.envVars.FROM_SECRET.secretKeyRef.name Name of a Secret when configuring env vars from a Secret
+  ## @extra celeryTranscribe.envVars.FROM_SECRET.secretKeyRef.key Key within a Secret when configuring env vars from a Secret
+  ## @skip celeryTranscribe.envVars
   envVars:
     <<: *commonEnvVars
 
-  ## @param celery.podAnnotations Annotations to add to the celery Pod
+  ## @param celeryTranscribe.podAnnotations Annotations to add to the celeryTranscribe Pod
   podAnnotations: {}
 
-  ## @param celery.service.type celery Service type
-  ## @param celery.service.port celery Service listening port
-  ## @param celery.service.targetPort celery container listening port
-  ## @param celery.service.annotations Annotations to add to the celery Service
+  ## @param celeryTranscribe.service.type celeryTranscribe Service type
+  ## @param celeryTranscribe.service.port celeryTranscribe Service listening port
+  ## @param celeryTranscribe.service.targetPort celeryTranscribe container listening port
+  ## @param celeryTranscribe.service.annotations Annotations to add to the celeryTranscribe Service
   service:
     type: ClusterIP
     port: 80
     targetPort: 8000
     annotations: {}
 
-  ## @param celery.probes Configure celery probes
-  ## @param celery.probes.liveness.path [nullable] Configure path for celery HTTP liveness probe
-  ## @param celery.probes.liveness.targetPort [nullable] Configure port for celery HTTP liveness probe
-  ## @param celery.probes.liveness.initialDelaySeconds [nullable] Configure initial delay for celery liveness probe
-  ## @param celery.probes.liveness.initialDelaySeconds [nullable] Configure timeout for celery liveness probe
-  ## @param celery.probes.startup.path [nullable] Configure path for celery HTTP startup probe
-  ## @param celery.probes.startup.targetPort [nullable] Configure port for celery HTTP startup probe
-  ## @param celery.probes.startup.initialDelaySeconds [nullable] Configure initial delay for celery startup probe
-  ## @param celery.probes.startup.initialDelaySeconds [nullable] Configure timeout for celery startup probe
-  ## @param celery.probes.readiness.path [nullable] Configure path for celery HTTP readiness probe
-  ## @param celery.probes.readiness.targetPort [nullable] Configure port for celery HTTP readiness probe
-  ## @param celery.probes.readiness.initialDelaySeconds [nullable] Configure initial delay for celery readiness probe
-  ## @param celery.probes.readiness.initialDelaySeconds [nullable] Configure timeout for celery readiness probe
+  ## @param celeryTranscribe.probes Configure celeryTranscribe probes
+  ## @param celeryTranscribe.probes.liveness.path [nullable] Configure path for celeryTranscribe HTTP liveness probe
+  ## @param celeryTranscribe.probes.liveness.targetPort [nullable] Configure port for celeryTranscribe HTTP liveness probe
+  ## @param celeryTranscribe.probes.liveness.initialDelaySeconds [nullable] Configure initial delay for celeryTranscribe liveness probe
+  ## @param celeryTranscribe.probes.liveness.initialDelaySeconds [nullable] Configure timeout for celeryTranscribe liveness probe
+  ## @param celeryTranscribe.probes.startup.path [nullable] Configure path for celeryTranscribe HTTP startup probe
+  ## @param celeryTranscribe.probes.startup.targetPort [nullable] Configure port for celeryTranscribe HTTP startup probe
+  ## @param celeryTranscribe.probes.startup.initialDelaySeconds [nullable] Configure initial delay for celeryTranscribe startup probe
+  ## @param celeryTranscribe.probes.startup.initialDelaySeconds [nullable] Configure timeout for celeryTranscribe startup probe
+  ## @param celeryTranscribe.probes.readiness.path [nullable] Configure path for celeryTranscribe HTTP readiness probe
+  ## @param celeryTranscribe.probes.readiness.targetPort [nullable] Configure port for celeryTranscribe HTTP readiness probe
+  ## @param celeryTranscribe.probes.readiness.initialDelaySeconds [nullable] Configure initial delay for celeryTranscribe readiness probe
+  ## @param celeryTranscribe.probes.readiness.initialDelaySeconds [nullable] Configure timeout for celeryTranscribe readiness probe
   probes: {}
 
-  ## @param celery.resources Resource requirements for the celery container
+  ## @param celeryTranscribe.resources Resource requirements for the celeryTranscribe container
   resources: {}
 
-  ## @param celery.nodeSelector Node selector for the celery Pod
+  ## @param celeryTranscribe.nodeSelector Node selector for the celeryTranscribe Pod
   nodeSelector: {}
 
-  ## @param celery.tolerations Tolerations for the celery Pod
+  ## @param celeryTranscribe.tolerations Tolerations for the celeryTranscribe Pod
   tolerations: []
 
-  ## @param celery.affinity Affinity for the celery Pod
+  ## @param celeryTranscribe.affinity Affinity for the celeryTranscribe Pod
   affinity: {}
 
-  ## @param celery.persistence Additional volumes to create and mount on the celery. Used for debugging purposes
-  ## @extra celery.persistence.volume-name.size Size of the additional volume
-  ## @extra celery.persistence.volume-name.type Type of the additional volume, persistentVolumeClaim or emptyDir
-  ## @extra celery.persistence.volume-name.mountPath Path where the volume should be mounted to
+  ## @param celeryTranscribe.persistence Additional volumes to create and mount on the celeryTranscribe. Used for debugging purposes
+  ## @extra celeryTranscribe.persistence.volume-name.size Size of the additional volume
+  ## @extra celeryTranscribe.persistence.volume-name.type Type of the additional volume, persistentVolumeClaim or emptyDir
+  ## @extra celeryTranscribe.persistence.volume-name.mountPath Path where the volume should be mounted to
   persistence: {}
 
-  ## @param celery.extraVolumeMounts Additional volumes to mount on the celery.
+  ## @param celeryTranscribe.extraVolumeMounts Additional volumes to mount on the celeryTranscribe.
   extraVolumeMounts: []
 
-  ## @param celery.extraVolumes Additional volumes to mount on the celery.
+  ## @param celeryTranscribe.extraVolumes Additional volumes to mount on the celeryTranscribe.
   extraVolumes: []
 
-  ## @param celery.pdb.enabled Enable pdb on celery
+  ## @param celeryTranscribe.pdb.enabled Enable pdb on celeryTranscribe
+  pdb:
+    enabled: false
+
+## @section celerySummarize
+
+celerySummarize:
+  ## @param celerySummarize.image.repository Repository to use to pull meet's celerySummarize container image
+  ## @param celerySummarize.image.tag meet's celerySummarize container tag
+  ## @param celerySummarize.image.pullPolicy celerySummarize container image pull policy
+  image:
+    repository: lasuite/meet-summary
+    pullPolicy: IfNotPresent
+    tag: "latest"
+
+  ## @param celerySummarize.dpAnnotations Annotations to add to the celerySummarize Deployment
+  dpAnnotations: {}
+
+  ## @param celerySummarize.command Override the celerySummarize container command
+  command:
+    - "celery"
+    - "-A"
+    - "summary.core.celery_worker"
+    - "worker"
+    - "--pool=solo"
+    - "--loglevel=info"
+    - "-Q"
+    - "summarize-queue"
+
+  ## @param celerySummarize.args Override the celerySummarize container args
+  args: []
+
+  ## @param celerySummarize.replicas Amount of celerySummarize replicas
+  replicas: 1
+
+  ## @param celerySummarize.shareProcessNamespace Enable share process namespace between containers
+  shareProcessNamespace: false
+
+  ## @param celerySummarize.sidecars Add sidecars containers to celerySummarize deployment
+  sidecars: []
+
+  ## @param celerySummarize.migrateJobAnnotations Annotations for the migrate job
+  migrateJobAnnotations: {}
+
+  ## @param celerySummarize.securityContext Configure celerySummarize Pod security context
+  securityContext: null
+
+  ## @param celerySummarize.envVars Configure celerySummarize container environment variables
+  ## @extra celerySummarize.envVars.BY_VALUE Example environment variable by setting value directly
+  ## @extra celerySummarize.envVars.FROM_CONFIGMAP.configMapKeyRef.name Name of a ConfigMap when configuring env vars from a ConfigMap
+  ## @extra celerySummarize.envVars.FROM_CONFIGMAP.configMapKeyRef.key Key within a ConfigMap when configuring env vars from a ConfigMap
+  ## @extra celerySummarize.envVars.FROM_SECRET.secretKeyRef.name Name of a Secret when configuring env vars from a Secret
+  ## @extra celerySummarize.envVars.FROM_SECRET.secretKeyRef.key Key within a Secret when configuring env vars from a Secret
+  ## @skip celerySummarize.envVars
+  envVars:
+    <<: *commonEnvVars
+
+  ## @param celerySummarize.podAnnotations Annotations to add to the celerySummarize Pod
+  podAnnotations: {}
+
+  ## @param celerySummarize.service.type celerySummarize Service type
+  ## @param celerySummarize.service.port celerySummarize Service listening port
+  ## @param celerySummarize.service.targetPort celerySummarize container listening port
+  ## @param celerySummarize.service.annotations Annotations to add to the celerySummarize Service
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 8000
+    annotations: {}
+
+  ## @param celerySummarize.probes Configure celerySummarize probes
+  ## @param celerySummarize.probes.liveness.path [nullable] Configure path for celerySummarize HTTP liveness probe
+  ## @param celerySummarize.probes.liveness.targetPort [nullable] Configure port for celerySummarize HTTP liveness probe
+  ## @param celerySummarize.probes.liveness.initialDelaySeconds [nullable] Configure initial delay for celerySummarize liveness probe
+  ## @param celerySummarize.probes.liveness.initialDelaySeconds [nullable] Configure timeout for celerySummarize liveness probe
+  ## @param celerySummarize.probes.startup.path [nullable] Configure path for celerySummarize HTTP startup probe
+  ## @param celerySummarize.probes.startup.targetPort [nullable] Configure port for celerySummarize HTTP startup probe
+  ## @param celerySummarize.probes.startup.initialDelaySeconds [nullable] Configure initial delay for celerySummarize startup probe
+  ## @param celerySummarize.probes.startup.initialDelaySeconds [nullable] Configure timeout for celerySummarize startup probe
+  ## @param celerySummarize.probes.readiness.path [nullable] Configure path for celerySummarize HTTP readiness probe
+  ## @param celerySummarize.probes.readiness.targetPort [nullable] Configure port for celerySummarize HTTP readiness probe
+  ## @param celerySummarize.probes.readiness.initialDelaySeconds [nullable] Configure initial delay for celerySummarize readiness probe
+  ## @param celerySummarize.probes.readiness.initialDelaySeconds [nullable] Configure timeout for celerySummarize readiness probe
+  probes: {}
+
+  ## @param celerySummarize.resources Resource requirements for the celerySummarize container
+  resources: {}
+
+  ## @param celerySummarize.nodeSelector Node selector for the celerySummarize Pod
+  nodeSelector: {}
+
+  ## @param celerySummarize.tolerations Tolerations for the celerySummarize Pod
+  tolerations: []
+
+  ## @param celerySummarize.affinity Affinity for the celerySummarize Pod
+  affinity: {}
+
+  ## @param celerySummarize.persistence Additional volumes to create and mount on the celerySummarize. Used for debugging purposes
+  ## @extra celerySummarize.persistence.volume-name.size Size of the additional volume
+  ## @extra celerySummarize.persistence.volume-name.type Type of the additional volume, persistentVolumeClaim or emptyDir
+  ## @extra celerySummarize.persistence.volume-name.mountPath Path where the volume should be mounted to
+  persistence: {}
+
+  ## @param celerySummarize.extraVolumeMounts Additional volumes to mount on the celerySummarize.
+  extraVolumeMounts: []
+
+  ## @param celerySummarize.extraVolumes Additional volumes to mount on the celerySummarize.
+  extraVolumes: []
+
+  ## @param celerySummarize.pdb.enabled Enable pdb on celerySummarize
+  pdb:
+    enabled: false
+
+## @section agents
+
+agents:
+
+  ## @param agents.image.repository Repository to use to pull meet's agents container image
+  ## @param agents.image.tag meet's agents container tag
+  ## @param agents.image.pullPolicy agents container image pull policy
+  image:
+    repository: lasuite/meet-agents
+    pullPolicy: IfNotPresent
+    tag: "latest"
+
+  ## @param agents.dpAnnotations Annotations to add to the agents Deployment
+  dpAnnotations: {}
+
+  ## @param agents.command Override the agents container command
+  command: []
+
+  ## @param agents.args Override the agents container args
+  args: []
+
+  ## @param agents.replicas Amount of agents replicas
+  replicas: 1
+
+  ## @param agents.shareProcessNamespace Enable share process namespace between containers
+  shareProcessNamespace: false
+
+  ## @param agents.sidecars Add sidecars containers to agents deployment
+  sidecars: []
+
+  ## @param agents.securityContext Configure agents Pod security context
+  securityContext: null
+
+  ## @param agents.envVars Configure agents container environment variables
+  ## @extra agents.envVars.BY_VALUE Example environment variable by setting value directly
+  ## @extra agents.envVars.FROM_CONFIGMAP.configMapKeyRef.name Name of a ConfigMap when configuring env vars from a ConfigMap
+  ## @extra agents.envVars.FROM_CONFIGMAP.configMapKeyRef.key Key within a ConfigMap when configuring env vars from a ConfigMap
+  ## @extra agents.envVars.FROM_SECRET.secretKeyRef.name Name of a Secret when configuring env vars from a Secret
+  ## @extra agents.envVars.FROM_SECRET.secretKeyRef.key Key within a Secret when configuring env vars from a Secret
+  ## @skip agents.envVars
+  envVars:
+    <<: *commonEnvVars
+
+  ## @param agents.podAnnotations Annotations to add to the agents Pod
+  podAnnotations: {}
+
+  ## @param agents.resources Resource requirements for the agents container
+  resources: {}
+
+  ## @param agents.nodeSelector Node selector for the agents Pod
+  nodeSelector: {}
+
+  ## @param agents.tolerations Tolerations for the agents Pod
+  tolerations: []
+
+  ## @param agents.affinity Affinity for the agents Pod
+  affinity: {}
+
+  ## @param agents.persistence Additional volumes to create and mount on the agents. Used for debugging purposes
+  ## @extra agents.persistence.volume-name.size Size of the additional volume
+  ## @extra agents.persistence.volume-name.type Type of the additional volume, persistentVolumeClaim or emptyDir
+  ## @extra agents.persistence.volume-name.mountPath Path where the volume should be mounted to
+  persistence: {}
+
+  ## @param agents.extraVolumeMounts Additional volumes to mount on the agents.
+  extraVolumeMounts: []
+
+  ## @param agents.extraVolumes Additional volumes to mount on the agents.
+  extraVolumes: []
+
+  ## @param agents.pdb.enabled Enable pdb on agents
   pdb:
     enabled: false

@@ -2,7 +2,7 @@
 Test recordings API endpoints in the Meet core app: save recording.
 """
 
-# pylint: disable=W0621,W0613
+# pylint: disable=redefined-outer-name,unused-argument
 
 import uuid
 from unittest import mock
@@ -77,7 +77,8 @@ def test_save_recording_permission_needed(settings, client):
         HTTP_AUTHORIZATION="Bearer testAuthToken",
     )
 
-    assert response.status_code == 403
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Not found."}
 
 
 def test_save_recording_parsing_error(recording_settings, mock_get_parser, client):

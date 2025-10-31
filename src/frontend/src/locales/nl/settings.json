@@ -7,6 +7,13 @@
     "authentication": "Authenticatie",
     "nameError": "Uw naam mag niet leeg zijn"
   },
+  "preferences": {
+    "title": "Voorkeuren",
+    "idleDisconnectModal": {
+      "label": "Verlaat oproepen zonder deelnemers",
+      "description": "Verlaat automatisch een oproep na een paar minuten als geen andere deelnemer meedoet"
+    }
+  },
   "audio": {
     "microphone": {
       "heading": "Microfoon",
@@ -30,6 +37,37 @@
     },
     "permissionsRequired": "Machtigingen vereist"
   },
+  "video": {
+    "camera": {
+      "heading": "Camera",
+      "label": "Selecteer uw video-ingang",
+      "disabled": "Camera uitgeschakeld",
+      "previewAriaLabel": {
+        "enabled": "Videovoorbeeld ingeschakeld",
+        "disabled": "Videovoorbeeld uitgeschakeld"
+      }
+    },
+    "resolution": {
+      "heading": "Resolutie",
+      "publish": {
+        "label": "Selecteer uw verzendresolutie (max.)",
+        "items": {
+          "high": "Hoge definitie",
+          "medium": "Standaarddefinitie",
+          "low": "Lage definitie"
+        }
+      },
+      "subscribe": {
+        "label": "Selecteer uw ontvangstresolutie (max.)",
+        "items": {
+          "high": "Hoge definitie (automatisch)",
+          "medium": "Standaarddefinitie",
+          "low": "Lage definitie"
+        }
+      }
+    },
+    "permissionsRequired": "Machtigingen vereist"
+  },
   "notifications": {
     "heading": "Geluidsmeldingen",
     "label": "Geluidsmeldingen voor",
@@ -38,9 +76,15 @@
       "enable": "Inschakelen"
     },
     "items": {
-      "participantJoined": "Deelnemer is toegevoegd",
-      "handRaised": "Hand opgestoken",
-      "messageReceived": "Bericht ontvangen"
+      "participantJoined": {
+        "label": "Deelnemer is toegevoegd"
+      },
+      "handRaised": {
+        "label": "Hand opgestoken"
+      },
+      "messageReceived": {
+        "label": "Bericht ontvangen"
+      }
     }
   },
   "dialog": {
@@ -54,6 +98,7 @@
   "tabs": {
     "account": "Profiel",
     "audio": "Audio",
+    "video": "Video",
     "general": "Algemeen",
     "notifications": "Meldingen"
   }

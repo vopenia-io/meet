@@ -1,23 +1,26 @@
 import { type ReactNode } from 'react'
 import { styled } from '@/styled-system/jsx'
-import { RiArrowDropDownLine } from '@remixicon/react'
+import { RemixiconComponentType, RiArrowDropDownLine } from '@remixicon/react'
 import {
   Button,
   ListBox,
   ListBoxItem,
   Select as RACSelect,
-  SelectProps,
+  SelectProps as RACSelectProps,
   SelectValue,
 } from 'react-aria-components'
 import { Box } from './Box'
 import { StyledPopover } from './Popover'
 import { menuRecipe } from '@/primitives/menuRecipe.ts'
+import { css } from '@/styled-system/css'
+import type { Placement } from '@react-types/overlays'
 
 const StyledButton = styled(Button, {
   base: {
     width: 'full',
     display: 'flex',
     justifyContent: 'space-between',
+    alignItems: 'center',
     paddingY: 0.125,
     paddingX: 0.25,
     border: '1px solid',
@@ -39,6 +42,31 @@ const StyledButton = styled(Button, {
       boxShadow: '0 1px 2px rgba(0 0 0 / 0.02)',
     },
   },
+  variants: {
+    variant: {
+      light: {},
+      dark: {
+        backgroundColor: 'primaryDark.100',
+        fontWeight: 'medium !important',
+        color: 'white',
+        '&[data-pressed]': {
+          backgroundColor: 'primaryDark.900',
+          color: 'primaryDark.100',
+        },
+        '&[data-hovered]': {
+          backgroundColor: 'primaryDark.300',
+          color: 'white',
+        },
+        '&[data-selected]': {
+          backgroundColor: 'primaryDark.700 !important',
+          color: 'primaryDark.100 !important',
+        },
+      },
+    },
+  },
+  defaultVariants: {
+    variant: 'light',
+  },
 })
 
 const StyledSelectValue = styled(SelectValue, {
@@ -53,30 +81,60 @@ const StyledSelectValue = styled(SelectValue, {
   },
 })
 
-export const Select = <T extends string | number>({
-  label,
-  items,
-  errors,
-  ...props
-}: Omit<SelectProps<object>, 'items' | 'label' | 'errors'> & {
+const StyledIcon = styled('div', {
+  base: {
+    marginRight: '0.35rem',
+    flexShrink: 0,
+  },
+})
+
+export type SelectProps<T> = Omit<
+  RACSelectProps<object>,
+  'items' | 'label' | 'errors'
+> & {
+  iconComponent?: RemixiconComponentType
   label: ReactNode
   items: Array<{ value: T; label: ReactNode }>
   errors?: ReactNode
-}) => {
+  placement?: Placement
+  variant?: 'light' | 'dark'
+}
+
+export const Select = <T extends string | number>({
+  label,
+  iconComponent,
+  items,
+  errors,
+  placement,
+  variant = 'light',
+  ...props
+}: SelectProps<T>) => {
+  const IconComponent = iconComponent
   return (
     <RACSelect {...props}>
       {label}
-      <StyledButton>
+      <StyledButton variant={variant}>
+        {!!IconComponent && (
+          <StyledIcon>
+            <IconComponent size={18} />
+          </StyledIcon>
+        )}
         <StyledSelectValue />
-        <RiArrowDropDownLine aria-hidden="true" />
+        <RiArrowDropDownLine
+          aria-hidden="true"
+          className={css({ flexShrink: 0 })}
+        />
       </StyledButton>
-      <StyledPopover>
-        <Box size="sm" type="popover" variant="control">
+      <StyledPopover placement={placement}>
+        <Box size="sm" type="popover" variant={variant}>
           <ListBox>
             {items.map((item) => (
               <ListBoxItem
                 className={
-                  menuRecipe({ extraPadding: true, variant: 'light' }).item
+                  menuRecipe({
+                    extraPadding: true,
+                    variant: variant,
+                  }).item
                 }
                 id={item.value}
                 key={item.value}

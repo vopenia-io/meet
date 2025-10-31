@@ -21,6 +21,7 @@
 | `ingress.path`                                                               | Path to use for the Ingress                          | `/`                                                                |
 | `ingress.hosts`                                                              | Additional host to configure for the Ingress         | `[]`                                                               |
 | `ingress.tls.enabled`                                                        | Weather to enable TLS for the Ingress                | `true`                                                             |
+| `ingress.tls.secretName`                                                     | Secret name for TLS config                           | `nil`                                                              |
 | `ingress.tls.additional[].secretName`                                        | Secret name for additional TLS config                |                                                                    |
 | `ingress.tls.additional[].hosts[]`                                           | Hosts for additional TLS config                      |                                                                    |
 | `ingress.customBackends`                                                     | Add custom backends to ingress                       | `[]`                                                               |
@@ -30,6 +31,7 @@
 | `ingressAdmin.path`                                                          | Path to use for the Ingress                          | `/admin`                                                           |
 | `ingressAdmin.hosts`                                                         | Additional host to configure for the Ingress         | `[]`                                                               |
 | `ingressAdmin.tls.enabled`                                                   | Weather to enable TLS for the Ingress                | `true`                                                             |
+| `ingressAdmin.tls.secretName`                                                | Secret name for TLS config                           | `nil`                                                              |
 | `ingressAdmin.tls.additional[].secretName`                                   | Secret name for additional TLS config                |                                                                    |
 | `ingressAdmin.tls.additional[].hosts[]`                                      | Hosts for additional TLS config                      |                                                                    |
 | `ingressMedia.enabled`                                                       | whether to enable the Ingress or not                 | `false`                                                            |
@@ -163,6 +165,7 @@
 | `posthog.ingress.path`                 | URL path prefix for the ingress routes (e.g., /)            | `/`                       |
 | `posthog.ingress.hosts`                | Additional hostnames array to be included in the ingress    | `[]`                      |
 | `posthog.ingress.tls.enabled`          | Enable or disable TLS/HTTPS for the ingress                 | `true`                    |
+| `posthog.ingress.tls.secretName`       | Secret name for TLS config                                  | `nil`                     |
 | `posthog.ingress.tls.additional`       | Additional TLS configurations for extra hosts/certificates  | `[]`                      |
 | `posthog.ingress.customBackends`       | Custom backend service configurations for the ingress       | `[]`                      |
 | `posthog.ingress.annotations`          | Additional Kubernetes annotations to apply to the ingress   | `{}`                      |
@@ -172,6 +175,7 @@
 | `posthog.ingressAssets.path`           | URL path prefix for the ingress routes (e.g., /)            | `/static`                 |
 | `posthog.ingressAssets.hosts`          | Additional hostnames array to be included in the ingress    | `[]`                      |
 | `posthog.ingressAssets.tls.enabled`    | Enable or disable TLS/HTTPS for the ingress                 | `true`                    |
+| `posthog.ingressAssets.tls.secretName` | Secret name for TLS config                                  | `nil`                     |
 | `posthog.ingressAssets.tls.additional` | Additional TLS configurations for extra hosts/certificates  | `[]`                      |
 | `posthog.ingressAssets.customBackends` | Custom backend service configurations for the ingress       | `[]`                      |
 | `posthog.ingressAssets.annotations`    | Additional Kubernetes annotations to apply to the ingress   | `{}`                      |
@@ -278,3 +282,36 @@
 | `celery.extraVolumeMounts`                           | Additional volumes to mount on the celery.                                        | `[]`        |
 | `celery.extraVolumes`                                | Additional volumes to mount on the celery.                                        | `[]`        |
 | `celery.pdb.enabled`                                 | Enable pdb on celery                                                              | `false`     |
+
+### agents
+
+| Name                                                 | Description                                                                       | Value                 |
+| ---------------------------------------------------- | --------------------------------------------------------------------------------- | --------------------- |
+| `agents.image.repository`                            | Repository to use to pull meet's agents container image                           | `lasuite/meet-agents` |
+| `agents.image.tag`                                   | meet's agents container tag                                                       | `latest`              |
+| `agents.image.pullPolicy`                            | agents container image pull policy                                                | `IfNotPresent`        |
+| `agents.dpAnnotations`                               | Annotations to add to the agents Deployment                                       | `{}`                  |
+| `agents.command`                                     | Override the agents container command                                             | `[]`                  |
+| `agents.args`                                        | Override the agents container args                                                | `[]`                  |
+| `agents.replicas`                                    | Amount of agents replicas                                                         | `1`                   |
+| `agents.shareProcessNamespace`                       | Enable share process namespace between containers                                 | `false`               |
+| `agents.sidecars`                                    | Add sidecars containers to agents deployment                                      | `[]`                  |
+| `agents.securityContext`                             | Configure agents Pod security context                                             | `nil`                 |
+| `agents.envVars`                                     | Configure agents container environment variables                                  | `undefined`           |
+| `agents.envVars.BY_VALUE`                            | Example environment variable by setting value directly                            |                       |
+| `agents.envVars.FROM_CONFIGMAP.configMapKeyRef.name` | Name of a ConfigMap when configuring env vars from a ConfigMap                    |                       |
+| `agents.envVars.FROM_CONFIGMAP.configMapKeyRef.key`  | Key within a ConfigMap when configuring env vars from a ConfigMap                 |                       |
+| `agents.envVars.FROM_SECRET.secretKeyRef.name`       | Name of a Secret when configuring env vars from a Secret                          |                       |
+| `agents.envVars.FROM_SECRET.secretKeyRef.key`        | Key within a Secret when configuring env vars from a Secret                       |                       |
+| `agents.podAnnotations`                              | Annotations to add to the agents Pod                                              | `{}`                  |
+| `agents.resources`                                   | Resource requirements for the agents container                                    | `{}`                  |
+| `agents.nodeSelector`                                | Node selector for the agents Pod                                                  | `{}`                  |
+| `agents.tolerations`                                 | Tolerations for the agents Pod                                                    | `[]`                  |
+| `agents.affinity`                                    | Affinity for the agents Pod                                                       | `{}`                  |
+| `agents.persistence`                                 | Additional volumes to create and mount on the agents. Used for debugging purposes | `{}`                  |
+| `agents.persistence.volume-name.size`                | Size of the additional volume                                                     |                       |
+| `agents.persistence.volume-name.type`                | Type of the additional volume, persistentVolumeClaim or emptyDir                  |                       |
+| `agents.persistence.volume-name.mountPath`           | Path where the volume should be mounted to                                        |                       |
+| `agents.extraVolumeMounts`                           | Additional volumes to mount on the agents.                                        | `[]`                  |
+| `agents.extraVolumes`                                | Additional volumes to mount on the agents.                                        | `[]`                  |
+| `agents.pdb.enabled`                                 | Enable pdb on agents                                                              | `false`               |

@@ -1,9 +1,10 @@
 """Client serializers for the Meet core app."""
 
-import uuid
+# pylint: disable=abstract-method,no-name-in-module
 
 from django.utils.translation import gettext_lazy as _
 
+from livekit.api import ParticipantPermission
 from rest_framework import serializers
 from rest_framework.exceptions import PermissionDenied
 from timezone_field.rest_framework import TimeZoneSerializerField
@@ -134,6 +135,8 @@ class RoomSerializer(serializers.ModelSerializer):
             )
             output["accesses"] = access_serializer.data
 
+        configuration = output["configuration"]
+
         if not is_admin_or_owner:
             del output["configuration"]
 
@@ -150,7 +153,11 @@ class RoomSerializer(serializers.ModelSerializer):
             room_id = f"{instance.id!s}"
             username = request.query_params.get("username", None)
             output["livekit"] = utils.generate_livekit_config(
-                room_id=room_id, user=request.user, username=username
+                room_id=room_id,
+                user=request.user,
+                username=username,
+                configuration=configuration,
+                is_admin_or_owner=is_admin_or_owner,
             )
 
         output["is_administrable"] = is_admin_or_owner
@@ -179,7 +186,19 @@ class RecordingSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
-class StartRecordingSerializer(serializers.Serializer):
+class BaseValidationOnlySerializer(serializers.Serializer):
+    """Base serializer for validation-only operations."""
+
+    def create(self, validated_data):
+        """Not implemented as this is a validation-only serializer."""
+        raise NotImplementedError(f"{self.__class__.__name__} is validation-only")
+
+    def update(self, instance, validated_data):
+        """Not implemented as this is a validation-only serializer."""
+        raise NotImplementedError(f"{self.__class__.__name__} is validation-only")
+
+
+class StartRecordingSerializer(BaseValidationOnlySerializer):
     """Validate start recording requests."""
 
     mode = serializers.ChoiceField(
@@ -192,64 +211,24 @@ class StartRecordingSerializer(serializers.Serializer):
         },
     )
 
-    def create(self, validated_data):
-        """Not implemented as this is a validation-only serializer."""
-        raise NotImplementedError("StartRecordingSerializer is validation-only")
 
-    def update(self, instance, validated_data):
-        """Not implemented as this is a validation-only serializer."""
-        raise NotImplementedError("StartRecordingSerializer is validation-only")
-
-
-class RequestEntrySerializer(serializers.Serializer):
+class RequestEntrySerializer(BaseValidationOnlySerializer):
     """Validate request entry data."""
 
     username = serializers.CharField(required=True)
 
-    def create(self, validated_data):
-        """Not implemented as this is a validation-only serializer."""
-        raise NotImplementedError("RequestEntrySerializer is validation-only")
 
-    def update(self, instance, validated_data):
-        """Not implemented as this is a validation-only serializer."""
-        raise NotImplementedError("RequestEntrySerializer is validation-only")
-
-
-class ParticipantEntrySerializer(serializers.Serializer):
+class ParticipantEntrySerializer(BaseValidationOnlySerializer):
     """Validate participant entry decision data."""
 
-    participant_id = serializers.CharField(required=True)
+    participant_id = serializers.UUIDField(required=True)
     allow_entry = serializers.BooleanField(required=True)
 
-    def validate_participant_id(self, value):
-        """Validate that the participant_id is a valid UUID hex string."""
-        try:
-            uuid.UUID(hex=value, version=4)
-        except (ValueError, TypeError) as e:
-            raise serializers.ValidationError("Invalid UUID hex format") from e
-        return value
 
-    def create(self, validated_data):
-        """Not implemented as this is a validation-only serializer."""
-        raise NotImplementedError("ParticipantEntrySerializer is validation-only")
-
-    def update(self, instance, validated_data):
-        """Not implemented as this is a validation-only serializer."""
-        raise NotImplementedError("ParticipantEntrySerializer is validation-only")
-
-
-class CreationCallbackSerializer(serializers.Serializer):
+class CreationCallbackSerializer(BaseValidationOnlySerializer):
     """Validate room creation callback data."""
 
     callback_id = serializers.CharField(required=True)
-
-    def create(self, validated_data):
-        """Not implemented as this is a validation-only serializer."""
-        raise NotImplementedError("CreationCallbackSerializer is validation-only")
-
-    def update(self, instance, validated_data):
-        """Not implemented as this is a validation-only serializer."""
-        raise NotImplementedError("CreationCallbackSerializer is validation-only")
 
 
 class RoomInviteSerializer(serializers.Serializer):
@@ -257,10 +236,68 @@ class RoomInviteSerializer(serializers.Serializer):
 
     emails = serializers.ListField(child=serializers.EmailField(), allow_empty=False)
 
-    def create(self, validated_data):
-        """Not implemented as this is a validation-only serializer."""
-        raise NotImplementedError("RoomInviteSerializer is validation-only")
 
-    def update(self, instance, validated_data):
-        """Not implemented as this is a validation-only serializer."""
-        raise NotImplementedError("RoomInviteSerializer is validation-only")
+class BaseParticipantsManagementSerializer(BaseValidationOnlySerializer):
+    """Base serializer for participant management operations."""
+
+    participant_identity = serializers.UUIDField(
+        help_text="LiveKit participant identity (UUID format)"
+    )
+
+
+class MuteParticipantSerializer(BaseParticipantsManagementSerializer):
+    """Validate participant muting data."""
+
+    track_sid = serializers.CharField(
+        max_length=255, help_text="LiveKit track SID to mute"
+    )
+
+
+class UpdateParticipantSerializer(BaseParticipantsManagementSerializer):
+    """Validate participant update data."""
+
+    metadata = serializers.DictField(
+        required=False, allow_null=True, help_text="Participant metadata as JSON object"
+    )
+    attributes = serializers.DictField(
+        required=False,
+        allow_null=True,
+        help_text="Participant attributes as JSON object",
+    )
+    permission = serializers.DictField(
+        required=False,
+        allow_null=True,
+        help_text="Participant permission as JSON object",
+    )
+    name = serializers.CharField(
+        max_length=255,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        help_text="Display name for the participant",
+    )
+
+    def validate(self, attrs):
+        """Ensure at least one update field is provided."""
+        update_fields = ["metadata", "attributes", "permission", "name"]
+
+        has_update = any(
+            field in attrs and attrs[field] is not None and attrs[field] != ""
+            for field in update_fields
+        )
+
+        if not has_update:
+            raise serializers.ValidationError(
+                f"At least one of the following fields must be provided: "
+                f"{', '.join(update_fields)}."
+            )
+
+        if "permission" in attrs:
+            try:
+                ParticipantPermission(**attrs["permission"])
+            except ValueError as e:
+                raise serializers.ValidationError(
+                    {"permission": f"Invalid permission: {str(e)}"}
+                ) from e
+
+        return attrs

@@ -1,8 +1,7 @@
 import { ProcessorWrapper } from '@livekit/track-processors'
 import { Track, TrackProcessor } from 'livekit-client'
-import { BackgroundBlurTrackProcessorJsWrapper } from './BackgroundBlurTrackProcessorJsWrapper'
 import { BackgroundCustomProcessor } from './BackgroundCustomProcessor'
-import { BackgroundVirtualTrackProcessorJsWrapper } from './BackgroundVirtualTrackProcessorJsWrapper'
+import { UnifiedBackgroundTrackProcessor } from './UnifiedBackgroundTrackProcessor'
 
 export type BackgroundOptions = {
   blurRadius?: number
@@ -16,7 +15,7 @@ export interface ProcessorSerialized {
 
 export interface BackgroundProcessorInterface
   extends TrackProcessor<Track.Kind> {
-  update(opts: BackgroundOptions): void
+  update(opts: BackgroundOptions): Promise<void>
   options: BackgroundOptions
   clone(): BackgroundProcessorInterface
   serialize(): ProcessorSerialized
@@ -41,21 +40,19 @@ export class BackgroundProcessorFactory {
     type: ProcessorType,
     opts: BackgroundOptions
   ): BackgroundProcessorInterface | undefined {
-    if (type === ProcessorType.BLUR) {
-      if (ProcessorWrapper.isSupported) {
-        return new BackgroundBlurTrackProcessorJsWrapper(opts)
-      }
-      if (BackgroundCustomProcessor.isSupported) {
-        return new BackgroundCustomProcessor(opts)
-      }
-    } else if (type === ProcessorType.VIRTUAL) {
-      if (ProcessorWrapper.isSupported) {
-        return new BackgroundVirtualTrackProcessorJsWrapper(opts)
-      }
-      if (BackgroundCustomProcessor.isSupported) {
-        return new BackgroundCustomProcessor(opts)
-      }
+    const isBlur = type === ProcessorType.BLUR
+    const isVirtual = type === ProcessorType.VIRTUAL
+
+    if (!isBlur && !isVirtual) return undefined
+
+    if (ProcessorWrapper.isSupported) {
+      return new UnifiedBackgroundTrackProcessor(opts)
     }
+
+    if (BackgroundCustomProcessor.isSupported) {
+      return new BackgroundCustomProcessor(opts)
+    }
+
     return undefined
   }
 

@@ -1,14 +1,71 @@
-import { useRoomContext } from '@livekit/components-react'
+import {
+  useRemoteParticipants,
+  useRoomContext,
+} from '@livekit/components-react'
 import { useEffect, useRef } from 'react'
 import { DisconnectReason, RoomEvent } from 'livekit-client'
 import { useIsAnalyticsEnabled } from '@/features/analytics/hooks/useIsAnalyticsEnabled'
 import posthog from 'posthog-js'
+import { connectionObserverStore } from '@/stores/connectionObserver'
+import { useConfig } from '@/api/useConfig'
+import { userPreferencesStore } from '@/stores/userPreferences'
+import { useSnapshot } from 'valtio'
 
 export const useConnectionObserver = () => {
   const room = useRoomContext()
   const connectionStartTimeRef = useRef<number | null>(null)
 
+  const { data } = useConfig()
   const isAnalyticsEnabled = useIsAnalyticsEnabled()
+
+  const userPreferencesSnap = useSnapshot(userPreferencesStore)
+
+  const idleDisconnectModalTimeoutRef = useRef<ReturnType<
+    typeof setTimeout
+  > | null>(null)
+
+  const remoteParticipants = useRemoteParticipants({
+    updateOnlyOn: [
+      RoomEvent.ParticipantConnected,
+      RoomEvent.ParticipantDisconnected,
+    ],
+  })
+
+  useEffect(() => {
+    // Always clear existing timer on dependency change
+    if (idleDisconnectModalTimeoutRef.current) {
+      clearTimeout(idleDisconnectModalTimeoutRef.current)
+      idleDisconnectModalTimeoutRef.current = null
+    }
+
+    const isEnabled = userPreferencesSnap.is_idle_disconnect_modal_enabled
+    const delay = data?.idle_disconnect_warning_delay
+
+    // Disabled or invalid delay: ensure modal is closed
+    if (!isEnabled || !delay) {
+      connectionObserverStore.isIdleDisconnectModalOpen = false
+      return
+    }
+
+    if (remoteParticipants.length === 0) {
+      idleDisconnectModalTimeoutRef.current = setTimeout(() => {
+        connectionObserverStore.isIdleDisconnectModalOpen = true
+      }, delay)
+    } else {
+      connectionObserverStore.isIdleDisconnectModalOpen = false
+    }
+
+    return () => {
+      if (idleDisconnectModalTimeoutRef.current) {
+        clearTimeout(idleDisconnectModalTimeoutRef.current)
+        idleDisconnectModalTimeoutRef.current = null
+      }
+    }
+  }, [
+    remoteParticipants.length,
+    data?.idle_disconnect_warning_delay,
+    userPreferencesSnap.is_idle_disconnect_modal_enabled,
+  ])
 
   useEffect(() => {
     if (!isAnalyticsEnabled) return
@@ -23,6 +80,18 @@ export const useConnectionObserver = () => {
 
     const handleReconnect = () => {
       posthog.capture('reconnect-event')
+    }
+
+    const handleReconnected = () => {
+      posthog.capture('reconnected-event')
+    }
+
+    const handleSignalingConnect = () => {
+      posthog.capture('signaling-connect-event')
+    }
+
+    const handleSignalingReconnect = () => {
+      posthog.capture('signaling-reconnect-event')
     }
 
     const handleDisconnect = (
@@ -43,13 +112,19 @@ export const useConnectionObserver = () => {
     }
 
     room.on(RoomEvent.Connected, handleConnection)
+    room.on(RoomEvent.SignalConnected, handleSignalingConnect)
     room.on(RoomEvent.Disconnected, handleDisconnect)
     room.on(RoomEvent.Reconnecting, handleReconnect)
+    room.on(RoomEvent.Reconnected, handleReconnected)
+    room.on(RoomEvent.SignalReconnecting, handleSignalingReconnect)
 
     return () => {
       room.off(RoomEvent.Connected, handleConnection)
+      room.off(RoomEvent.SignalConnected, handleSignalingConnect)
       room.off(RoomEvent.Disconnected, handleDisconnect)
       room.off(RoomEvent.Reconnecting, handleReconnect)
+      room.off(RoomEvent.Reconnected, handleReconnected)
+      room.off(RoomEvent.SignalReconnecting, handleSignalingReconnect)
     }
   }, [room, isAnalyticsEnabled])
 

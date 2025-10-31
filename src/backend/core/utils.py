@@ -2,12 +2,15 @@
 Utils functions used in the core app
 """
 
-# ruff: noqa:S311
+# pylint: disable=R0913, R0917
+# ruff: noqa:S311, PLR0913
 
 import hashlib
 import json
 import random
-from typing import Optional
+import secrets
+import string
+from typing import List, Optional
 from uuid import uuid4
 
 from django.conf import settings
@@ -49,7 +52,13 @@ def generate_color(identity: str) -> str:
 
 
 def generate_token(
-    room: str, user, username: Optional[str] = None, color: Optional[str] = None
+    room: str,
+    user,
+    username: Optional[str] = None,
+    color: Optional[str] = None,
+    sources: Optional[List[str]] = None,
+    is_admin_or_owner: bool = False,
+    participant_id: Optional[str] = None,
 ) -> str:
     """Generate a LiveKit access token for a user in a specific room.
 
@@ -60,25 +69,34 @@ def generate_token(
                          If none, a default value will be used.
         color (Optional[str]): The color to be displayed in the room.
                          If none, a value will be generated
+        sources: (Optional[List[str]]): List of media sources the user can publish
+                         If none, defaults to LIVEKIT_DEFAULT_SOURCES.
+        is_admin_or_owner (bool): Whether user has admin privileges
+        participant_id (Optional[str]): Stable identifier for anonymous users;
+                         used as identity when user.is_anonymous.
 
     Returns:
         str: The LiveKit JWT access token.
     """
+
+    if is_admin_or_owner:
+        sources = settings.LIVEKIT_DEFAULT_SOURCES
+
+    if sources is None:
+        sources = settings.LIVEKIT_DEFAULT_SOURCES
+
     video_grants = VideoGrants(
         room=room,
         room_join=True,
-        room_admin=True,
+        room_admin=is_admin_or_owner,
         can_update_own_metadata=True,
-        can_publish_sources=[
-            "camera",
-            "microphone",
-            "screen_share",
-            "screen_share_audio",
-        ],
+        can_publish=bool(sources),
+        can_publish_sources=sources,
+        can_subscribe=True,
     )
 
     if user.is_anonymous:
-        identity = str(uuid4())
+        identity = participant_id or str(uuid4())
         default_username = "Anonymous"
     else:
         identity = str(user.sub)
@@ -95,14 +113,22 @@ def generate_token(
         .with_grants(video_grants)
         .with_identity(identity)
         .with_name(username or default_username)
-        .with_metadata(json.dumps({"color": color}))
+        .with_attributes(
+            {"color": color, "room_admin": "true" if is_admin_or_owner else "false"}
+        )
     )
 
     return token.to_jwt()
 
 
 def generate_livekit_config(
-    room_id: str, user, username: str, color: Optional[str] = None
+    room_id: str,
+    user,
+    username: str,
+    is_admin_or_owner: bool,
+    color: Optional[str] = None,
+    configuration: Optional[dict] = None,
+    participant_id: Optional[str] = None,
 ) -> dict:
     """Generate LiveKit configuration for room access.
 
@@ -110,15 +136,31 @@ def generate_livekit_config(
         room_id: Room identifier
         user: User instance requesting access
         username: Display name in room
+        is_admin_or_owner (bool): Whether the user has admin/owner privileges for this room.
+        color (Optional[str]): Optional color to associate with the participant.
+        configuration (Optional[dict]): Room configuration dict that can override default settings.
+        participant_id (Optional[str]): Stable identifier for anonymous users;
+                         used as identity when user.is_anonymous.
 
     Returns:
         dict: LiveKit configuration with URL, room and access token
     """
+
+    sources = None
+    if configuration is not None:
+        sources = configuration.get("can_publish_sources", None)
+
     return {
         "url": settings.LIVEKIT_CONFIGURATION["url"],
         "room": room_id,
         "token": generate_token(
-            room=room_id, user=user, username=username, color=color
+            room=room_id,
+            user=user,
+            username=username,
+            color=color,
+            sources=sources,
+            is_admin_or_owner=is_admin_or_owner,
+            participant_id=participant_id,
         ),
     }
 
@@ -200,3 +242,53 @@ async def notify_participants(room_name: str, notification_data: dict):
         raise NotificationError("Failed to notify room participants") from e
     finally:
         await lkapi.aclose()
+
+
+ALPHANUMERIC_CHARSET = string.ascii_letters + string.digits
+
+
+def generate_secure_token(length: int = 30, charset: str = ALPHANUMERIC_CHARSET) -> str:
+    """Generate a cryptographically secure random token.
+
+    Uses SystemRandom for proper entropy, suitable for OAuth tokens
+    and API credentials that must be non-guessable.
+
+    Inspired by: https://github.com/oauthlib/oauthlib/blob/master/oauthlib/common.py
+
+    Args:
+        length: Token length in characters (default: 30)
+        charset: Character set to use for generation
+
+    Returns:
+        Cryptographically secure random token
+    """
+    return "".join(secrets.choice(charset) for _ in range(length))
+
+
+def generate_client_id() -> str:
+    """Generate a unique client ID for application authentication.
+
+    Returns:
+        Random client ID string
+    """
+    return generate_secure_token(settings.APPLICATION_CLIENT_ID_LENGTH)
+
+
+def generate_client_secret() -> str:
+    """Generate a secure client secret for application authentication.
+
+    Returns:
+        Cryptographically secure client secret
+    """
+    return generate_secure_token(settings.APPLICATION_CLIENT_SECRET_LENGTH)
+
+
+def generate_room_slug():
+    """Generate a random room slug in the format 'xxx-xxxx-xxx'."""
+
+    sizes = [3, 4, 3]
+    parts = [
+        "".join(secrets.choice(string.ascii_lowercase) for _ in range(size))
+        for size in sizes
+    ]
+    return "-".join(parts)

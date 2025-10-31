@@ -68,6 +68,7 @@ export const buttonRecipe = cva({
       },
       secondaryText: {
         backgroundColor: 'transparent',
+        fontWeight: 'medium !important',
         color: 'primary.800',
         '&[data-hovered]': {
           backgroundColor: 'greyscale.100',
@@ -147,6 +148,10 @@ export const buttonRecipe = cva({
           backgroundColor: 'primaryDark.900',
           color: 'primaryDark.100',
         },
+        '&[data-disabled]': {
+          backgroundColor: 'primaryDark.75',
+          color: 'primaryDark.300',
+        },
         '&[data-hovered]': {
           backgroundColor: 'primaryDark.300',
           color: 'white',
@@ -200,6 +205,10 @@ export const buttonRecipe = cva({
           backgroundColor: 'greyscale.100',
           color: 'greyscale.700',
         },
+        '&[data-disabled]': {
+          backgroundColor: 'transparent',
+          color: 'greyscale.300',
+        },
       },
       greyscale: {
         backgroundColor: 'transparent',
@@ -246,8 +255,22 @@ export const buttonRecipe = cva({
           color: 'error.100 !important',
         },
         '&[data-disabled]': {
-          backgroundColor: 'error.200',
-          color: 'error.300',
+          backgroundColor: 'error.200 !important',
+          color: 'error.300 !important',
+        },
+      },
+      errorCircle: {
+        backgroundColor: 'error.500',
+        width: '56px',
+        height: '56px',
+        borderRadius: '100%',
+        color: 'white',
+        '&[data-hovered]': {
+          backgroundColor: 'error.600',
+        },
+        '&[data-pressed]': {
+          backgroundColor: 'error.700',
+          color: 'error.200',
         },
       },
       // @TODO: better handling of colors… this is a mess
@@ -268,6 +291,18 @@ export const buttonRecipe = cva({
           background: 'gray.100 !important',
           color: 'primary !important',
         },
+      },
+      permission: {
+        position: 'relative',
+        borderRadius: '100%',
+        color: 'amber.500',
+        width: 'fit-content',
+        height: 'fit-content',
+        padding: '0 !important',
+        margin: '0 !important',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
       },
     },
     invisible: {

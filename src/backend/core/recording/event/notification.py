@@ -131,8 +131,8 @@ class NotificationService:
         if not owner_access:
             logger.error("No owner found for recording %s", recording.id)
             return False
-
         payload = {
+            "owner_id": str(owner_access.user.id),
             "filename": recording.key,
             "email": owner_access.user.email,
             "sub": owner_access.user.sub,
@@ -158,9 +158,9 @@ class NotificationService:
                 timeout=30,
             )
             response.raise_for_status()
-        except requests.HTTPError as exc:
+        except requests.RequestException as exc:
             logger.exception(
-                "Summary service HTTP error for recording %s. URL: %s. Exception: %s",
+                "Summary service error for recording %s. URL: %s. Exception: %s",
                 recording.id,
                 settings.SUMMARY_SERVICE_ENDPOINT,
                 exc,

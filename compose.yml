@@ -46,6 +46,21 @@ services:
       /usr/bin/mc mb meet/meet-media-storage && \
       exit 0;"
 
+  createwebhook:
+    image: minio/mc
+    depends_on:
+      minio:
+        condition: service_healthy
+        restart: true
+    entrypoint: >
+      sh -c "
+      /usr/bin/mc alias set meet http://minio:9000 meet password &&
+      /usr/bin/mc admin config set meet notify_webhook:meet-webhook endpoint='http://app-dev:8000/api/v1.0/recordings/storage-hook/' auth_token='Bearer password' &&
+      /usr/bin/mc admin service restart meet --wait --json &&
+      sleep 15 &&
+      /usr/bin/mc event add meet/meet-media-storage arn:minio:sqs::meet-webhook:webhook --event put &&
+      exit 0;"
+
   app-dev:
     build:
       context: .
@@ -72,6 +87,7 @@ services:
         - nginx
         - livekit
         - createbuckets
+        - createwebhook
     extra_hosts:
       - "127.0.0.1.nip.io:host-gateway"
   
@@ -221,3 +237,64 @@ services:
         - ./docker/livekit/out:/out
       depends_on:
         - redis
+
+  redis-summary:
+    image: redis
+    ports:
+      - "6379:6379"
+
+  app-summary-dev:
+    build:
+      context: src/summary
+      target: development
+      args:
+        DOCKER_USER: ${DOCKER_USER:-1000}
+    user: ${DOCKER_USER:-1000}
+    env_file:
+      - env.d/development/summary
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./src/summary:/app
+    depends_on:
+        - redis-summary
+
+  celery-summary-transcribe:
+    container_name: celery-summary-transcribe
+    build:
+      context: ./src/summary
+      dockerfile: Dockerfile
+      target: production
+    command: celery -A summary.core.celery_worker worker --pool=solo --loglevel=debug -Q transcribe-queue
+    env_file:
+      - env.d/development/summary
+    volumes:
+      - ./src/summary:/app
+    depends_on:
+      - redis-summary
+      - app-summary-dev
+      - minio
+    develop:
+      watch:
+        - action: rebuild
+          path: ./src/summary
+
+  celery-summary-summarize:
+    container_name: celery-summary-summarize
+    build:
+      context: ./src/summary
+      dockerfile: Dockerfile
+      target: production
+    command: celery -A summary.core.celery_worker worker --pool=solo --loglevel=debug -Q summarize-queue
+    env_file:
+      - env.d/development/summary
+    volumes:
+      - ./src/summary:/app
+    depends_on:
+      - redis-summary
+      - app-summary-dev
+      - minio
+    develop:
+      watch:
+        - action: rebuild
+          path: ./src/summary

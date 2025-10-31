@@ -1,4 +1,4 @@
-import { DialogProps, Field, H, Switch, Text } from '@/primitives'
+import { DialogProps, Field, Switch, Text } from '@/primitives'
 
 import { TabPanel, TabPanelProps } from '@/primitives/Tabs'
 import {
@@ -9,78 +9,11 @@ import {
 import { isSafari } from '@/utils/livekit'
 import { useTranslation } from 'react-i18next'
 import { SoundTester } from '@/components/SoundTester'
-import { HStack } from '@/styled-system/jsx'
 import { ActiveSpeaker } from '@/features/rooms/components/ActiveSpeaker'
 import { usePersistentUserChoices } from '@/features/rooms/livekit/hooks/usePersistentUserChoices'
-import { ReactNode } from 'react'
-import { css } from '@/styled-system/css'
-import posthog from 'posthog-js'
 import { useNoiseReductionAvailable } from '@/features/rooms/livekit/hooks/useNoiseReductionAvailable'
-
-type RowWrapperProps = {
-  heading: string
-  children: ReactNode[]
-  beta?: boolean
-}
-
-const BetaBadge = () => (
-  <span
-    className={css({
-      content: '"Beta"',
-      display: 'block',
-      letterSpacing: '-0.02rem',
-      padding: '0 0.25rem',
-      backgroundColor: '#E8EDFF',
-      color: '#0063CB',
-      fontSize: '12px',
-      fontWeight: 500,
-      margin: '0 0 0.9375rem 0.3125rem',
-      lineHeight: '1rem',
-      borderRadius: '4px',
-      width: 'fit-content',
-      height: 'fit-content',
-      marginTop: { base: '10px', sm: '5px' },
-    })}
-  >
-    Beta
-  </span>
-)
-
-const RowWrapper = ({ heading, children, beta }: RowWrapperProps) => {
-  return (
-    <>
-      <HStack>
-        <H lvl={2}>{heading}</H>
-        {beta && <BetaBadge />}
-      </HStack>
-      <HStack
-        gap={0}
-        style={{
-          flexWrap: 'wrap',
-        }}
-      >
-        <div
-          style={{
-            flex: '1 1 215px',
-            minWidth: 0,
-          }}
-        >
-          {children[0]}
-        </div>
-        <div
-          style={{
-            width: '10rem',
-            justifyContent: 'center',
-            display: 'flex',
-            paddingLeft: '1.5rem',
-          }}
-        >
-          {children[1]}
-        </div>
-      </HStack>
-    </>
-  )
-}
+import posthog from 'posthog-js'
+import { RowWrapper } from './layout/RowWrapper'
 
 export type AudioTabProps = Pick<DialogProps, 'onOpenChange'> &
   Pick<TabPanelProps, 'id'>
@@ -92,24 +25,19 @@ export const AudioTab = ({ id }: AudioTabProps) => {
   const { localParticipant } = useRoomContext()
 
   const {
-    userChoices: { noiseReductionEnabled },
+    userChoices: { noiseReductionEnabled, audioDeviceId, audioOutputDeviceId },
     saveAudioInputDeviceId,
     saveNoiseReductionEnabled,
+    saveAudioOutputDeviceId,
   } = usePersistentUserChoices()
 
   const isSpeaking = useIsSpeaking(localParticipant)
 
-  const {
-    devices: devicesOut,
-    activeDeviceId: activeDeviceIdOut,
-    setActiveMediaDevice: setActiveMediaDeviceOut,
-  } = useMediaDeviceSelect({ kind: 'audiooutput' })
+  const { devices: devicesOut, setActiveMediaDevice: setActiveMediaDeviceOut } =
+    useMediaDeviceSelect({ kind: 'audiooutput' })
 
-  const {
-    devices: devicesIn,
-    activeDeviceId: activeDeviceIdIn,
-    setActiveMediaDevice: setActiveMediaDeviceIn,
-  } = useMediaDeviceSelect({ kind: 'audioinput' })
+  const { devices: devicesIn, setActiveMediaDevice: setActiveMediaDeviceIn } =
+    useMediaDeviceSelect({ kind: 'audioinput' })
 
   const itemsOut: DeviceItems = devicesOut.map((d) => ({
     value: d.deviceId,
@@ -134,15 +62,6 @@ export const AudioTab = ({ id }: AudioTabProps) => {
         defaultSelectedKey: undefined,
       }
 
-  // No API to directly query the default audio device; this function heuristically finds it.
-  // Returns the item with value 'default' if present; otherwise, returns the first item in the list.
-  const getDefaultSelectedKey = (items: DeviceItems) => {
-    if (!items || items.length === 0) return
-    const defaultItem =
-      items.find((item) => item.value === 'default') || items[0]
-    return defaultItem.value
-  }
-
   const noiseReductionAvailable = useNoiseReductionAvailable()
 
   return (
@@ -152,11 +71,9 @@ export const AudioTab = ({ id }: AudioTabProps) => {
           type="select"
           label={t('audio.microphone.label')}
           items={itemsIn}
-          defaultSelectedKey={
-            activeDeviceIdIn || getDefaultSelectedKey(itemsIn)
-          }
-          onSelectionChange={(key) => {
-            setActiveMediaDeviceIn(key as string)
+          selectedKey={audioDeviceId}
+          onSelectionChange={async (key) => {
+            await setActiveMediaDeviceIn(key as string)
             saveAudioInputDeviceId(key as string)
           }}
           {...disabledProps}
@@ -180,12 +97,11 @@ export const AudioTab = ({ id }: AudioTabProps) => {
             type="select"
             label={t('audio.speakers.label')}
             items={itemsOut}
-            defaultSelectedKey={
-              activeDeviceIdOut || getDefaultSelectedKey(itemsOut)
-            }
-            onSelectionChange={async (key) =>
-              setActiveMediaDeviceOut(key as string)
-            }
+            selectedKey={audioOutputDeviceId}
+            onSelectionChange={async (key) => {
+              await setActiveMediaDeviceOut(key as string)
+              saveAudioOutputDeviceId(key as string)
+            }}
             {...disabledProps}
             style={{
               minWidth: 0,

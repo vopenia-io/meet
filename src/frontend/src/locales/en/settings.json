@@ -7,6 +7,13 @@
     "authentication": "Authentication",
     "nameError": "Your name cannot be empty"
   },
+  "preferences": {
+    "title": "Preferences",
+    "idleDisconnectModal": {
+      "label": "Leave calls with no participants",
+      "description": "Automatically leaves a call after a few minutes if no other participant joins"
+    }
+  },
   "audio": {
     "microphone": {
       "heading": "Microphone",
@@ -30,6 +37,37 @@
     },
     "permissionsRequired": "Permissions required"
   },
+  "video": {
+    "camera": {
+      "heading": "Camera",
+      "label": "Select your video input",
+      "disabled": "Camera disabled",
+      "previewAriaLabel": {
+        "enabled": "Video preview enabled",
+        "disabled": "Video preview disabled"
+      }
+    },
+    "resolution": {
+      "heading": "Resolution",
+      "publish": {
+        "label": "Select your sending resolution (max.)",
+        "items": {
+          "high": "High definition",
+          "medium": "Standard definition",
+          "low": "Low definition"
+        }
+      },
+      "subscribe": {
+        "label": "Select your reception resolution (max.)",
+        "items": {
+          "high": "High definition (automatic)",
+          "medium": "Standard definition",
+          "low": "Low definition"
+        }
+      }
+    },
+    "permissionsRequired": "Permissions required"
+  },
   "notifications": {
     "heading": "Sound notifications",
     "label": "sound notifications for",
@@ -38,9 +76,15 @@
       "enable": "Enable"
     },
     "items": {
-      "participantJoined": "Participant joined",
-      "handRaised": "Hand raised",
-      "messageReceived": "Message received"
+      "participantJoined": {
+        "label": "Participant joined"
+      },
+      "handRaised": {
+        "label": "Hand raised"
+      },
+      "messageReceived": {
+        "label": "Message received"
+      }
     }
   },
   "dialog": {
@@ -54,6 +98,7 @@
   "tabs": {
     "account": "Profile",
     "audio": "Audio",
+    "video": "Video",
     "general": "General",
     "notifications": "Notifications"
   }

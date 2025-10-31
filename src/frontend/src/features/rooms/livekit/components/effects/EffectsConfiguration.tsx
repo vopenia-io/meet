@@ -2,13 +2,13 @@ import { LocalVideoTrack, Track } from 'livekit-client'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
+  BackgroundOptions,
   BackgroundProcessorFactory,
   BackgroundProcessorInterface,
   ProcessorType,
-  BackgroundOptions,
 } from '../blur'
 import { css } from '@/styled-system/css'
-import { Text, P, ToggleButton, H } from '@/primitives'
+import { H, P, Text, ToggleButton } from '@/primitives'
 import { styled } from '@/styled-system/jsx'
 import { BlurOn } from '@/components/icons/BlurOn'
 import { BlurOnStrong } from '@/components/icons/BlurOnStrong'
@@ -37,12 +37,14 @@ const Information = styled('div', {
 })
 
 export type EffectsConfigurationProps = {
+  isDisabled?: boolean
   videoTrack: LocalVideoTrack
   onSubmit?: (processor?: BackgroundProcessorInterface) => void
   layout?: 'vertical' | 'horizontal'
 }
 
 export const EffectsConfiguration = ({
+  isDisabled,
   videoTrack,
   onSubmit,
   layout = 'horizontal',
@@ -105,7 +107,11 @@ export const EffectsConfiguration = ({
       if (isSelected(type, options)) {
         // Stop processor.
         await clearEffect()
-      } else if (!processor || processor.serialize().type !== type) {
+      } else if (
+        !processor ||
+        (processor.serialize().type !== type &&
+          !BackgroundProcessorFactory.hasModernApiSupport())
+      ) {
         // Change processor.
         const newProcessor = BackgroundProcessorFactory.getProcessor(
           type,
@@ -121,8 +127,7 @@ export const EffectsConfiguration = ({
         await videoTrack.setProcessor(newProcessor)
         onSubmit?.(newProcessor)
       } else {
-        // Update processor.
-        processor?.update(options)
+        await processor?.update(options)
         // We want to trigger onSubmit when options changes so the parent component is aware of it.
         onSubmit?.(processor)
       }
@@ -177,6 +182,8 @@ export const EffectsConfiguration = ({
           width: '100%',
           aspectRatio: 16 / 9,
           position: 'relative',
+          overflow: 'hidden',
+          borderRadius: '8px',
         })}
       >
         {videoTrack && !videoTrack.isMuted ? (
@@ -209,7 +216,7 @@ export const EffectsConfiguration = ({
                 marginBottom: 0,
               }}
             >
-              {t('activateCamera')}
+              {t(isDisabled ? 'cameraDisabled' : 'activateCamera')}
             </P>
           </div>
         )}
@@ -271,7 +278,7 @@ export const EffectsConfiguration = ({
                     await clearEffect()
                   }}
                   isSelected={!getProcessor()}
-                  isDisabled={processorPendingReveal}
+                  isDisabled={processorPendingReveal || isDisabled}
                 >
                   <RiProhibited2Line />
                 </ToggleButton>
@@ -283,7 +290,7 @@ export const EffectsConfiguration = ({
                   tooltip={tooltipLabel(ProcessorType.BLUR, {
                     blurRadius: BlurRadius.LIGHT,
                   })}
-                  isDisabled={processorPendingReveal}
+                  isDisabled={processorPendingReveal || isDisabled}
                   onChange={async () =>
                     await toggleEffect(ProcessorType.BLUR, {
                       blurRadius: BlurRadius.LIGHT,
@@ -304,7 +311,7 @@ export const EffectsConfiguration = ({
                   tooltip={tooltipLabel(ProcessorType.BLUR, {
                     blurRadius: BlurRadius.NORMAL,
                   })}
-                  isDisabled={processorPendingReveal}
+                  isDisabled={processorPendingReveal || isDisabled}
                   onChange={async () =>
                     await toggleEffect(ProcessorType.BLUR, {
                       blurRadius: BlurRadius.NORMAL,
@@ -352,7 +359,7 @@ export const EffectsConfiguration = ({
                         tooltip={tooltipLabel(ProcessorType.VIRTUAL, {
                           imagePath,
                         })}
-                        isDisabled={processorPendingReveal}
+                        isDisabled={processorPendingReveal || isDisabled}
                         onChange={async () =>
                           await toggleEffect(ProcessorType.VIRTUAL, {
                             imagePath,

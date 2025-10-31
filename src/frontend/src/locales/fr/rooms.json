@@ -7,9 +7,18 @@
     "home": "Retourner à l'accueil",
     "back": "Réintégrer la réunion"
   },
-  "join": {
+  "selectDevice": {
+    "loading": "Chargement…",
+    "select": "Sélectionnez une valeur",
+    "permissionsNeeded": "Autorisations nécessaires",
+    "settings": {
+      "audio": "Paramètres audio",
+      "video": "Paramètres video"
+    },
+    "effects": "Effets d'arrière-plan",
     "videoinput": {
       "choose": "Choisir la webcam",
+      "permissionsNeeded": "Choisir la webcam - autorisations nécessaires",
       "disable": "Désactiver la webcam",
       "enable": "Activer la webcam",
       "label": "Webcam",
@@ -17,13 +26,20 @@
     },
     "audioinput": {
       "choose": "Choisir le micro",
+      "permissionsNeeded": "Choisir le micro - autorisations nécessaires",
       "disable": "Désactiver le micro",
       "enable": "Activer le micro",
       "label": "Microphone"
     },
+    "audiooutput": {
+      "choose": "Choisir le haut-parleur",
+      "permissionsNeeded": "Choisir le haut-parleur - autorisations nécessaires"
+    }
+  },
+  "join": {
     "heading": "Rejoindre la réunion ?",
     "effects": {
-      "description": "Effets d'arrière plan",
+      "description": "Effets d'arrière-plan",
       "title": "Effets",
       "subTitle": "Paramétrez les effets de votre caméra."
     },
@@ -37,7 +53,17 @@
       "usernameEmpty": "Votre nom ne peut pas être vide"
     },
     "cameraDisabled": "La caméra est désactivée.",
-    "cameraStarting": "La caméra va démarrer.",
+    "cameraStarting": "La caméra va démarrer…",
+    "cameraNotGranted": "Souhaitez-vous que les autres puissent vous voir pendant la réunion ?",
+    "cameraAndMicNotGranted": "Souhaitez-vous que les autres puissent vous voir et vous entendre pendant la réunion ?",
+    "videoPreview": {
+      "enabled": "Apercu vidéo activé",
+      "disabled": "Apercu vidéo désactivé"
+    },
+    "permissionsButton": {
+      "cameraAndMicNotGranted": "Autorisez l'accès à la caméra et au micro",
+      "cameraNotGranted": "Autorisez l'accès à la caméra"
+    },
     "waiting": {
       "title": "Demande de participation…",
       "body": "Vous pourrez participer à cet appel lorsque quelqu'un vous y autorisera"
@@ -53,12 +79,21 @@
   },
   "leaveRoomPrompt": "Revenir à l'accueil vous fera quitter la réunion.",
   "shareDialog": {
-    "copy": "Copier le lien de la réunion",
-    "copyButton": "Copier le lien",
-    "copied": "Lien copié dans le presse-papiers",
+    "copy": "Copier les informations",
+    "copyUrl": "Copier le lien",
+    "copied": "Copiées dans le presse-papiers",
     "heading": "Votre réunion est prête",
-    "description": "Partagez ce lien avec les personnes que vous souhaitez inviter à la réunion.",
-    "permissions": "Les personnes disposant de ce lien n'ont pas besoin de votre autorisation pour rejoindre cette réunion."
+    "description": "Partagez ces informations avec les personnes que vous souhaitez inviter à la réunion.",
+    "permissions": "Les personnes disposant de ce lien n'ont pas besoin de votre autorisation pour rejoindre cette réunion.",
+    "phone": {
+      "call": "Appelez le :",
+      "pinCode": "Code :"
+    }
+  },
+  "pagination": {
+    "count": "{{currentPage}} sur {{totalPageCount}}",
+    "next": "page suivante",
+    "previous": "page précédente"
   },
   "mediaErrorDialog": {
     "DeviceInUse": {
@@ -72,6 +107,30 @@
       }
     },
     "close": "OK"
+  },
+  "permissionErrorDialog": {
+    "heading": {
+      "camera": "{{appTitle}} n'est pas autorisé à utiliser votre caméra",
+      "microphone": "{{appTitle}} n'est pas autorisé à utiliser votre micro",
+      "cameraAndMicrophone": "{{appTitle}} n'est pas autorisé à utiliser votre micro ni votre caméra",
+      "default": "{{appTitle}} n'est pas autorisé à utiliser certaines fonctionnalités nécessaires."
+    },
+    "body": {
+      "openMenu": {
+        "others": "Cliquez sur l'icône des paramètres ICON_PLACEHOLDER dans la barre d'adresse de votre navigateur",
+        "safari": "Cliquez sur le menu \"Safari\", et ouvrez \"Paramètres pour {{appDomain}}\"."
+      },
+      "details": {
+        "camera": "Autorisez l'accès à la caméra",
+        "microphone": "Autorisez l'accès au microphone",
+        "cameraAndMicrophone": "Autorisez l'accès à la caméra et au microphone",
+        "default": "Activez les autorisations nécessaires."
+      }
+    }
+  },
+  "permissionsButton": {
+    "tooltip": "Plus d'infos",
+    "ariaLabel": "Problème de permissions. Afficher plus d'infos"
   },
   "error": {
     "createRoom": {
@@ -89,6 +148,13 @@
       "closeButton": "Ignorer",
       "newTab": "Nouvelle fenêtre"
     }
+  },
+  "isIdleDisconnectModal": {
+    "title": "Êtes-vous toujours là ?",
+    "body": "Vous êtes le seul participant. Cet appel va donc se terminer dans {{duration}}. Voulez-vous poursuivre l'appel ?",
+    "settings": "Pour ne plus voir ce message, accèder à Paramètres > Général.",
+    "stayButton": "Poursuivre l'appel",
+    "leaveButton": "Quitter maintenant"
   },
   "controls": {
     "microphone": "Microphone",
@@ -113,6 +179,10 @@
     "hand": {
       "raise": "Lever la main",
       "lower": "Baisser la main"
+    },
+    "subtitles": {
+      "closed": "Afficher les sous-titres",
+      "open": "Masquer les sous-titres"
     },
     "screenShare": {
       "start": "Partager l'écran",
@@ -143,8 +213,10 @@
     "items": {
       "feedback": "Partager votre avis",
       "settings": "Paramètres",
+      "screenRecording": "Enregistrement",
+      "transcript": "Transcription",
       "username": "Choisir votre nom",
-      "effects": "Effets d'arrière plan",
+      "effects": "Effets d'arrière-plan",
       "switchCamera": "Changer de caméra",
       "fullscreen": {
         "enter": "Plein écran",
@@ -155,6 +227,7 @@
   },
   "effects": {
     "activateCamera": "Votre caméra est désactivée. Choisissez une option pour l'activer.",
+    "cameraDisabled": "Votre caméra est désactivée.",
     "notAvailable": "Les effets vidéo seront bientôt disponibles sur votre navigateur. Nous y travaillons ! En attendant, vous pouvez utiliser Google Chrome pour de meilleures performances ou Firefox :(",
     "heading": "Flou",
     "clear": "Désactiver l'effect",
@@ -226,9 +299,9 @@
     "roomInformation": {
       "title": "Informations de connexions",
       "button": {
-        "ariaLabel": "Copier l'adresse de votre réunion",
-        "copy": "Copier l'adresse",
-        "copied": "Adresse copiée"
+        "ariaLabel": "Copier les informations de votre réunion",
+        "copy": "Copier les informations",
+        "copied": "Informations copiées"
       },
       "phone": {
         "call": "Appelez le :",
@@ -239,7 +312,7 @@
   "transcript": {
     "start": {
       "heading": "Transcrire cet appel",
-      "body": "Transcrivez cet appel automatiquement et recevez le compte rendu dans Docs.",
+      "body": "Transcrivez cet appel automatiquement {{duration_message}} et recevez le compte rendu dans Docs.",
       "button": "Démarrer la transcription",
       "loading": "Démarrage de la transcription",
       "linkMore": "En savoir plus"
@@ -270,12 +343,13 @@
         "start": "Nous n'avons pas pu démarrer la transcription. Veuillez réessayer dans quelques instants."
       },
       "button": "OK"
-    }
+    },
+    "durationMessage": "(limité à {{max_duration}}) "
   },
   "screenRecording": {
     "start": {
       "heading": "Enregistrer cet appel",
-      "body": "Enregistrez cet appel pour plus tard et recevez l'enregistrement vidéo par mail.",
+      "body": "Enregistrez cet appel pour plus tard {{duration_message}} et recevez l'enregistrement vidéo par mail.",
       "button": "Démarrer l'enregistrement",
       "loading": "Démarrage de l'enregistrement",
       "linkMore": "En savoir plus"
@@ -301,7 +375,8 @@
         "start": "Nous n'avons pas pu démarrer l'enregistrement. Veuillez réessayer dans quelques instants."
       },
       "button": "OK"
-    }
+    },
+    "durationMessage": "(limité à {{max_duration}}) "
   },
   "admin": {
     "description": "Ces paramètres organisateur vous permettent de garder le contrôle de votre réunion. Seuls les organisateurs peuvent accéder à ces commandes.",
@@ -322,6 +397,22 @@
           "label": "Restreindre",
           "description": "Les personnes qui n'ont pas été invitées à la réunion doivent demander à la rejoindre."
         }
+      }
+    },
+    "moderation": {
+      "title": "Modération de la réunion",
+      "description": "Ces paramètres limitent les actions possibles des contributeurs pendant la réunion.",
+      "microphone": {
+        "label": "Allumer le micro",
+        "description": ""
+      },
+      "camera": {
+        "label": "Activer la vidéo",
+        "description": ""
+      },
+      "screenshare": {
+        "label": "Partager leur écran",
+        "description": "En désactivant cette option, les participants ne pourront plus partager leur écran et tout partage en cours sera immédiatement interrompu."
       }
     }
   },
@@ -353,6 +444,7 @@
     "subheading": "Dans la réunion",
     "you": "Vous",
     "contributors": "Contributeurs",
+    "host": "Organisateur de la réunion",
     "collapsable": {
       "open": "Ouvrir la liste {{name}}",
       "close": "Fermer la liste {{name}}"
@@ -367,7 +459,8 @@
     },
     "raisedHands": "Mains levées",
     "lowerParticipantHand": "Baisser la main de {{name}}",
-    "lowerParticipantsHand": "Baisser la main de tous les participants",
+    "lowerParticipantsHand": "Baisser toutes les mains",
+    "muteParticipants": "Couper tous les micros",
     "waiting": {
       "title": "Salle d'attente",
       "accept": {
@@ -380,6 +473,21 @@
         "label": "Refuser {{name}} dans la réunion",
         "all": "Tout rejeter"
       }
+    },
+    "moreOptions": "Plus d'options"
+  },
+  "participantMenu": {
+    "remove": {
+      "label": "Exclure de l'appel",
+      "ariaLabel": "Exclure {{name}} de l'appel"
+    },
+    "unpin": {
+      "label": "Désépingler",
+      "ariaLabel": "Désépingler {{name}}"
+    },
+    "pin": {
+      "label": "Épingler",
+      "ariaLabel": "Épingler {{name}}"
     }
   },
   "recordingStateToast": {
@@ -408,7 +516,7 @@
       "enable": "Épingler",
       "disable": "Annuler l'épinglage"
     },
-    "effects": "Effets d'arrière plan",
+    "effects": "Effets d'arrière-plan",
     "muteParticipant": "Couper le micro de {{name}}",
     "fullScreen": "Plein écran"
   },

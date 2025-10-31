@@ -58,13 +58,25 @@ docker_build(
     'localhost:5001/meet-summary:latest',
     context='../src/summary',
     dockerfile='../src/summary/Dockerfile',
-    only=['.', '../../docker', '../../.dockerignore'],
+    only=['.'],
     target = 'production',
     live_update=[
-        sync('../src/summary', '/home/summary'),
+        sync('../src/summary', '/app'),
     ]
 )
 clean_old_images('localhost:5001/meet-summary')
+
+docker_build(
+    'localhost:5001/meet-agents:latest',
+    context='../src/agents',
+    dockerfile='../src/agents/Dockerfile',
+   only=['.'],
+    target = 'production',
+    live_update=[
+        sync('../src/agents', '/app'),
+    ]
+)
+clean_old_images('localhost:5001/meet-agents')
 
 # Copy the mkcert root CA certificate to our Docker build context
 # This is necessary because we need to inject the certificate into our LiveKit container
@@ -84,6 +96,13 @@ docker_build(
 clean_old_images('localhost:5001/meet-livekit')
 
 k8s_yaml(local('cd ../src/helm && helmfile -n meet -e ${DEV_ENV:-dev} template .'))
+
+k8s_resource('minio-bucket', resource_deps=['minio'])
+k8s_resource('meet-backend', resource_deps=['postgresql', 'minio', 'redis', 'livekit-livekit-server'])
+k8s_resource('meet-backend-migrate', resource_deps=['meet-backend'])
+k8s_resource('livekit-livekit-server-test-connection', resource_deps=['livekit-livekit-server'])
+k8s_resource('keycloak', resource_deps=['kc-postgresql'])
+k8s_resource('meet-backend-createsuperuser', resource_deps=['meet-backend-migrate'])
 
 migration = '''
 set -eu

@@ -18,7 +18,6 @@ import {
   ANIMATION_DURATION,
   ReactionPortals,
 } from '@/features/rooms/livekit/components/ReactionPortal'
-import { safeParseMetadata } from '@/features/rooms/utils/safeParseMetadata'
 
 export const MainNotificationToast = () => {
   const room = useRoomContext()
@@ -99,11 +98,25 @@ export const MainNotificationToast = () => {
         case NotificationType.ScreenRecordingLimitReached:
           toastQueue.add(
             {
+              participant,
               type: notification.type,
             },
             { timeout: NotificationDuration.ALERT }
           )
           break
+        case NotificationType.PermissionsRemoved: {
+          const removedSources = notification?.data?.removedSources
+          if (!removedSources?.length) break
+          toastQueue.add(
+            {
+              participant,
+              type: notification.type,
+              removedSources: removedSources,
+            },
+            { timeout: NotificationDuration.ALERT }
+          )
+          break
+        }
         default:
           return
       }
@@ -155,17 +168,14 @@ export const MainNotificationToast = () => {
 
   useEffect(() => {
     const handleNotificationReceived = (
-      prevMetadataStr: string | undefined,
+      changedAttributes: Record<string, string>,
       participant: Participant
     ) => {
       if (!participant) return
       if (isMobileBrowser()) return
       if (participant.isLocal) return
 
-      const prevMetadata = safeParseMetadata(prevMetadataStr)
-      const metadata = safeParseMetadata(participant.metadata)
-
-      if (prevMetadata?.raised == metadata?.raised) return
+      if (!('handRaisedAt' in changedAttributes)) return
 
       const existingToast = toastQueue.visibleToasts.find(
         (toast) =>
@@ -173,12 +183,12 @@ export const MainNotificationToast = () => {
           toast.content.type === NotificationType.HandRaised
       )
 
-      if (existingToast && prevMetadata.raised && !metadata.raised) {
+      if (existingToast && !changedAttributes?.handRaisedAt) {
         toastQueue.close(existingToast.key)
         return
       }
 
-      if (!existingToast && !prevMetadata.raised && metadata.raised) {
+      if (!existingToast && !!changedAttributes?.handRaisedAt) {
         triggerNotificationSound(NotificationType.HandRaised)
         toastQueue.add(
           {
@@ -190,10 +200,13 @@ export const MainNotificationToast = () => {
       }
     }
 
-    room.on(RoomEvent.ParticipantMetadataChanged, handleNotificationReceived)
+    room.on(RoomEvent.ParticipantAttributesChanged, handleNotificationReceived)
 
     return () => {
-      room.off(RoomEvent.ParticipantMetadataChanged, handleNotificationReceived)
+      room.off(
+        RoomEvent.ParticipantAttributesChanged,
+        handleNotificationReceived
+      )
     }
   }, [room, triggerNotificationSound])
 

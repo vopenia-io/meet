@@ -1,7 +1,7 @@
 import { css } from '@/styled-system/css'
 import { Button, Text } from '@/primitives'
 import { useMemo, useRef } from 'react'
-import { ScreenSharePreferenceStore } from '@/stores/ScreenSharePreferences'
+import { screenSharePreferenceStore } from '@/stores/screenSharePreferences'
 import { useSnapshot } from 'valtio'
 import { useLocalParticipant } from '@livekit/components-react'
 import { useSize } from '../hooks/useResizeObserver'
@@ -18,7 +18,7 @@ export const FullScreenShareWarning = ({
   const warningContainerRef = useRef<HTMLDivElement>(null)
   const { width: containerWidth } = useSize(warningContainerRef)
   const { localParticipant } = useLocalParticipant()
-  const screenSharePreferences = useSnapshot(ScreenSharePreferenceStore)
+  const screenSharePreferences = useSnapshot(screenSharePreferenceStore)
 
   const isFullScreenSharing = useMemo(() => {
     if (trackReference?.source !== 'screen_share') return false
@@ -62,7 +62,7 @@ export const FullScreenShareWarning = ({
   }
 
   const handleDismissWarning = () => {
-    ScreenSharePreferenceStore.enabled = false
+    screenSharePreferenceStore.enabled = false
   }
 
   if (!shouldShowWarning) return null
@@ -71,7 +71,6 @@ export const FullScreenShareWarning = ({
     <div
       className={css({
         position: 'absolute',
-        zIndex: '1000',
         height: '100%',
         width: '100%',
       })}
@@ -81,7 +80,6 @@ export const FullScreenShareWarning = ({
         <div
           className={css({
             position: 'absolute',
-            zIndex: '1000',
             height: '100%',
             width: '100%',
             backgroundColor: 'rgba(22, 22, 34, 0.9)',

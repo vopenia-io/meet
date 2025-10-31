@@ -11,7 +11,7 @@ import { WaitingParticipantListItem } from './WaitingParticipantListItem'
 import { useWaitingParticipants } from '@/features/rooms/hooks/useWaitingParticipants'
 import { Participant } from 'livekit-client'
 import { WaitingParticipant } from '@/features/rooms/api/listWaitingParticipants'
-import { safeParseMetadata } from '@/features/rooms/utils/safeParseMetadata'
+import { MuteEveryoneButton } from './MuteEveryoneButton'
 
 // TODO: Optimize rendering performance, especially for longer participant lists, even though they are generally short.
 export const ParticipantsList = () => {
@@ -35,10 +35,15 @@ export const ParticipantsList = () => {
     ...sortedRemoteParticipants,
   ]
 
-  const raisedHandParticipants = participants.filter((participant) => {
-    const data = safeParseMetadata(participant.metadata)
-    return data.raised
-  })
+  const raisedHandParticipants = participants
+    .filter((participant) => !!participant.attributes.handRaisedAt)
+    .sort((a, b) => {
+      const dateA = new Date(a.attributes.handRaisedAt)
+      const dateB = new Date(b.attributes.handRaisedAt)
+      const timeA = isNaN(dateA.getTime()) ? 0 : dateA.getTime()
+      const timeB = isNaN(dateB.getTime()) ? 0 : dateB.getTime()
+      return timeA - timeB
+    })
 
   const { waitingParticipants, handleParticipantEntry } =
     useWaitingParticipants()
@@ -70,7 +75,7 @@ export const ParticipantsList = () => {
                 onAction={handleParticipantEntry}
               />
             )}
-            action={() => <></>}
+            action={<></>}
           />
         </Div>
       )}
@@ -85,9 +90,9 @@ export const ParticipantsList = () => {
                 participant={participant}
               />
             )}
-            action={() => (
+            action={
               <LowerAllHandsButton participants={raisedHandParticipants} />
-            )}
+            }
           />
         </Div>
       )}
@@ -100,6 +105,7 @@ export const ParticipantsList = () => {
             participant={participant}
           />
         )}
+        action={<MuteEveryoneButton participants={sortedRemoteParticipants} />}
       />
     </Div>
   )

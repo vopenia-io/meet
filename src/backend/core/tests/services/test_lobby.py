@@ -144,10 +144,9 @@ def test_get_or_create_participant_id_from_cookie(lobby_service):
     assert participant_id == "existing-id"
 
 
-@mock.patch("uuid.uuid4")
+@mock.patch.object(uuid, "uuid4", return_value="generated-id")
 def test_get_or_create_participant_id_new(mock_uuid4, lobby_service):
     """Test creating new participant ID when cookie is missing."""
-    mock_uuid4.return_value = mock.Mock(hex="generated-id")
     request = mock.Mock()
     request.COOKIES = {}
 
@@ -266,6 +265,9 @@ def test_request_entry_public_room(
         user=request.user,
         username=username,
         color=participant.color,
+        configuration=room.configuration,
+        is_admin_or_owner=False,
+        participant_id="test-participant-id",
     )
 
     lobby_service._get_participant.assert_called_once_with(room.id, participant_id)
@@ -302,6 +304,9 @@ def test_request_entry_trusted_room(
         user=request.user,
         username=username,
         color=participant.color,
+        configuration=room.configuration,
+        is_admin_or_owner=False,
+        participant_id="test-participant-id",
     )
 
     lobby_service._get_participant.assert_called_once_with(room.id, participant_id)
@@ -394,6 +399,9 @@ def test_request_entry_accepted_participant(
         user=request.user,
         username=username,
         color="#123456",
+        configuration=room.configuration,
+        is_admin_or_owner=False,
+        participant_id="test-participant-id",
     )
     lobby_service._get_participant.assert_called_once_with(room.id, participant_id)
 
@@ -442,7 +450,7 @@ def test_enter_success(
         timeout=settings.LOBBY_WAITING_TIMEOUT,
     )
     mock_notify.assert_called_once_with(
-        room_name=str(room.id), notification_data={"type": "participantWaiting"}
+        room_name=str(room.pk), notification_data={"type": "participantWaiting"}
     )
 
 
@@ -831,3 +839,35 @@ def test_clear_room_empty(settings, lobby_service):
     assert cache.keys(f"test-lobby_{room_id!s}_*") == []
     lobby_service.clear_room_cache(room_id)
     assert cache.keys(f"test-lobby_{room_id!s}_*") == []
+
+
+def test_clear_participant_cache(lobby_service):
+    """Test clearing a specific participant entry from cache."""
+    room_id = uuid.uuid4()
+    participant_id = "test-participant-id"
+
+    cache_key = f"{settings.LOBBY_KEY_PREFIX}_{room_id!s}_{participant_id}"
+    participant_data = {
+        "status": "waiting",
+        "username": "test-username",
+        "id": participant_id,
+        "color": "#123456",
+    }
+    cache.set(cache_key, participant_data, timeout=settings.LOBBY_WAITING_TIMEOUT)
+    assert cache.get(cache_key) is not None
+
+    lobby_service.clear_participant_cache(room_id, participant_id)
+    assert cache.get(cache_key) is None
+
+
+def test_clear_participant_cache_nonexistent(lobby_service):
+    """Test clearing a participant that doesn't exist in cache."""
+    room_id = uuid.uuid4()
+    participant_id = "nonexistent-participant"
+
+    cache_key = f"{settings.LOBBY_KEY_PREFIX}_{room_id!s}_{participant_id}"
+    assert cache.get(cache_key) is None
+
+    lobby_service.clear_participant_cache(room_id, participant_id)
+
+    assert cache.get(cache_key) is None

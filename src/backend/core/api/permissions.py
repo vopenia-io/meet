@@ -1,7 +1,5 @@
 """Permission handlers for the Meet core app."""
 
-from django.conf import settings
-
 from rest_framework import permissions
 
 from ..models import RoleChoices
@@ -101,21 +99,10 @@ class HasPrivilegesOnRoom(IsAuthenticated):
         return obj.is_administrator_or_owner(request.user)
 
 
-class IsRecordingEnabled(permissions.BasePermission):
-    """Check if the recording feature is enabled."""
+class HasLiveKitRoomAccess(permissions.BasePermission):
+    """Check if authenticated user's LiveKit token is for the specific room."""
 
-    message = "Access denied, recording is disabled."
-
-    def has_permission(self, request, view):
-        """Determine if access is allowed based on settings."""
-        return settings.RECORDING_ENABLE
-
-
-class IsStorageEventEnabled(permissions.BasePermission):
-    """Check if the storage event feature is enabled."""
-
-    message = "Access denied, storage event is disabled."
-
-    def has_permission(self, request, view):
-        """Determine if access is allowed based on settings."""
-        return settings.RECORDING_STORAGE_EVENT_ENABLE
+    def has_object_permission(self, request, view, obj):
+        if not request.auth or not hasattr(request.auth, "video"):
+            return False
+        return request.auth.video.room == str(obj.id)

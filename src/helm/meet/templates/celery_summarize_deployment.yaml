@@ -1,0 +1,153 @@
+{{- $envVars := include "meet.common.env" (list . .Values.celerySummarize) -}}
+{{- $fullName := include "meet.celerySummarize.fullname" . -}}
+{{- $component := "celery-summarize" -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $fullName }}
+  annotations:
+   {{- with .Values.celerySummarize.dpAnnotations }}
+   {{- toYaml . | nindent 4 }}
+   {{- end }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "meet.common.labels" (list . $component) | nindent 4 }}
+spec:
+  replicas: {{ .Values.celerySummarize.replicas }}
+  selector:
+    matchLabels:
+      {{- include "meet.common.selectorLabels" (list . $component) | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        {{- with .Values.celerySummarize.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "meet.common.selectorLabels" (list . $component) | nindent 8 }}
+    spec:
+      {{- if $.Values.image.credentials }}
+      imagePullSecrets:
+        - name: {{ include "meet.secret.dockerconfigjson.name" (dict "fullname" (include "meet.fullname" .) "imageCredentials" $.Values.image.credentials) }}
+      {{- end }}
+      shareProcessNamespace: {{ .Values.celerySummarize.shareProcessNamespace }}
+      containers:
+        {{- with .Values.celerySummarize.sidecars }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        - name: {{ .Chart.Name }}
+          image: "{{ (.Values.celerySummarize.image | default dict).repository | default .Values.image.repository }}:{{ (.Values.celerySummarize.image | default dict).tag | default .Values.image.tag }}"
+          imagePullPolicy: {{ (.Values.celerySummarize.image | default dict).pullPolicy | default .Values.image.pullPolicy }}
+          {{- with .Values.celerySummarize.command }}
+          command:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.celerySummarize.args }}
+          args:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          env:
+            {{- if $envVars }}
+            {{- $envVars | indent 12 }}
+            {{- end }}
+          {{- with .Values.celerySummarize.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.celerySummarize.service.targetPort }}
+              protocol: TCP
+          {{- if .Values.celerySummarize.probes.liveness }}
+          livenessProbe:
+            {{- include "meet.probes.abstract" (merge .Values.celerySummarize.probes.liveness (dict "targetPort" .Values.celerySummarize.service.targetPort )) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.celerySummarize.probes.readiness }}
+          readinessProbe:
+            {{- include "meet.probes.abstract" (merge .Values.celerySummarize.probes.readiness (dict "targetPort" .Values.celerySummarize.service.targetPort )) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.celerySummarize.probes.startup }}
+          startupProbe:
+            {{- include "meet.probes.abstract" (merge .Values.celerySummarize.probes.startup (dict "targetPort" .Values.celerySummarize.service.targetPort )) | nindent 12 }}
+          {{- end }}
+          {{- with .Values.celerySummarize.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            {{- range $index, $value := .Values.mountFiles }}
+            - name: "files-{{ $index }}"
+              mountPath: {{ $value.path }}
+              subPath: content
+            {{- end }}
+            {{- range $name, $volume := .Values.celerySummarize.persistence }}
+            - name: "{{ $name }}"
+              mountPath: "{{ $volume.mountPath }}"
+            {{- end }}
+            {{- range .Values.celerySummarize.extraVolumeMounts }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+              subPath: {{ .subPath | default "" }}
+              readOnly: {{ .readOnly }}
+            {{- end }}
+      {{- with .Values.celerySummarize.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.celerySummarize.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.celerySummarize.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        {{- range $index, $value := .Values.mountFiles }}
+        - name: "files-{{ $index }}"
+          configMap:
+            name: "{{ include "meet.fullname" $ }}-files-{{ $index }}"
+        {{- end }}
+        {{- range $name, $volume := .Values.celerySummarize.persistence }}
+        - name: "{{ $name }}"
+          {{- if eq $volume.type "emptyDir" }}
+          emptyDir: {}
+          {{- else }}
+          persistentVolumeClaim:
+            claimName: "{{ $fullName }}-{{ $name }}"
+          {{- end }}
+        {{- end }}
+        {{- range .Values.celerySummarize.extraVolumes }}
+        - name: {{ .name }}
+          {{- if .existingClaim }}
+          persistentVolumeClaim:
+            claimName: {{ .existingClaim }}
+          {{- else if .hostPath }}
+          hostPath:
+            {{ toYaml .hostPath | nindent 12 }}
+          {{- else if .csi }}
+          csi:
+            {{- toYaml .csi | nindent 12 }}
+          {{- else if .configMap }}
+          configMap:
+            {{- toYaml .configMap | nindent 12 }}
+          {{- else if .emptyDir }}
+          emptyDir:
+            {{- toYaml .emptyDir | nindent 12 }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        {{- end }}
+---
+{{ if .Values.celerySummarize.pdb.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ $fullName }}
+  namespace: {{ .Release.Namespace | quote }}
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      {{- include "meet.common.selectorLabels" (list . $component) | nindent 6 }}
+{{ end }}

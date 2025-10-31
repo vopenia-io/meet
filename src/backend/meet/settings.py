@@ -69,6 +69,10 @@ class Base(Configuration):
     USE_SWAGGER = False
 
     API_VERSION = "v1.0"
+    EXTERNAL_API_VERSION = "v1.0"
+    EXTERNAL_API_ENABLED = values.BooleanValue(
+        False, environ_name="EXTERNAL_API_ENABLED", environ_prefix=None
+    )
 
     DATA_DIR = values.Value(path.join("/", "data"), environ_name="DATA_DIR")
 
@@ -322,6 +326,11 @@ class Base(Configuration):
         "is_silent_login_enabled": values.BooleanValue(
             True, environ_name="FRONTEND_IS_SILENT_LOGIN_ENABLED", environ_prefix=None
         ),
+        "idle_disconnect_warning_delay": values.PositiveIntegerValue(
+            None,
+            environ_name="FRONTEND_IDLE_DISCONNECT_WARNING_DELAY",
+            environ_prefix=None,
+        ),
         "feedback": values.DictValue(
             {}, environ_name="FRONTEND_FEEDBACK", environ_prefix=None
         ),
@@ -492,6 +501,19 @@ class Base(Configuration):
         ),
         "url": values.Value(environ_name="LIVEKIT_API_URL", environ_prefix=None),
     }
+    LIVEKIT_FORCE_WSS_PROTOCOL = values.BooleanValue(
+        False, environ_name="LIVEKIT_FORCE_WSS_PROTOCOL", environ_prefix=None
+    )
+    LIVEKIT_DEFAULT_SOURCES = values.ListValue(
+        [
+            "camera",
+            "microphone",
+            "screen_share",
+            "screen_share_audio",
+        ],
+        environ_name="LIVEKIT_DEFAULT_SOURCES",
+        environ_prefix=None,
+    )
     LIVEKIT_ENABLE_FIREFOX_PROXY_WORKAROUND = values.BooleanValue(
         environ_name="LIVEKIT_ENABLE_FIREFOX_PROXY_WORKAROUND",
         environ_prefix=None,
@@ -499,6 +521,10 @@ class Base(Configuration):
     )
     LIVEKIT_VERIFY_SSL = values.BooleanValue(
         True, environ_name="LIVEKIT_VERIFY_SSL", environ_prefix=None
+    )
+    # Regex to filter webhook events by room name. Only matching events are processed.
+    LIVEKIT_WEBHOOK_EVENTS_FILTER_REGEX = values.Value(
+        None, environ_name="LIVEKIT_WEBHOOK_EVENTS_FILTER_REGEX", environ_prefix=None
     )
     RESOURCE_DEFAULT_ACCESS_LEVEL = values.Value(
         "public", environ_name="RESOURCE_DEFAULT_ACCESS_LEVEL", environ_prefix=None
@@ -641,6 +667,61 @@ class Base(Configuration):
         environ_prefix=None,
     )
 
+    # Subtitles settings
+    ROOM_SUBTITLE_ENABLED = values.BooleanValue(
+        False, environ_name="ROOM_SUBTITLE_ENABLED", environ_prefix=None
+    )
+    ROOM_SUBTITLE_AGENT_NAME = values.Value(
+        "multi-user-transcriber",
+        environ_name="ROOM_SUBTITLE_AGENT_NAME",
+        environ_prefix=None,
+    )
+
+    # External Applications
+    APPLICATION_CLIENT_ID_LENGTH = values.PositiveIntegerValue(
+        40,
+        environ_name="APPLICATION_CLIENT_ID_LENGTH",
+        environ_prefix=None,
+    )
+    APPLICATION_CLIENT_SECRET_LENGTH = values.PositiveIntegerValue(
+        128,
+        environ_name="APPLICATION_CLIENT_SECRET_LENGTH",
+        environ_prefix=None,
+    )
+    APPLICATION_JWT_SECRET_KEY = SecretFileValue(
+        None, environ_name="APPLICATION_JWT_SECRET_KEY", environ_prefix=None
+    )
+    APPLICATION_JWT_ALG = values.Value(
+        "HS256",
+        environ_name="APPLICATION_JWT_ALG",
+        environ_prefix=None,
+    )
+    APPLICATION_JWT_ISSUER = values.Value(
+        "lasuite-meet",
+        environ_name="APPLICATION_JWT_ISSUER",
+        environ_prefix=None,
+    )
+    APPLICATION_JWT_AUDIENCE = values.Value(
+        None,
+        environ_name="APPLICATION_JWT_AUDIENCE",
+        environ_prefix=None,
+    )
+    APPLICATION_JWT_EXPIRATION_SECONDS = values.PositiveIntegerValue(
+        3600,
+        environ_name="APPLICATION_JWT_EXPIRATION_SECONDS",
+        environ_prefix=None,
+    )
+    APPLICATION_JWT_TOKEN_TYPE = values.Value(
+        "Bearer",
+        environ_name="APPLICATION_JWT_TOKEN_TYPE",
+        environ_prefix=None,
+    )
+    APPLICATION_BASE_URL = values.Value(
+        None,
+        environ_name="APPLICATION_BASE_URL",
+        environ_prefix=None,
+    )
+
     # pylint: disable=invalid-name
     @property
     def ENVIRONMENT(self):
@@ -759,6 +840,7 @@ class Test(Base):
         "django.contrib.auth.hashers.MD5PasswordHasher",
     ]
     USE_SWAGGER = True
+    EXTERNAL_API_ENABLED = True
 
     CELERY_TASK_ALWAYS_EAGER = values.BooleanValue(True)
 

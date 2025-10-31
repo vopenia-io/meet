@@ -7,9 +7,18 @@
     "home": "Return to home",
     "back": "Rejoin the meeting"
   },
-  "join": {
+  "selectDevice": {
+    "loading": "Loading…",
+    "select": "Select a value",
+    "permissionsNeeded": "Permission needed",
+    "settings": {
+      "audio": "Audio settings",
+      "video": "Video settings"
+    },
+    "effects": "Effects",
     "videoinput": {
       "choose": "Select camera",
+      "permissionsNeeded": "Select camera - permission needed",
       "disable": "Disable camera",
       "enable": "Enable camera",
       "label": "Camera",
@@ -17,10 +26,17 @@
     },
     "audioinput": {
       "choose": "Select microphone",
+      "permissionsNeeded": "Select microphone - permission needed",
       "disable": "Disable microphone",
       "enable": "Enable microphone",
       "label": "Microphone"
     },
+    "audiooutput": {
+      "choose": "Select speaker",
+      "permissionsNeeded": "Select speaker - permission needed"
+    }
+  },
+  "join": {
     "effects": {
       "description": "Apply effects",
       "title": "Effects",
@@ -37,7 +53,17 @@
       "usernameEmpty": "Your name cannot be empty"
     },
     "cameraDisabled": "Camera is disabled.",
-    "cameraStarting": "Camera is starting.",
+    "cameraStarting": "Camera is starting…",
+    "cameraNotGranted": "Would you like others to be able to see you during the meeting?",
+    "cameraAndMicNotGranted": "Would you like others to be able to see and hear you during the meeting?",
+    "permissionsButton": {
+      "cameraAndMicNotGranted": "Allow access to camera and microphone",
+      "cameraNotGranted": "Allow access to camera"
+    },
+    "videoPreview": {
+      "enabled": "Video preview enabled",
+      "disabled": "Video preview disabled"
+    },
     "waiting": {
       "title": "Requesting to join...",
       "body": "You will be able to join this call when someone authorizes you"
@@ -53,12 +79,21 @@
   },
   "leaveRoomPrompt": "This will make you leave the meeting.",
   "shareDialog": {
-    "copy": "Copy the meeting link",
-    "copyButton": "Copy link",
-    "copied": "Link copied to clipboard",
+    "copy": "Copy information",
+    "copyUrl": "Copy link",
+    "copied": "Information copied to clipboard",
     "heading": "Your meeting is ready",
     "description": "Share this link with people you want to invite to the meeting.",
-    "permissions": "People with this link do not need your permission to join this meeting."
+    "permissions": "People with this link do not need your permission to join this meeting.",
+    "phone": {
+      "call": "Call:",
+      "pinCode": "Code:"
+    }
+  },
+  "pagination": {
+    "count": "{{currentPage}} of {{totalPageCount}}",
+    "next": "next page",
+    "previous": "previous page"
   },
   "mediaErrorDialog": {
     "DeviceInUse": {
@@ -72,6 +107,30 @@
       }
     },
     "close": "OK"
+  },
+  "permissionErrorDialog": {
+    "heading": {
+      "camera": "{{appTitle}} is not allowed to use your camera",
+      "microphone": "{{appTitle}} is not allowed to use your microphone",
+      "cameraAndMicrophone": "{{appTitle}} is not allowed to use your microphone or camera",
+      "default": "{{appTitle}} is not allowed to use certain permissions"
+    },
+    "body": {
+      "openMenu": {
+        "others": "Click on the settings icon ICON_PLACEHOLDER in your browser’s address bar",
+        "safari": "Click the 'Safari' menu, and open 'Settings for {{appDomain}}'."
+      },
+      "details": {
+        "camera": "Allow access to the camera",
+        "microphone": "Allow access to the microphone",
+        "cameraAndMicrophone": "Allow access to the camera and microphone",
+        "default": "Enable the necessary permissions."
+      }
+    }
+  },
+  "permissionsButton": {
+    "tooltip": "More info",
+    "ariaLabel": "Permissions issue. Show more info"
   },
   "error": {
     "createRoom": {
@@ -89,6 +148,13 @@
       "closeButton": "Dismiss",
       "newTab": "New window"
     }
+  },
+  "isIdleDisconnectModal": {
+    "title": "Are you still there?",
+    "body": "You are the only participant. This call will end in {{duration}}. Would you like to continue the call?",
+    "settings": "To stop seeing this message, go to Settings > General.",
+    "stayButton": "Continue the call",
+    "leaveButton": "Leave now"
   },
   "controls": {
     "microphone": "Microphone",
@@ -113,6 +179,10 @@
     "hand": {
       "raise": "Raise hand",
       "lower": "Lower hand"
+    },
+    "subtitles": {
+      "closed": "Show subtitles",
+      "open": "Hide subtitles"
     },
     "screenShare": {
       "start": "Share screen",
@@ -143,6 +213,8 @@
     "items": {
       "feedback": "Give us feedback",
       "settings": "Settings",
+      "screenRecording": "Screen recording",
+      "transcript": "Transcription",
       "username": "Update Your Name",
       "effects": "Apply effects",
       "switchCamera": "Switch camera",
@@ -155,6 +227,7 @@
   },
   "effects": {
     "activateCamera": "Your camera is disabled. Choose an option to enable it.",
+    "cameraDisabled": "Your camera is disabled.",
     "notAvailable": "Video effects will be available soon on your browser. We're working on it! In the meantime, you can use Google Chrome for best performance or Firefox :(",
     "heading": "Blur",
     "clear": "Disable effect",
@@ -226,9 +299,9 @@
     "roomInformation": {
       "title": "Connection Information",
       "button": {
-        "ariaLabel": "Copy your meeting address",
-        "copy": "Copy address",
-        "copied": "Address copied"
+        "ariaLabel": "Copy the information from your meeting",
+        "copy": "Copy information",
+        "copied": "Information copied"
       },
       "phone": {
         "call": "Call:",
@@ -239,7 +312,7 @@
   "transcript": {
     "start": {
       "heading": "Transcribe this call",
-      "body": "Automatically transcribe this call and receive the summary in Docs.",
+      "body": "Automatically transcribe this call {{duration_message}} and receive the summary in Docs.",
       "button": "Start transcription",
       "loading": "Transcription starting",
       "linkMore": "Learn more"
@@ -270,12 +343,13 @@
         "start": "We were unable to start the transcription. Please try again in a moment."
       },
       "button": "OK"
-    }
+    },
+    "durationMessage": "(limited to {{max_duration}}) "
   },
   "screenRecording": {
     "start": {
       "heading": "Record this call",
-      "body": "Record this call to watch it later and receive the video recording by email.",
+      "body": "Record this call to watch it later {{duration_message}} and receive the video recording by email.",
       "button": "Start recording",
       "loading": "Recording starting",
       "linkMore": "Learn more"
@@ -301,7 +375,8 @@
         "start": "We were unable to start the recording. Please try again in a moment."
       },
       "button": "OK"
-    }
+    },
+    "durationMessage": "(limited to {{max_duration}}) "
   },
   "admin": {
     "description": "These organizer settings allow you to maintain control of your meeting. Only organizers can access these controls.",
@@ -322,6 +397,22 @@
           "label": "Restricted",
           "description": "People who have not been invited to the meeting must request to join."
         }
+      }
+    },
+    "moderation": {
+      "title": "Meeting Moderation",
+      "description": "These settings restrict the actions contributors can take during the meeting.",
+      "microphone": {
+        "label": "Turn on microphone",
+        "description": ""
+      },
+      "camera": {
+        "label": "Enable video",
+        "description": ""
+      },
+      "screenshare": {
+        "label": "Share their screen",
+        "description": "Disabling this option will prevent participants from sharing their screen, and any ongoing screen sharing will be stopped immediately."
       }
     }
   },
@@ -352,6 +443,7 @@
   "participants": {
     "subheading": "In room",
     "you": "You",
+    "host": "Host",
     "contributors": "Contributors",
     "collapsable": {
       "open": "Open {{name}} list",
@@ -368,6 +460,7 @@
     "raisedHands": "Raised hands",
     "lowerParticipantHand": "Lower {{name}}'s hand",
     "lowerParticipantsHand": "Lower all hands",
+    "muteParticipants": "Mute all microphones",
     "waiting": {
       "title": "Lobby",
       "accept": {
@@ -380,6 +473,21 @@
         "label": "Deny {{name}} from the meeting",
         "all": "Deny all"
       }
+    },
+    "moreOptions": "More options"
+  },
+  "participantMenu": {
+    "remove": {
+      "label": "Remove from the call",
+      "ariaLabel": "Remove {{name}} from the call"
+    },
+    "unpin": {
+      "label": "Unpin",
+      "ariaLabel": "Unpin {{name}}"
+    },
+    "pin": {
+      "label": "Pin",
+      "ariaLabel": "Pin {{name}}"
     }
   },
   "recordingStateToast": {

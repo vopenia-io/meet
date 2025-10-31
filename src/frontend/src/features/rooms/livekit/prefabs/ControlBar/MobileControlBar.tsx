@@ -4,7 +4,6 @@ import { ControlBarAuxProps } from './ControlBar'
 import React from 'react'
 import { css } from '@/styled-system/css'
 import { LeaveButton } from '../../components/controls/LeaveButton'
-import { SelectToggleDevice } from '../../components/controls/SelectToggleDevice'
 import { Track } from 'livekit-client'
 import { HandToggle } from '../../components/controls/HandToggle'
 import { Button } from '@/primitives/Button'
@@ -19,24 +18,22 @@ import { ChatToggle } from '../../components/controls/ChatToggle'
 import { ParticipantsToggle } from '../../components/controls/Participants/ParticipantsToggle'
 import { useSidePanel } from '../../hooks/useSidePanel'
 import { LinkButton } from '@/primitives'
-import { useSettingsDialog } from '../../components/controls/SettingsDialogContext'
 import { ResponsiveMenu } from './ResponsiveMenu'
 import { ToolsToggle } from '../../components/controls/ToolsToggle'
 import { CameraSwitchButton } from '../../components/controls/CameraSwitchButton'
 import { useConfig } from '@/api/useConfig'
+import { AudioDevicesControl } from '../../components/controls/Device/AudioDevicesControl'
+import { VideoDeviceControl } from '../../components/controls/Device/VideoDeviceControl'
+import { useSettingsDialog } from '@/features/settings/hook/useSettingsDialog'
 
 export function MobileControlBar({
   onDeviceError,
-  microphoneOnChange,
-  cameraOnChange,
-  saveAudioInputDeviceId,
-  saveVideoInputDeviceId,
-}: ControlBarAuxProps) {
+}: Readonly<ControlBarAuxProps>) {
   const { t } = useTranslation('rooms')
   const [isMenuOpened, setIsMenuOpened] = React.useState(false)
   const browserSupportsScreenSharing = supportsScreenSharing()
   const { toggleEffects } = useSidePanel()
-  const { setDialogOpen } = useSettingsDialog()
+  const { openSettingsDialog } = useSettingsDialog()
 
   const { data } = useConfig()
 
@@ -62,25 +59,15 @@ export function MobileControlBar({
           })}
         >
           <LeaveButton />
-          <SelectToggleDevice
-            source={Track.Source.Microphone}
-            onChange={microphoneOnChange}
+          <AudioDevicesControl
             onDeviceError={(error) =>
               onDeviceError?.({ source: Track.Source.Microphone, error })
             }
-            onActiveDeviceChange={(deviceId) =>
-              saveAudioInputDeviceId(deviceId ?? '')
-            }
             hideMenu={true}
           />
-          <SelectToggleDevice
-            source={Track.Source.Camera}
-            onChange={cameraOnChange}
+          <VideoDeviceControl
             onDeviceError={(error) =>
               onDeviceError?.({ source: Track.Source.Camera, error })
-            }
-            onActiveDeviceChange={(deviceId) =>
-              saveVideoInputDeviceId(deviceId ?? '')
             }
             hideMenu={true}
           />
@@ -167,7 +154,7 @@ export function MobileControlBar({
             )}
             <Button
               onPress={() => {
-                setDialogOpen(true)
+                openSettingsDialog()
                 setIsMenuOpened(false)
               }}
               variant="primaryTextDark"

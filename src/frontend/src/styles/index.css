@@ -25,7 +25,11 @@ body,
   }
 }
 
-body:has(.lk-video-conference) #crisp-chatbox > div > a {
+body:has(.lk-video-conference) #crisp-chatbox-button {
+  display: none !important;
+}
+
+body:has(.lk-video-conference) #crisp-chatbox > * > div[role='button'] {
   display: none !important;
 }
 

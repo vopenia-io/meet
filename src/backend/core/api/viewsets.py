@@ -50,9 +50,16 @@ from core.services.lobby import (
     LobbyParticipantNotFound,
     LobbyService,
 )
+from core.services.participants_management import (
+    ParticipantsManagement,
+    ParticipantsManagementException,
+)
 from core.services.room_creation import RoomCreation
+from core.services.subtitle import SubtitleException, SubtitleService
 
+from ..authentication.livekit import LiveKitTokenAuthentication
 from . import permissions, serializers
+from .feature_flag import FeatureFlag
 
 # pylint: disable=too-many-ancestors
 
@@ -287,9 +294,9 @@ class RoomViewSet(
         url_path="start-recording",
         permission_classes=[
             permissions.HasPrivilegesOnRoom,
-            permissions.IsRecordingEnabled,
         ],
     )
+    @FeatureFlag.require("recording")
     def start_room_recording(self, request, pk=None):  # pylint: disable=unused-argument
         """Start recording a room."""
 
@@ -332,9 +339,9 @@ class RoomViewSet(
         url_path="stop-recording",
         permission_classes=[
             permissions.HasPrivilegesOnRoom,
-            permissions.IsRecordingEnabled,
         ],
     )
+    @FeatureFlag.require("recording")
     def stop_room_recording(self, request, pk=None):  # pylint: disable=unused-argument
         """Stop room recording."""
 
@@ -417,7 +424,8 @@ class RoomViewSet(
         try:
             lobby_service.handle_participant_entry(
                 room_id=room.id,
-                **serializer.validated_data,
+                participant_id=str(serializer.validated_data.get("participant_id")),
+                allow_entry=serializer.validated_data.get("allow_entry"),
             )
             return drf_response.Response({"message": "Participant was updated."})
 
@@ -530,6 +538,135 @@ class RoomViewSet(
             status=drf_status.HTTP_200_OK,
         )
 
+    @decorators.action(
+        detail=True,
+        methods=["post"],
+        url_path="start-subtitle",
+        permission_classes=[
+            permissions.HasLiveKitRoomAccess,
+        ],
+        authentication_classes=[LiveKitTokenAuthentication],
+    )
+    @FeatureFlag.require("subtitle")
+    def start_subtitle(self, request, pk=None):  # pylint: disable=unused-argument
+        """Start realtime transcription for the room.
+
+        Requires valid LiveKit token for room authorization.
+        Anonymous users can start subtitles if they have room access tokens.
+        """
+
+        room = self.get_object()
+
+        try:
+            SubtitleService().start_subtitle(room)
+        except SubtitleException:
+            return drf_response.Response(
+                {"error": f"Subtitles failed to start for room {room.slug}"},
+                status=drf_status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        return drf_response.Response(
+            {"status": "success"}, status=drf_status.HTTP_200_OK
+        )
+
+    @decorators.action(
+        detail=True,
+        methods=["post"],
+        url_path="mute-participant",
+        url_name="mute-participant",
+        permission_classes=[permissions.HasPrivilegesOnRoom],
+    )
+    def mute_participant(self, request, pk=None):  # pylint: disable=unused-argument
+        """Mute a specific track for a participant in the room."""
+        room = self.get_object()
+
+        serializer = serializers.MuteParticipantSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            ParticipantsManagement().mute(
+                room_name=str(room.pk),
+                identity=str(serializer.validated_data["participant_identity"]),
+                track_sid=serializer.validated_data["track_sid"],
+            )
+        except ParticipantsManagementException:
+            return drf_response.Response(
+                {"error": "Failed to mute participant"},
+                status=drf_status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        return drf_response.Response(
+            {
+                "status": "success",
+            },
+            status=drf_status.HTTP_200_OK,
+        )
+
+    @decorators.action(
+        detail=True,
+        methods=["post"],
+        url_path="update-participant",
+        url_name="update-participant",
+        permission_classes=[permissions.HasPrivilegesOnRoom],
+    )
+    def update_participant(self, request, pk=None):  # pylint: disable=unused-argument
+        """Update participant attributes, permissions, or metadata."""
+        room = self.get_object()
+
+        serializer = serializers.UpdateParticipantSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            ParticipantsManagement().update(
+                room_name=str(room.pk),
+                identity=str(serializer.validated_data["participant_identity"]),
+                metadata=serializer.validated_data.get("metadata"),
+                attributes=serializer.validated_data.get("attributes"),
+                permission=serializer.validated_data.get("permission"),
+                name=serializer.validated_data.get("name"),
+            )
+        except ParticipantsManagementException:
+            return drf_response.Response(
+                {"error": "Failed to update participant"},
+                status=drf_status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        return drf_response.Response(
+            {
+                "status": "success",
+            },
+            status=drf_status.HTTP_200_OK,
+        )
+
+    @decorators.action(
+        detail=True,
+        methods=["post"],
+        url_path="remove-participant",
+        url_name="remove-participant",
+        permission_classes=[permissions.HasPrivilegesOnRoom],
+    )
+    def remove_participant(self, request, pk=None):  # pylint: disable=unused-argument
+        """Remove a participant from the room."""
+        room = self.get_object()
+
+        serializer = serializers.BaseParticipantsManagementSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            ParticipantsManagement().remove(
+                room_name=str(room.pk),
+                identity=str(serializer.validated_data["participant_identity"]),
+            )
+        except ParticipantsManagementException:
+            return drf_response.Response(
+                {"error": "Failed to remove participant"},
+                status=drf_status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        return drf_response.Response(
+            {"status": "success"}, status=drf_status.HTTP_200_OK
+        )
+
 
 class ResourceAccessViewSet(
     mixins.CreateModelMixin,
@@ -596,8 +733,8 @@ class RecordingViewSet(
         methods=["post"],
         url_path="storage-hook",
         authentication_classes=[StorageEventAuthentication],
-        permission_classes=[permissions.IsStorageEventEnabled],
     )
+    @FeatureFlag.require("storage_event")
     def on_storage_event_received(self, request, pk=None):  # pylint: disable=unused-argument
         """Handle incoming storage hook events for recordings."""
 

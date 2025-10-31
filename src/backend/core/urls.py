@@ -7,6 +7,7 @@ from lasuite.oidc_login.urls import urlpatterns as oidc_urls
 from rest_framework.routers import DefaultRouter
 
 from core.api import get_frontend_configuration, viewsets
+from core.external_api import viewsets as external_viewsets
 
 # - Main endpoints
 router = DefaultRouter()
@@ -15,6 +16,20 @@ router.register("rooms", viewsets.RoomViewSet, basename="rooms")
 router.register("recordings", viewsets.RecordingViewSet, basename="recordings")
 router.register(
     "resource-accesses", viewsets.ResourceAccessViewSet, basename="resource_accesses"
+)
+
+# - External API
+external_router = DefaultRouter()
+external_router.register(
+    "application",
+    external_viewsets.ApplicationViewSet,
+    basename="external_application",
+)
+
+external_router.register(
+    "rooms",
+    external_viewsets.RoomViewSet,
+    basename="external_room",
 )
 
 urlpatterns = [
@@ -29,3 +44,15 @@ urlpatterns = [
         ),
     ),
 ]
+
+if settings.EXTERNAL_API_ENABLED:
+    urlpatterns.append(
+        path(
+            f"external-api/{settings.EXTERNAL_API_VERSION}/",
+            include(
+                [
+                    *external_router.urls,
+                ]
+            ),
+        )
+    )

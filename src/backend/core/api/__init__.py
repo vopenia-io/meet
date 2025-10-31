@@ -50,9 +50,12 @@ def get_frontend_configuration(request):
             else None,
             "default_country": settings.ROOM_TELEPHONY_DEFAULT_COUNTRY,
         },
+        "subtitle": {"enabled": settings.ROOM_SUBTITLE_ENABLED},
         "livekit": {
             "url": settings.LIVEKIT_CONFIGURATION["url"],
+            "force_wss_protocol": settings.LIVEKIT_FORCE_WSS_PROTOCOL,
             "enable_firefox_proxy_workaround": settings.LIVEKIT_ENABLE_FIREFOX_PROXY_WORKAROUND,
+            "default_sources": settings.LIVEKIT_DEFAULT_SOURCES,
         },
     }
     frontend_configuration.update(settings.FRONTEND_CONFIGURATION)

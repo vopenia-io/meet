@@ -1,12 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { LiveKitRoom } from '@livekit/components-react'
+import {
+  LiveKitRoom,
+  usePersistentUserChoices,
+} from '@livekit/components-react'
 import {
   DisconnectReason,
   MediaDeviceFailure,
   Room,
   RoomOptions,
+  VideoPresets,
 } from 'livekit-client'
 import { keys } from '@/api/queryKeys'
 import { queryClient } from '@/api/queryClient'
@@ -29,17 +33,19 @@ import { isFireFox } from '@/utils/livekit'
 
 export const Conference = ({
   roomId,
-  userConfig,
   initialRoomData,
   mode = 'join',
 }: {
   roomId: string
-  userConfig: LocalUserChoices
   mode?: 'join' | 'create'
   initialRoomData?: ApiRoom
 }) => {
   const posthog = usePostHog()
   const { data: apiConfig } = useConfig()
+
+  const { userChoices: userConfig } = usePersistentUserChoices() as {
+    userChoices: LocalUserChoices
+  }
 
   useEffect(() => {
     posthog.capture('visit-room', { slug: roomId })
@@ -88,13 +94,24 @@ export const Conference = ({
       },
       videoCaptureDefaults: {
         deviceId: userConfig.videoDeviceId ?? undefined,
+        resolution: userConfig.videoPublishResolution
+          ? VideoPresets[userConfig.videoPublishResolution].resolution
+          : undefined,
       },
       audioCaptureDefaults: {
         deviceId: userConfig.audioDeviceId ?? undefined,
       },
+      audioOutput: {
+        deviceId: userConfig.audioOutputDeviceId ?? undefined,
+      },
     }
     // do not rely on the userConfig object directly as its reference may change on every render
-  }, [userConfig.videoDeviceId, userConfig.audioDeviceId])
+  }, [
+    userConfig.videoDeviceId,
+    userConfig.videoPublishResolution,
+    userConfig.audioDeviceId,
+    userConfig.audioOutputDeviceId,
+  ])
 
   const room = useMemo(() => new Room(roomOptions), [roomOptions])
 
@@ -152,6 +169,20 @@ export const Conference = ({
     kind: null,
   })
 
+  /*
+   * Ensure stable WebSocket connection URL. This is critical for legacy browser compatibility
+   * (Firefox <124, Chrome <125, Edge <125) where HTTPS URLs in WebSocket() constructor
+   *  may fail - the force_wss_protocol flag allows explicit WSS protocol conversion
+   */
+  const serverUrl = useMemo(() => {
+    const livekit_url = apiConfig?.livekit.url
+    if (!livekit_url) return
+    if (apiConfig?.livekit.force_wss_protocol) {
+      return livekit_url.replace('https://', 'wss://')
+    }
+    return livekit_url
+  }, [apiConfig?.livekit])
+
   const { t } = useTranslation('rooms')
   if (isCreateError) {
     // this error screen should be replaced by a proper waiting room for anonymous user.
@@ -175,7 +206,7 @@ export const Conference = ({
       <Screen header={false} footer={false}>
         <LiveKitRoom
           room={room}
-          serverUrl={apiConfig?.livekit.url}
+          serverUrl={serverUrl}
           token={data?.livekit?.token}
           connect={isConnectionWarmedUp}
           audio={userConfig.audioEnabled}
@@ -211,7 +242,6 @@ export const Conference = ({
             <InviteDialog
               isOpen={showInviteDialog}
               onOpenChange={setShowInviteDialog}
-              roomId={roomId}
               onClose={() => setShowInviteDialog(false)}
             />
           )}

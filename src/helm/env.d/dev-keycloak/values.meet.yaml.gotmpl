@@ -35,14 +35,11 @@ backend:
     LOGIN_REDIRECT_URL: https://meet.127.0.0.1.nip.io
     LOGIN_REDIRECT_URL_FAILURE: https://meet.127.0.0.1.nip.io
     LOGOUT_REDIRECT_URL: https://meet.127.0.0.1.nip.io
-    DB_HOST: postgres-postgresql
+    DB_HOST: postgres
     DB_NAME: meet
     DB_USER: dinum
     DB_PASSWORD: pass
     DB_PORT: 5432
-    POSTGRES_DB: meet
-    POSTGRES_USER: dinum
-    POSTGRES_PASSWORD: pass
     REDIS_URL: redis://default:pass@redis-master:6379/1
     STORAGES_STATICFILES_BACKEND: django.contrib.staticfiles.storage.StaticFilesStorage
     {{- with .Values.livekit.keys }}
@@ -52,6 +49,7 @@ backend:
     {{- end }}
     {{- end }}
     LIVEKIT_API_URL: https://livekit.127.0.0.1.nip.io/
+    LIVEKIT_FORCE_WSS_PROTOCOL: True
     LIVEKIT_ENABLE_FIREFOX_PROXY_WORKAROUND: True
     ALLOW_UNREGISTERED_ROOMS: False
     FRONTEND_SILENCE_LIVEKIT_DEBUG: False
@@ -59,6 +57,7 @@ backend:
     FRONTEND_TRANSCRIPT: "{'form_beta_users': 'https://grist.numerique.gouv.fr/o/docs/forms/3fFfvJoTBEQ6ZiMi8zsQwX/17'}"
     FRONTEND_FEEDBACK: "{'url': 'https://grist.numerique.gouv.fr/o/docs/cbMv4G7pLY3Z/USER-RESEARCH-or-LA-SUITE/f/26'}"
     FRONTEND_MANIFEST_LINK: "https://docs.numerique.gouv.fr/docs/1ef86abf-f7e0-46ce-b6c7-8be8b8af4c3d/"
+    FRONTEND_IDLE_DISCONNECT_WARNING_DELAY: 9000
     AWS_S3_ENDPOINT_URL: http://minio.meet.svc.cluster.local:9000
     AWS_S3_ACCESS_KEY_ID: meet
     AWS_S3_SECRET_ACCESS_KEY: password
@@ -71,7 +70,10 @@ backend:
     SUMMARY_SERVICE_API_TOKEN: password
     SCREEN_RECORDING_BASE_URL: https://meet.127.0.0.1.nip.io/recordings
     ROOM_TELEPHONY_ENABLED: True
+    ROOM_TELEPHONY_DEFAULT_COUNTRY: 'FR'
+    ROOM_TELEPHONY_PHONE_NUMBER: '+33901020304'
     SSL_CERT_FILE: /usr/local/lib/python3.13/site-packages/certifi/cacert.pem
+    ROOM_SUBTITLE_ENABLED: True
 
 
   migrate:
@@ -79,15 +81,7 @@ backend:
       - "/bin/sh"
       - "-c"
       - |
-        while ! python manage.py check --database default > /dev/null 2>&1
-        do
-          echo "Database not ready"
-          sleep 2
-        done
-        echo "Database is ready"
-
-        python manage.py migrate --no-input &&
-        python manage.py create_demo --force
+        python manage.py migrate --no-input
     restartPolicy: Never
 
   command:
@@ -102,13 +96,6 @@ backend:
       - "/bin/sh"
       - "-c"
       - |
-        while ! python manage.py check --database default > /dev/null 2>&1
-        do
-          echo "Database not ready"
-          sleep 2
-        done
-        echo "Database is ready"
-
         python manage.py createsuperuser --email admin@example.com --password admin
     restartPolicy: Never
 
@@ -165,11 +152,14 @@ summary:
     AWS_S3_ENDPOINT_URL: minio.meet.svc.cluster.local:9000
     AWS_S3_ACCESS_KEY_ID: meet
     AWS_S3_SECRET_ACCESS_KEY: password
-    OPENAI_API_KEY: password
-    OPENAI_BASE_URL: https://albertine.beta.numerique.gouv.fr/v1
-    OPENAI_ASR_MODEL: large-v2
-    OPENAI_LLM_MODEL: meta-llama/Llama-3.1-8B-Instruct
     AWS_S3_SECURE_ACCESS: False
+    WHISPERX_API_KEY: your-secret-value
+    WHISPERX_BASE_URL: https://configure-your-url.com
+    WHISPERX_ASR_MODEL: large-v2
+    WHISPERX_DEFAULT_LANGUAGE: fr
+    LLM_BASE_URL: https://configure-your-url.com
+    LLM_API_KEY: your-secret-value
+    LLM_MODEL: meta-llama/Llama-3.1-8B-Instruct
     WEBHOOK_API_TOKEN: password
     WEBHOOK_URL: https://www.mock-impress.com/webhook/
     CELERY_BROKER_URL: redis://default:pass@redis-master:6379/1
@@ -190,7 +180,7 @@ summary:
     - "8000"
     - "--reload"
 
-celery:
+celeryTranscribe:
   replicas: 1
   envVars:
     APP_NAME: summary-microservice
@@ -199,11 +189,14 @@ celery:
     AWS_S3_ENDPOINT_URL: minio.meet.svc.cluster.local:9000
     AWS_S3_ACCESS_KEY_ID: meet
     AWS_S3_SECRET_ACCESS_KEY: password
-    OPENAI_API_KEY: password
-    OPENAI_BASE_URL: https://albertine.beta.numerique.gouv.fr/v1
-    OPENAI_ASR_MODEL: large-v2
-    OPENAI_LLM_MODEL: meta-llama/Llama-3.1-8B-Instruct
     AWS_S3_SECURE_ACCESS: False
+    WHISPERX_API_KEY: your-secret-value
+    WHISPERX_BASE_URL: https://configure-your-url.com
+    WHISPERX_ASR_MODEL: large-v2
+    WHISPERX_DEFAULT_LANGUAGE: fr
+    LLM_BASE_URL: https://configure-your-url.com
+    LLM_API_KEY: your-secret-value
+    LLM_MODEL: meta-llama/Llama-3.1-8B-Instruct
     WEBHOOK_API_TOKEN: password
     WEBHOOK_URL: https://www.mock-impress.com/webhook/
     CELERY_BROKER_URL: redis://default:pass@redis-master:6379/1
@@ -222,6 +215,77 @@ celery:
     - "worker"
     - "--pool=solo"
     - "--loglevel=info"
+    - "-Q"
+    - "transcribe-queue"
+
+celerySummarize:
+  replicas: 1
+  envVars:
+    APP_NAME: summary-microservice
+    APP_API_TOKEN: password
+    AWS_STORAGE_BUCKET_NAME: meet-media-storage
+    AWS_S3_ENDPOINT_URL: minio.meet.svc.cluster.local:9000
+    AWS_S3_ACCESS_KEY_ID: meet
+    AWS_S3_SECRET_ACCESS_KEY: password
+    AWS_S3_SECURE_ACCESS: False
+    WHISPERX_API_KEY: your-secret-value
+    WHISPERX_BASE_URL: https://configure-your-url.com
+    WHISPERX_ASR_MODEL: large-v2
+    WHISPERX_DEFAULT_LANGUAGE: fr
+    LLM_BASE_URL: https://configure-your-url.com
+    LLM_API_KEY: your-secret-value
+    LLM_MODEL: meta-llama/Llama-3.1-8B-Instruct
+    WEBHOOK_API_TOKEN: password
+    WEBHOOK_URL: https://www.mock-impress.com/webhook/
+    CELERY_BROKER_URL: redis://default:pass@redis-master:6379/1
+    CELERY_RESULT_BACKEND: redis://default:pass@redis-master:6379/1
+    TASK_TRACKER_REDIS_URL: redis://default:pass@redis-master:6379/1
+
+  image:
+    repository: localhost:5001/meet-summary
+    pullPolicy: Always
+    tag: "latest"
+
+  command:
+    - "celery"
+    - "-A"
+    - "summary.core.celery_worker"
+    - "worker"
+    - "--pool=solo"
+    - "--loglevel=info"
+    - "-Q"
+    - "summarize-queue"
+
+agents:
+  replicas: 1
+  envVars:
+    LIVEKIT_URL: https://livekit.127.0.0.1.nip.io/
+    {{- with .Values.livekit.keys }}
+    {{- range $key, $value := . }}
+    LIVEKIT_API_SECRET: {{ $value }}
+    LIVEKIT_API_KEY: {{ $key }}
+    {{- end }}
+    {{- end }}
+
+  image:
+    repository: localhost:5001/meet-agents
+    pullPolicy: Always
+    tag: "latest"
+
+  # Extra volume mounts to manage our local custom CA and avoid to disable ssl
+  extraVolumeMounts:
+    - name: certs
+      mountPath: /usr/lib/ssl/cert.pem
+      subPath: cert.pem
+
+  # Extra volumes to manage our local custom CA and avoid to disable ssl
+  extraVolumes:
+    - name: certs
+      configMap:
+        name: certifi
+        items:
+        - key: cacert.pem
+          path: cert.pem
 
 ingressMedia:
   enabled: true
