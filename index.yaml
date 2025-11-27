@@ -2,6 +2,14 @@ apiVersion: v1
 entries:
   meet:
   - apiVersion: v2
+    created: "2025-11-27T15:50:23.508664273Z"
+    digest: 78dcfd12f35ae197cde1873757aa4fc3056cba2f4e6c4fbe39efbf24b284dfdc
+    name: meet
+    type: application
+    urls:
+    - https://vopenia-io.github.io/meet/meet-0.0.15.tgz
+    version: 0.0.15
+  - apiVersion: v2
     created: "2025-10-31T16:37:13.869153263Z"
     digest: 4c993028435b4f91b8f53e2f1ce6fd98875511234c10d54549f80898aec238fe
     name: meet
@@ -57,4 +65,4 @@ entries:
     urls:
     - https://suitenumerique.github.io/meet/meet-0.0.1.tgz
     version: 0.0.1
-generated: "2025-10-31T16:37:13.867360963Z"
+generated: "2025-11-27T15:50:23.506929682Z"
