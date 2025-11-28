@@ -547,6 +547,11 @@ class Base(Configuration):
         ),
         "url": values.Value(environ_name="LIVEKIT_API_URL", environ_prefix=None),
     }
+    # Internal URL for backend-to-livekit API calls (e.g., http://livekit:7880 in Docker)
+    # Falls back to LIVEKIT_API_URL if not set
+    LIVEKIT_INTERNAL_API_URL = values.Value(
+        environ_name="LIVEKIT_INTERNAL_API_URL", environ_prefix=None, default=None
+    )
     LIVEKIT_FORCE_WSS_PROTOCOL = values.BooleanValue(
         False, environ_name="LIVEKIT_FORCE_WSS_PROTOCOL", environ_prefix=None
     )
@@ -850,7 +855,7 @@ class Development(Base):
 
     ALLOWED_HOSTS = ["*"]
     CORS_ALLOW_ALL_ORIGINS = True
-    CSRF_TRUSTED_ORIGINS = ["http://localhost:8072", "http://localhost:3000"]
+    CSRF_TRUSTED_ORIGINS = ["http://localhost:8072", "http://localhost:3000", "http://192.168.0.10:3000", "http://192.168.0.10:8071", "https://192.168.0.10:3000", "https://192.168.0.10"]
     DEBUG = True
 
     SESSION_COOKIE_NAME = "meet_sessionid"

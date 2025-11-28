@@ -1,0 +1,49 @@
+port: 5080
+log_level: debug
+
+# Redis configuration (required for LiveKit SIP)
+redis:
+  address: localhost:16379
+  # username: ""  # Optional
+  # password: ""  # Optional
+  # db: 0        # Optional
+
+# LiveKit server configuration
+livekit:
+api_key: devkey
+api_secret: secret
+ws_url: "ws://localhost:7880"
+insecure: true
+
+# SIP configuration
+sip_port: 5080
+advertised_ip: 192.168.0.10
+rtp_port_start: 20000
+rtp_port_end: 20100
+pin_required: false
+
+use_external_ip: false
+logging:
+  level: debug
+# Media configuration
+
+sip:
+  trunks:
+    - name: "kamailio-trunk"
+      # Your SIP provider settings
+      # inbound_address is not needed - using sip_port above instead
+      # ... other settings
+
+      # Per-trunk flood protection
+      max_concurrent_calls: 10  # Disable for this trunk
+      call_rate_limit: 10       # Disable rate limiting
+
+  dispatch_rules:
+    - name: "default"
+      trunk: "kamailio-trunk"
+      rule: ".*"
+      auto_accept: true
+# Optional: Webhook for call events
+# webhooks:
+#   - url: "http://your-server/webhook"
+#     events: ["call_start", "call_end"]

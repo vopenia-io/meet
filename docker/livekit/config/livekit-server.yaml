@@ -3,3 +3,14 @@ redis:
   address: redis:6379
 keys:
   devkey: secret
+
+# Room configuration optimized for VP8 quality
+room:
+  enabled_codecs:
+    - mime: video/vp8
+    - mime: audio/opus
+
+webhook:
+  urls:
+    - http://app-dev:8000/api/v1.0/rooms/webhooks-livekit/
+  api_key: devkey
