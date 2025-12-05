@@ -17,6 +17,8 @@ router.register("recordings", viewsets.RecordingViewSet, basename="recordings")
 router.register(
     "resource-accesses", viewsets.ResourceAccessViewSet, basename="resource_accesses"
 )
+router.register("devices", viewsets.DeviceViewSet, basename="devices")
+router.register("calls", viewsets.CallViewSet, basename="calls")
 
 # - External API
 external_router = DefaultRouter()

@@ -4,11 +4,15 @@ from logging import getLogger
 
 from asgiref.sync import async_to_sync
 from livekit.api import TwirpError
+from django.conf import settings
+from livekit.protocol.agent_dispatch import RoomAgentDispatch
+from livekit.protocol.room import RoomConfiguration
 from livekit.protocol.sip import (
     CreateSIPDispatchRuleRequest,
     DeleteSIPDispatchRuleRequest,
     ListSIPDispatchRuleRequest,
     SIPDispatchRule,
+    SIPDispatchRuleCallee,
     SIPDispatchRuleDirect,
 )
 
@@ -119,6 +123,128 @@ class TelephonyService:
         except TwirpError as e:
             logger.exception("Failed to delete dispatch rules for room %s", room_id)
             raise TelephonyException("Could not delete dispatch rules") from e
+
+        finally:
+            await lkapi.aclose()
+
+    def _lobby_rule_name(self, phone_number: str) -> str:
+        """Generate the rule name for a lobby phone number."""
+        # Remove + and any non-alphanumeric chars for the rule name
+        clean_number = phone_number.lstrip("+").replace("-", "")
+        return f"SIP_lobby_{clean_number}"
+
+    @async_to_sync
+    async def create_lobby_dispatch_rules(self):
+        """Create SIP dispatch rules for lobby routing.
+
+        This creates dispatch rules for phone numbers designated for the lobby pattern.
+        Calls to these numbers are routed to transient lobby rooms with a unique suffix.
+        """
+        if not settings.PHONE_SYSTEM_ENABLED:
+            logger.info("Phone system not enabled, skipping lobby dispatch rule creation")
+            return
+
+        lobby_numbers = settings.PHONE_SYSTEM_LOBBY_PHONE_NUMBERS
+        if not lobby_numbers:
+            logger.warning("No lobby phone numbers configured")
+            return
+
+        lkapi = utils.create_livekit_client()
+
+        try:
+            for phone_number in lobby_numbers:
+                # Create a callee-based dispatch rule that routes to unique lobby rooms
+                # Using SIPDispatchRuleCallee with randomize=True creates unique rooms
+                # per call without requiring a PIN (unlike SIPDispatchRuleIndividual)
+                callee_rule = SIPDispatchRule(
+                    dispatch_rule_callee=SIPDispatchRuleCallee(
+                        room_prefix=settings.PHONE_SYSTEM_LOBBY_ROOM_PREFIX,
+                        pin="",  # No PIN required
+                        randomize=True,  # Unique room per call
+                    )
+                )
+
+                # Configure the room to dispatch the lobby-bot agent
+                # The lobby-bot agent joins the room and subscribes to the SIP
+                # participant's audio track, which triggers livekit-sip to
+                # answer the call (send SIP 200 OK)
+                lobby_bot_agent_name = settings.PHONE_SYSTEM_LOBBY_BOT_AGENT_NAME
+                room_config = RoomConfiguration(
+                    agents=[
+                        RoomAgentDispatch(agent_name=lobby_bot_agent_name),
+                    ]
+                )
+
+                request = CreateSIPDispatchRuleRequest(
+                    rule=callee_rule,
+                    name=self._lobby_rule_name(phone_number),
+                    inbound_numbers=[phone_number],
+                    room_config=room_config,
+                )
+
+                try:
+                    await lkapi.sip.create_sip_dispatch_rule(create=request)
+                    logger.info(
+                        "Created lobby dispatch rule for %s",
+                        phone_number,
+                    )
+                except TwirpError as e:
+                    # Check if rule already exists (don't fail for duplicate)
+                    if "already exists" in str(e).lower():
+                        logger.info(
+                            "Lobby dispatch rule already exists for %s",
+                            phone_number,
+                        )
+                    else:
+                        logger.exception(
+                            "Failed to create lobby dispatch rule for %s",
+                            phone_number,
+                        )
+                        raise TelephonyException(
+                            f"Could not create lobby dispatch rule for {phone_number}"
+                        ) from e
+
+        finally:
+            await lkapi.aclose()
+
+    @async_to_sync
+    async def delete_lobby_dispatch_rules(self):
+        """Delete all lobby dispatch rules."""
+        if not settings.PHONE_SYSTEM_ENABLED:
+            return
+
+        lobby_numbers = settings.PHONE_SYSTEM_LOBBY_PHONE_NUMBERS
+        if not lobby_numbers:
+            return
+
+        lkapi = utils.create_livekit_client()
+
+        try:
+            # List all rules
+            existing_rules = await lkapi.sip.list_sip_dispatch_rule(
+                list=ListSIPDispatchRuleRequest()
+            )
+
+            if not existing_rules or not existing_rules.items:
+                return
+
+            # Find lobby rules
+            lobby_rule_names = {
+                self._lobby_rule_name(num) for num in lobby_numbers
+            }
+
+            for rule in existing_rules.items:
+                if rule.name in lobby_rule_names:
+                    await lkapi.sip.delete_sip_dispatch_rule(
+                        delete=DeleteSIPDispatchRuleRequest(
+                            sip_dispatch_rule_id=rule.sip_dispatch_rule_id
+                        )
+                    )
+                    logger.info("Deleted lobby dispatch rule: %s", rule.name)
+
+        except TwirpError as e:
+            logger.exception("Failed to delete lobby dispatch rules")
+            raise TelephonyException("Could not delete lobby dispatch rules") from e
 
         finally:
             await lkapi.aclose()

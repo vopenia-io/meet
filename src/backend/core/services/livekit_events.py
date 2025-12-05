@@ -18,6 +18,8 @@ from core.recording.services.recording_events import (
 )
 
 from .lobby import LobbyService
+from .phone_system import PhoneSystemService, PendingCallStatus
+from .push_notifications import PushNotificationService
 from .telephony import TelephonyException, TelephonyService
 
 logger = getLogger(__name__)
@@ -92,6 +94,8 @@ class LiveKitEventsService:
         self.lobby_service = LobbyService()
         self.telephony_service = TelephonyService()
         self.recording_events = RecordingEventsService()
+        self.phone_system = PhoneSystemService()
+        self.push_service = PushNotificationService()
 
         self._filter_regex = None
         if settings.LIVEKIT_WEBHOOK_EVENTS_FILTER_REGEX:
@@ -166,12 +170,13 @@ class LiveKitEventsService:
 
         try:
             room_id = uuid.UUID(data.room.name)
-        except ValueError as e:
-            logger.warning(
-                "Ignoring room event: room name '%s' is not a valid UUID format.",
+        except ValueError:
+            # Non-UUID rooms (like sip-lobby-*) are not managed rooms, skip them
+            logger.debug(
+                "Ignoring room_started: room name '%s' is not a valid UUID format.",
                 data.room.name,
             )
-            raise ActionFailedError("Failed to process room started event") from e
+            return
 
         try:
             room = models.Room.objects.get(id=room_id)
@@ -191,12 +196,13 @@ class LiveKitEventsService:
 
         try:
             room_id = uuid.UUID(data.room.name)
-        except ValueError as e:
-            logger.warning(
-                "Ignoring room event: room name '%s' is not a valid UUID format.",
+        except ValueError:
+            # Non-UUID rooms (like sip-lobby-*) are not managed rooms, skip them
+            logger.debug(
+                "Ignoring room_finished: room name '%s' is not a valid UUID format.",
                 data.room.name,
             )
-            raise ActionFailedError("Failed to process room finished event") from e
+            return
 
         if settings.ROOM_TELEPHONY_ENABLED:
             try:
@@ -212,3 +218,165 @@ class LiveKitEventsService:
             raise ActionFailedError(
                 f"Failed to clear room cache for room {room_id}"
             ) from e
+
+    def _handle_participant_joined(self, data):
+        """Handle 'participant_joined' event - detect SIP lobby calls."""
+        print(f"[PHONE_SYSTEM] _handle_participant_joined called, PHONE_SYSTEM_ENABLED={settings.PHONE_SYSTEM_ENABLED}")
+        if not settings.PHONE_SYSTEM_ENABLED:
+            return
+
+        room_name = data.room.name
+        participant = data.participant
+        print(f"[PHONE_SYSTEM] room_name={room_name}, participant={participant.identity}")
+
+        # Check if this is a lobby room
+        if not self.phone_system.is_lobby_room(room_name):
+            print(f"[PHONE_SYSTEM] Not a lobby room, skipping")
+            return
+
+        print(f"[PHONE_SYSTEM] This is a lobby room!")
+        # Check if this is a SIP participant by looking at attributes
+        attributes = dict(participant.attributes) if participant.attributes else {}
+        print(f"[PHONE_SYSTEM] participant.attributes={attributes}")
+
+        # SIP participants have sip.callID in their attributes
+        if "sip.callID" not in attributes:
+            logger.debug(
+                "Non-SIP participant joined lobby room %s: %s",
+                room_name,
+                participant.identity,
+            )
+            return
+
+        # Extract SIP call info from participant attributes
+        sip_call_id = attributes.get("sip.callID", "")
+        caller_number = attributes.get("sip.phoneNumber", "")
+        callee_number = attributes.get("sip.trunkPhoneNumber", "")
+
+        # If callee_number not in attributes, try extracting from trunk info
+        if not callee_number:
+            callee_number = attributes.get("sip.to.user", "")
+
+        logger.info(
+            "SIP participant joined lobby: room=%s, identity=%s, caller=%s, callee=%s",
+            room_name,
+            participant.identity,
+            caller_number,
+            callee_number,
+        )
+
+        # Look up target user by the called phone number
+        target_user = self.phone_system.lookup_user_by_callee_number(callee_number)
+
+        if not target_user:
+            logger.warning(
+                "No user found for callee number %s, hanging up call in room %s",
+                callee_number,
+                room_name,
+            )
+            self.phone_system.hangup_participant(room_name, participant.identity)
+            return
+
+        # Pre-create meeting room immediately so we can include it in the push notification
+        # This allows the client to navigate directly without waiting for accept_call response
+        from core.utils import generate_room_slug
+
+        slug = generate_room_slug()
+        meeting_room = models.Room.objects.create(
+            name=slug,
+            access_level=models.RoomAccessLevel.RESTRICTED,
+        )
+        models.ResourceAccess.objects.create(
+            resource=meeting_room,
+            user=target_user,
+            role=models.RoleChoices.OWNER,
+        )
+        logger.info(
+            "Pre-created meeting room %s (slug=%s) for incoming call from %s",
+            meeting_room.id,
+            meeting_room.slug,
+            caller_number,
+        )
+
+        # Create pending call record with room info
+        pending_call = self.phone_system.create_pending_call(
+            lobby_room_name=room_name,
+            sip_participant_identity=participant.identity,
+            sip_call_id=sip_call_id,
+            caller_number=caller_number,
+            callee_number=callee_number,
+            target_user=target_user,
+            meeting_room_id=str(meeting_room.id),
+            meeting_room_slug=meeting_room.slug,
+        )
+
+        # Send push notification to the target user (now includes room info)
+        self.push_service.send_incoming_call_notification(
+            user=target_user,
+            pending_call=pending_call,
+        )
+
+        # Note: The lobby-bot LiveKit agent (src/agents/lobby-bot.py) will
+        # automatically join this room and subscribe to the SIP participant's
+        # audio track, which triggers livekit-sip to answer the call (200 OK).
+        # This is configured via the dispatch rule's agent configuration.
+
+    def _handle_participant_left(self, data):
+        """Handle 'participant_left' event - detect caller hangup in lobby."""
+        if not settings.PHONE_SYSTEM_ENABLED:
+            return
+
+        room_name = data.room.name
+
+        # Only handle lobby rooms
+        if not self.phone_system.is_lobby_room(room_name):
+            return
+
+        # Check if there's a pending call for this lobby
+        pending_call = self.phone_system.get_pending_call_by_lobby(room_name)
+
+        if not pending_call:
+            logger.debug("No pending call found for lobby room %s", room_name)
+            return
+
+        # If call is still ringing, the caller hung up before answer
+        if pending_call.status == PendingCallStatus.RINGING.value:
+            logger.info(
+                "Caller hung up before answer in lobby %s, call_id=%s",
+                room_name,
+                pending_call.call_id,
+            )
+
+            # Update call status
+            self.phone_system.update_call_status(
+                pending_call.call_id, PendingCallStatus.EXPIRED
+            )
+
+            # Send cancellation notification to user
+            try:
+                target_user = models.User.objects.get(id=pending_call.target_user_id)
+                self.push_service.send_call_cancelled_notification(
+                    user=target_user,
+                    call_id=pending_call.call_id,
+                )
+            except models.User.DoesNotExist:
+                logger.warning(
+                    "User %s not found for call cancellation notification",
+                    pending_call.target_user_id,
+                )
+
+            # Clean up orphan pre-created room (was never used)
+            if pending_call.meeting_room_id:
+                try:
+                    orphan_room = models.Room.objects.get(id=pending_call.meeting_room_id)
+                    orphan_room.delete()
+                    logger.info(
+                        "Cleaned up unused room %s for cancelled call %s",
+                        pending_call.meeting_room_id,
+                        pending_call.call_id,
+                    )
+                except models.Room.DoesNotExist:
+                    pass
+
+            # Clean up pending call record
+            self.phone_system.clear_pending_call(pending_call.call_id)

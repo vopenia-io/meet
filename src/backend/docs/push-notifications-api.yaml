@@ -1,0 +1,699 @@
+openapi: 3.0.3
+
+servers:
+  - url: /api/v1.0
+    description: API v1.0
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Devices
+    description: |
+      Push notification device registration.
+
+      **iOS**: Use APNS endpoints with device token from `didRegisterForRemoteNotificationsWithDeviceToken`
+
+      **Android**: Use WebPush endpoints with FCM token from `onNewToken`
+  - name: Calls
+    description: |
+      Incoming phone call management.
+
+      When a call arrives, the server sends a push notification with all necessary data.
+      The app should display an incoming call UI and call these endpoints based on user action.
+
+paths:
+  /devices/apns/register/:
+    post:
+      tags:
+        - Devices
+      summary: Register iOS device (APNS)
+      description: |
+        Register an iOS device for Apple Push Notification Service (APNS).
+
+        **When to call**: After receiving device token in `application(_:didRegisterForRemoteNotificationsWithDeviceToken:)`
+
+        **Idempotent**: If device already registered, it will be updated and reactivated.
+      operationId: registerApnsDevice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/APNSDeviceRegistration'
+            examples:
+              ios:
+                summary: iOS device registration
+                value:
+                  registration_id: "740f4707bebcf74f9b7c25d48e3358945f6aa01da5ddb387462c7eaf61bb78ad"
+                  device_id: "550e8400-e29b-41d4-a716-446655440000"
+                  name: "iPhone 15 Pro"
+      responses:
+        '201':
+          description: Device registered successfully (new device)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceRegistrationResponse'
+              example:
+                status: success
+                created: true
+        '200':
+          description: Device updated successfully (existing device)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceRegistrationResponse'
+              example:
+                status: success
+                created: false
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '501':
+          $ref: '#/components/responses/NotConfiguredError'
+
+  /devices/apns/unregister/:
+    post:
+      tags:
+        - Devices
+      summary: Unregister iOS device (APNS)
+      description: |
+        Unregister an iOS device from receiving push notifications.
+
+        **When to call**: On user logout or when user disables notifications.
+
+        The device is marked as inactive but not deleted (for re-registration).
+      operationId: unregisterApnsDevice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceUnregistration'
+            example:
+              registration_id: "740f4707bebcf74f9b7c25d48e3358945f6aa01da5ddb387462c7eaf61bb78ad"
+      responses:
+        '200':
+          description: Device unregistered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '501':
+          $ref: '#/components/responses/NotConfiguredError'
+
+  /devices/webpush/register/:
+    post:
+      tags:
+        - Devices
+      summary: Register Android/Web device (WebPush/FCM)
+      description: |
+        Register an Android device (via FCM) or web browser for push notifications.
+
+        **Android**: Use FCM token from `onNewToken()`. Set `browser` to "Android".
+
+        **Web**: Use PushSubscription details from service worker.
+
+        **Idempotent**: If device already registered, it will be updated and reactivated.
+      operationId: registerWebPushDevice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebPushDeviceRegistration'
+            examples:
+              android:
+                summary: Android FCM registration
+                value:
+                  registration_id: "cMctpybZR8KVu9bL2..."
+                  p256dh: ""
+                  auth: ""
+                  browser: "Android"
+              web:
+                summary: Web browser registration
+                value:
+                  registration_id: "https://fcm.googleapis.com/fcm/send/..."
+                  p256dh: "BNcRdreALRFXTkOOUHK1EtK2wtaz5Ry4YfYCA_0..."
+                  auth: "tBHItJI5svbpez7KI4CCXg"
+                  browser: "Chrome"
+      responses:
+        '201':
+          description: Device registered successfully (new device)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceRegistrationResponse'
+        '200':
+          description: Device updated successfully (existing device)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceRegistrationResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '501':
+          $ref: '#/components/responses/NotConfiguredError'
+
+  /devices/webpush/unregister/:
+    post:
+      tags:
+        - Devices
+      summary: Unregister Android/Web device (WebPush/FCM)
+      description: |
+        Unregister an Android device or web browser from receiving push notifications.
+
+        **When to call**: On user logout or when user disables notifications.
+      operationId: unregisterWebPushDevice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceUnregistration'
+            example:
+              registration_id: "cMctpybZR8KVu9bL2..."
+      responses:
+        '200':
+          description: Device unregistered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '501':
+          $ref: '#/components/responses/NotConfiguredError'
+
+  /calls/pending/:
+    get:
+      tags:
+        - Calls
+      summary: List pending incoming calls
+      description: |
+        Get all pending incoming calls for the authenticated user.
+
+        **Use case**: When app launches or resumes, check for any pending calls
+        that may have been received while the app was in background.
+
+        Returns only calls with status "ringing".
+      operationId: listPendingCalls
+      responses:
+        '200':
+          description: List of pending calls
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  calls:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PendingCall'
+              examples:
+                with_call:
+                  summary: One pending call
+                  value:
+                    calls:
+                      - call_id: "550e8400-e29b-41d4-a716-446655440000"
+                        caller_number: "+33612345678"
+                        callee_number: "+33535005942"
+                        lobby_room_name: "sip-lobby-_0535005942_abc123"
+                        sip_participant_identity: "sip_0612345678"
+                        status: "ringing"
+                        created_at: 1701705600.123
+                        room_id: "4e19a60c-ca12-4d7c-a497-7c240347a172"
+                        room_slug: "abc-defg-hij"
+                empty:
+                  summary: No pending calls
+                  value:
+                    calls: []
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+
+  /calls/accept/:
+    post:
+      tags:
+        - Calls
+      summary: Accept incoming call
+      description: |
+        Accept a pending incoming call and join the meeting room.
+
+        **What happens**:
+        1. Server signals lobby-bot to answer the PSTN call
+        2. PSTN caller hears "call connected" (ringing stops)
+        3. SIP participant is transferred to the meeting room
+        4. Server returns LiveKit credentials for your app to join
+
+        **Important**: The room was pre-created when the call arrived. The `room_id`
+        and `room_slug` from the push notification are valid immediately.
+
+        **Timeout**: Calls expire after ~60 seconds if not answered.
+      operationId: acceptCall
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AcceptCallRequest'
+            example:
+              call_id: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Call accepted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcceptCallResponse'
+              example:
+                status: accepted
+                room_id: "4e19a60c-ca12-4d7c-a497-7c240347a172"
+                room_slug: "abc-defg-hij"
+                livekit:
+                  url: "wss://livekit.example.com"
+                  token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '404':
+          description: Call not found or expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleError'
+              examples:
+                not_found:
+                  value:
+                    error: "Call not found or expired"
+                already_handled:
+                  value:
+                    error: "Call already accepted or declined"
+        '500':
+          description: Transfer failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleError'
+              example:
+                error: "Failed to transfer call to meeting room"
+
+  /calls/decline/:
+    post:
+      tags:
+        - Calls
+      summary: Decline incoming call
+      description: |
+        Decline a pending incoming call.
+
+        **What happens**:
+        1. Server hangs up the PSTN call
+        2. Caller hears busy/disconnect tone
+        3. Pending call record is removed
+        4. Pre-created room is deleted (cleanup)
+      operationId: declineCall
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeclineCallRequest'
+            example:
+              call_id: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Call declined successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [declined]
+              example:
+                status: declined
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+        '404':
+          description: Call not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT token obtained from authentication.
+
+        Include in all requests:
+        ```
+        Authorization: Bearer <token>
+        ```
+
+  responses:
+    ValidationError:
+      description: Invalid request data
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationError'
+    AuthenticationError:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AuthenticationError'
+    NotConfiguredError:
+      description: Push notifications not configured on server
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/NotImplementedError'
+
+  schemas:
+    APNSDeviceRegistration:
+      type: object
+      required:
+        - registration_id
+      properties:
+        registration_id:
+          type: string
+          maxLength: 200
+          description: |
+            APNS device token (hex string).
+
+            Obtained from `application(_:didRegisterForRemoteNotificationsWithDeviceToken:)`
+          example: "740f4707bebcf74f9b7c25d48e3358945f6aa01da5ddb387462c7eaf61bb78ad"
+        device_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: |
+            Unique device identifier (optional).
+
+            Use `UIDevice.current.identifierForVendor` on iOS.
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        name:
+          type: string
+          maxLength: 255
+          description: |
+            Human-readable device name (optional).
+
+            Use `UIDevice.current.name` on iOS.
+          example: "iPhone 15 Pro"
+
+    WebPushDeviceRegistration:
+      type: object
+      required:
+        - registration_id
+        - p256dh
+        - auth
+      properties:
+        registration_id:
+          type: string
+          description: |
+            **Android**: FCM token from `onNewToken()`
+
+            **Web**: Push subscription endpoint URL
+          example: "cMctpybZR8KVu9bL2..."
+        p256dh:
+          type: string
+          maxLength: 200
+          description: |
+            P-256 ECDH public key for message encryption.
+
+            **Android**: Leave empty string ""
+
+            **Web**: From `subscription.getKey('p256dh')`
+        auth:
+          type: string
+          maxLength: 50
+          description: |
+            Authentication secret for message encryption.
+
+            **Android**: Leave empty string ""
+
+            **Web**: From `subscription.getKey('auth')`
+        browser:
+          type: string
+          maxLength: 50
+          description: |
+            Platform identifier.
+
+            **Android**: Set to "Android"
+
+            **Web**: Browser name (e.g., "Chrome", "Firefox", "Safari")
+          example: "Android"
+
+    DeviceUnregistration:
+      type: object
+      required:
+        - registration_id
+      properties:
+        registration_id:
+          type: string
+          description: Device registration ID to unregister (same as used for registration)
+
+    DeviceRegistrationResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [success]
+        created:
+          type: boolean
+          description: |
+            `true` if new device was created
+
+            `false` if existing device was updated/reactivated
+
+    SuccessResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [success]
+
+    PendingCall:
+      type: object
+      description: |
+        Represents an incoming call waiting for user action.
+
+        All fields match the push notification payload, so you can use
+        either source interchangeably.
+      properties:
+        call_id:
+          type: string
+          format: uuid
+          description: Unique identifier for this call (use in accept/decline)
+        caller_number:
+          type: string
+          description: |
+            Phone number of the caller (E.164 format).
+
+            Display this to the user (after formatting).
+          example: "+33612345678"
+        callee_number:
+          type: string
+          description: Phone number that was called (your DID number)
+          example: "+33535005942"
+        lobby_room_name:
+          type: string
+          description: Internal LiveKit room name (not needed by client)
+        sip_participant_identity:
+          type: string
+          description: Internal SIP participant ID (not needed by client)
+        status:
+          type: string
+          enum: [ringing, accepted, declined, expired, transferred]
+          description: Current status (only "ringing" calls are returned)
+        created_at:
+          type: number
+          format: double
+          description: Unix timestamp when the call was received
+        room_id:
+          type: string
+          format: uuid
+          description: |
+            Meeting room ID (pre-created when call arrived).
+
+            Use for navigation after accepting.
+        room_slug:
+          type: string
+          description: |
+            Human-readable room slug for URL/navigation.
+
+            Example: Navigate to `/rooms/{room_slug}` after accepting.
+          example: "abc-defg-hij"
+
+    AcceptCallRequest:
+      type: object
+      required:
+        - call_id
+      properties:
+        call_id:
+          type: string
+          format: uuid
+          description: |
+            ID of the call to accept.
+
+            From push notification `call_id` field or `/calls/pending/` response.
+
+    AcceptCallResponse:
+      type: object
+      description: |
+        Response after successfully accepting a call.
+
+        Use the `livekit` credentials to connect to the room.
+      properties:
+        status:
+          type: string
+          enum: [accepted]
+        room_id:
+          type: string
+          format: uuid
+          description: Meeting room UUID
+        room_slug:
+          type: string
+          description: Room slug for navigation/display
+        livekit:
+          type: object
+          description: LiveKit connection details
+          properties:
+            url:
+              type: string
+              format: uri
+              description: LiveKit WebSocket URL
+              example: "wss://livekit.example.com"
+            token:
+              type: string
+              description: |
+                JWT token for LiveKit authentication.
+
+                Pass to `LiveKit.connect(url, token)`
+
+    DeclineCallRequest:
+      type: object
+      required:
+        - call_id
+      properties:
+        call_id:
+          type: string
+          format: uuid
+          description: ID of the call to decline
+
+    ValidationError:
+      type: object
+      additionalProperties:
+        type: array
+        items:
+          type: string
+      example:
+        call_id:
+          - "This field is required."
+
+    SimpleError:
+      type: object
+      properties:
+        error:
+          type: string
+
+    AuthenticationError:
+      type: object
+      properties:
+        detail:
+          type: string
+          example: "Authentication credentials were not provided."
+
+    NotImplementedError:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Push notifications not configured"
+
+    # ==========================================
+    # Push Notification Payloads (Reference)
+    # ==========================================
+
+    IncomingCallNotification:
+      type: object
+      description: |
+        **Push notification payload** sent when an incoming call arrives.
+
+        This is sent by the server to your registered device - not received via API.
+
+        **iOS**: Delivered via VoIP push (PushKit). Show CallKit incoming call UI.
+
+        **Android**: Delivered via FCM data message. Show full-screen incoming call activity.
+
+        **Important**: `room_id` and `room_slug` are included so you can navigate
+        directly to the room without waiting for the `/calls/accept/` response.
+      properties:
+        type:
+          type: string
+          enum: [incoming_call]
+          description: Notification type identifier
+        call_id:
+          type: string
+          format: uuid
+          description: Unique call identifier (pass to accept/decline)
+        caller_number:
+          type: string
+          description: Caller's phone number (E.164 format)
+          example: "+33612345678"
+        callee_number:
+          type: string
+          description: Your phone number that was called
+          example: "+33535005942"
+        room_id:
+          type: string
+          format: uuid
+          description: Pre-created meeting room ID
+        room_slug:
+          type: string
+          description: Room slug for URL navigation
+          example: "abc-defg-hij"
+        lobby_room_name:
+          type: string
+          description: Internal use - can be ignored
+        sip_participant_identity:
+          type: string
+          description: Internal use - can be ignored
+
+    CallCancelledNotification:
+      type: object
+      description: |
+        **Push notification payload** sent when an incoming call is cancelled.
+
+        This happens when the caller hangs up before you answer.
+
+        **iOS**: Use to dismiss CallKit UI via `reportCall(with:endedAt:reason:)`
+
+        **Android**: Dismiss incoming call UI/notification.
+      properties:
+        type:
+          type: string
+          enum: [call_cancelled]
+        call_id:
+          type: string
+          format: uuid
+          description: ID of the cancelled call (to match with displayed incoming call)

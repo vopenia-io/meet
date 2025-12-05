@@ -234,6 +234,7 @@ class Base(Configuration):
         "rest_framework",
         "parler",
         "easy_thumbnails",
+        "push_notifications",
         # Django
         "django.contrib.admin",
         "django.contrib.auth",
@@ -728,6 +729,65 @@ class Base(Configuration):
         environ_prefix=None,
     )
 
+    # Phone System (SIP Lobby Pattern)
+    PHONE_SYSTEM_ENABLED = values.BooleanValue(
+        False,
+        environ_name="PHONE_SYSTEM_ENABLED",
+        environ_prefix=None,
+    )
+    PHONE_SYSTEM_LOBBY_PHONE_NUMBERS = values.ListValue(
+        [],
+        environ_name="PHONE_SYSTEM_LOBBY_PHONE_NUMBERS",
+        environ_prefix=None,
+    )
+    PHONE_SYSTEM_LOBBY_ROOM_PREFIX = values.Value(
+        "sip-lobby-",
+        environ_name="PHONE_SYSTEM_LOBBY_ROOM_PREFIX",
+        environ_prefix=None,
+    )
+    PHONE_SYSTEM_PENDING_CALL_TIMEOUT = values.PositiveIntegerValue(
+        120,  # 2 minutes
+        environ_name="PHONE_SYSTEM_PENDING_CALL_TIMEOUT",
+        environ_prefix=None,
+    )
+    PHONE_SYSTEM_TRANSFER_TIMEOUT = values.PositiveIntegerValue(
+        30,
+        environ_name="PHONE_SYSTEM_TRANSFER_TIMEOUT",
+        environ_prefix=None,
+    )
+    # Name of the LiveKit agent that joins lobby rooms to answer SIP calls
+    PHONE_SYSTEM_LOBBY_BOT_AGENT_NAME = values.Value(
+        "lobby-bot",
+        environ_name="PHONE_SYSTEM_LOBBY_BOT_AGENT_NAME",
+        environ_prefix=None,
+    )
+
+    # Push Notifications (django-push-notifications)
+    PUSH_NOTIFICATIONS_SETTINGS = {
+        # APNS (iOS) settings
+        "APNS_CERTIFICATE": values.Value(
+            None, environ_name="APNS_CERTIFICATE_PATH", environ_prefix=None
+        ),
+        "APNS_TOPIC": values.Value(
+            None, environ_name="APNS_BUNDLE_ID", environ_prefix=None
+        ),
+        "APNS_USE_SANDBOX": values.BooleanValue(
+            True, environ_name="APNS_USE_SANDBOX", environ_prefix=None
+        ),
+        # Web Push (VAPID) settings
+        "WP_PRIVATE_KEY": SecretFileValue(
+            environ_name="WEBPUSH_PRIVATE_KEY", environ_prefix=None
+        ),
+        "WP_CLAIMS": {
+            "sub": values.Value(
+                "mailto:support@example.com",
+                environ_name="WEBPUSH_CONTACT_EMAIL",
+                environ_prefix=None,
+            ),
+        },
+        "UPDATE_ON_DUPLICATE_REG_ID": True,
+    }
+
     # External Applications
     APPLICATION_CLIENT_ID_LENGTH = values.PositiveIntegerValue(
         40,
@@ -861,6 +921,22 @@ class Development(Base):
     SESSION_COOKIE_NAME = "meet_sessionid"
 
     USE_SWAGGER = True
+
+    LOGGING = {
+        "version": 1,
+        "disable_existing_loggers": False,
+        "handlers": {
+            "console": {
+                "class": "logging.StreamHandler",
+            },
+        },
+        "loggers": {
+            "core": {
+                "handlers": ["console"],
+                "level": "DEBUG",
+            },
+        },
+    }
 
     def __init__(self):
         # pylint: disable=invalid-name

@@ -14,6 +14,16 @@ import './i18n/init'
 import { queryClient } from '@/api/queryClient'
 import { AppInitialization } from '@/components/AppInitialization'
 import { useIsSdkContext } from '@/features/sdk/hooks/useIsSdkContext'
+import { IncomingCallDialog, usePushNotifications } from '@/features/calls'
+
+/**
+ * Component that handles incoming call polling.
+ * Must be inside QueryClientProvider since it uses useUser which depends on react-query.
+ */
+const IncomingCallHandler = () => {
+  usePushNotifications()
+  return <IncomingCallDialog />
+}
 
 function App() {
   const { i18n } = useTranslation()
@@ -38,6 +48,7 @@ function App() {
             initialIsOpen={false}
             buttonPosition="bottom-left"
           />
+          <IncomingCallHandler />
         </I18nProvider>
       </Suspense>
     </QueryClientProvider>

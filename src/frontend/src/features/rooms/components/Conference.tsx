@@ -35,10 +35,12 @@ export const Conference = ({
   roomId,
   initialRoomData,
   mode = 'join',
+  isPhoneCall = false,
 }: {
   roomId: string
   mode?: 'join' | 'create'
   initialRoomData?: ApiRoom
+  isPhoneCall?: boolean
 }) => {
   const posthog = usePostHog()
   const { data: apiConfig } = useConfig()
@@ -211,6 +213,7 @@ export const Conference = ({
           connect={isConnectionWarmedUp}
           audio={userConfig.audioEnabled}
           video={
+            !isPhoneCall &&
             userConfig.videoEnabled && {
               processor: BackgroundProcessorFactory.deserializeProcessor(
                 userConfig.processorSerialized

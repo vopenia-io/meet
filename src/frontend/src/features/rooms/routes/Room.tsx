@@ -29,6 +29,7 @@ export const Room = () => {
   const initialRoomData = history.state?.initialRoomData
   const mode = isLoggedIn && history.state?.create ? 'create' : 'join'
   const skipJoinScreen = isLoggedIn && mode === 'create'
+  const isPhoneCall = !!history.state?.phoneCall
 
   useKeyboardShortcuts()
 
@@ -69,6 +70,7 @@ export const Room = () => {
         initialRoomData={initialRoomData}
         roomId={roomId}
         mode={mode}
+        isPhoneCall={isPhoneCall}
       />
     </BaseRoom>
   )

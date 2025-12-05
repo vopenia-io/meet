@@ -863,3 +863,308 @@ class RecordingViewSet(
         request = utils.generate_s3_authorization_headers(recording.key)
 
         return drf_response.Response("authorized", headers=request.headers, status=200)
+
+
+class DeviceViewSet(viewsets.GenericViewSet):
+    """API endpoints for push notification device registration."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    @decorators.action(detail=False, methods=["post"], url_path="apns/register")
+    def register_apns(self, request):
+        """Register an APNS device for push notifications."""
+        try:
+            from push_notifications.models import APNSDevice
+        except ImportError:
+            return drf_response.Response(
+                {"error": "Push notifications not configured"},
+                status=drf_status.HTTP_501_NOT_IMPLEMENTED,
+            )
+
+        serializer = serializers.APNSDeviceSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        device, created = APNSDevice.objects.update_or_create(
+            registration_id=serializer.validated_data["registration_id"],
+            defaults={
+                "user": request.user,
+                "active": True,
+                "device_id": serializer.validated_data.get("device_id"),
+                "name": serializer.validated_data.get("name", ""),
+            },
+        )
+
+        return drf_response.Response(
+            {"status": "success", "created": created},
+            status=drf_status.HTTP_201_CREATED if created else drf_status.HTTP_200_OK,
+        )
+
+    @decorators.action(detail=False, methods=["post"], url_path="apns/unregister")
+    def unregister_apns(self, request):
+        """Unregister an APNS device."""
+        try:
+            from push_notifications.models import APNSDevice
+        except ImportError:
+            return drf_response.Response(
+                {"error": "Push notifications not configured"},
+                status=drf_status.HTTP_501_NOT_IMPLEMENTED,
+            )
+
+        registration_id = request.data.get("registration_id")
+        if not registration_id:
+            return drf_response.Response(
+                {"error": "registration_id required"},
+                status=drf_status.HTTP_400_BAD_REQUEST,
+            )
+
+        APNSDevice.objects.filter(
+            user=request.user,
+            registration_id=registration_id,
+        ).update(active=False)
+
+        return drf_response.Response({"status": "success"})
+
+    @decorators.action(detail=False, methods=["post"], url_path="webpush/register")
+    def register_webpush(self, request):
+        """Register a WebPush device for push notifications."""
+        try:
+            from push_notifications.models import WebPushDevice
+        except ImportError:
+            return drf_response.Response(
+                {"error": "Push notifications not configured"},
+                status=drf_status.HTTP_501_NOT_IMPLEMENTED,
+            )
+
+        serializer = serializers.WebPushDeviceSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        device, created = WebPushDevice.objects.update_or_create(
+            registration_id=serializer.validated_data["registration_id"],
+            defaults={
+                "user": request.user,
+                "active": True,
+                "p256dh": serializer.validated_data["p256dh"],
+                "auth": serializer.validated_data["auth"],
+                "browser": serializer.validated_data.get("browser", ""),
+            },
+        )
+
+        return drf_response.Response(
+            {"status": "success", "created": created},
+            status=drf_status.HTTP_201_CREATED if created else drf_status.HTTP_200_OK,
+        )
+
+    @decorators.action(detail=False, methods=["post"], url_path="webpush/unregister")
+    def unregister_webpush(self, request):
+        """Unregister a WebPush device."""
+        try:
+            from push_notifications.models import WebPushDevice
+        except ImportError:
+            return drf_response.Response(
+                {"error": "Push notifications not configured"},
+                status=drf_status.HTTP_501_NOT_IMPLEMENTED,
+            )
+
+        registration_id = request.data.get("registration_id")
+        if not registration_id:
+            return drf_response.Response(
+                {"error": "registration_id required"},
+                status=drf_status.HTTP_400_BAD_REQUEST,
+            )
+
+        WebPushDevice.objects.filter(
+            user=request.user,
+            registration_id=registration_id,
+        ).update(active=False)
+
+        return drf_response.Response({"status": "success"})
+
+
+class CallViewSet(viewsets.GenericViewSet):
+    """API endpoints for managing incoming phone calls."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from core.services.phone_system import PhoneSystemService
+
+        self.phone_system = PhoneSystemService()
+
+    @decorators.action(detail=False, methods=["get"], url_path="pending")
+    def list_pending_calls(self, request):
+        """List all pending incoming calls for the current user."""
+        pending_calls = self.phone_system.get_user_pending_calls(str(request.user.id))
+
+        return drf_response.Response(
+            {
+                "calls": [
+                    serializers.PendingCallSerializer(
+                        {
+                            "call_id": call.call_id,
+                            "caller_number": call.caller_number,
+                            "callee_number": call.callee_number,
+                            "lobby_room_name": call.lobby_room_name,
+                            "sip_participant_identity": call.sip_participant_identity,
+                            "status": call.status,
+                            "created_at": call.created_at,
+                        }
+                    ).data
+                    for call in pending_calls
+                ]
+            }
+        )
+
+    @decorators.action(detail=False, methods=["post"], url_path="accept")
+    def accept_call(self, request):
+        """Accept an incoming call and transfer to a meeting room."""
+        from core.services.phone_system import (
+            PendingCallStatus,
+            TransferError,
+        )
+
+        print(f"[DEBUG] Accept call request.data: {request.data}")
+        print(f"[DEBUG] Accept call request.data type: {type(request.data)}")
+
+        serializer = serializers.AcceptCallSerializer(data=request.data)
+        print(f"[DEBUG] Serializer initial data: {serializer.initial_data}")
+        is_valid = serializer.is_valid()
+        print(f"[DEBUG] Serializer is_valid: {is_valid}")
+        if not is_valid:
+            print(f"[DEBUG] Accept call validation errors: {serializer.errors}")
+            return drf_response.Response(serializer.errors, status=drf_status.HTTP_400_BAD_REQUEST)
+
+        call_id = str(serializer.validated_data["call_id"])
+        print(f"[DEBUG] Looking up pending call with ID: {call_id}")
+        pending_call = self.phone_system.get_pending_call(call_id)
+        print(f"[DEBUG] Pending call found: {pending_call}")
+
+        if not pending_call:
+            print("[DEBUG] Returning 404 - Call not found")
+            return drf_response.Response(
+                {"error": "Call not found or expired"},
+                status=drf_status.HTTP_404_NOT_FOUND,
+            )
+
+        # Verify the call belongs to this user
+        print(f"[DEBUG] Checking user: pending_call.target_user_id={pending_call.target_user_id}, request.user.id={request.user.id}")
+        if pending_call.target_user_id != str(request.user.id):
+            print("[DEBUG] Returning 403 - Unauthorized")
+            return drf_response.Response(
+                {"error": "Unauthorized"},
+                status=drf_status.HTTP_403_FORBIDDEN,
+            )
+
+        print(f"[DEBUG] Checking status: pending_call.status={pending_call.status}, RINGING={PendingCallStatus.RINGING.value}")
+        if pending_call.status != PendingCallStatus.RINGING.value:
+            print(f"[DEBUG] Returning 400 - Not in ringing state: {pending_call.status}")
+            return drf_response.Response(
+                {"error": f"Call is not in ringing state: {pending_call.status}"},
+                status=drf_status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Room was pre-created when the call arrived (in livekit_events._handle_participant_joined)
+        # This allows the push notification to include room_id and room_slug
+        try:
+            room = models.Room.objects.get(id=pending_call.meeting_room_id)
+        except models.Room.DoesNotExist:
+            logger.error(
+                "Pre-created room %s not found for call %s",
+                pending_call.meeting_room_id,
+                call_id,
+            )
+            return drf_response.Response(
+                {"error": "Room not found"},
+                status=drf_status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        # Update call status
+        self.phone_system.update_call_status(
+            call_id,
+            PendingCallStatus.ACCEPTED,
+        )
+
+        # Signal lobby-bot to answer the call by setting room metadata
+        # The lobby-bot watches for {"status": "accepted"} and then publishes
+        # its audio track, which triggers livekit-sip to answer the call
+        try:
+            self.phone_system.signal_call_accepted(pending_call.lobby_room_name, call_id)
+        except Exception as e:
+            logger.exception("Failed to signal call acceptance for %s", call_id)
+            return drf_response.Response(
+                {"error": f"Failed to signal call acceptance: {e}"},
+                status=drf_status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        # Wait for lobby-bot to publish track and livekit-sip to answer the call
+        # This delay allows the SIP call to be established before we transfer
+        import time
+        time.sleep(0.5)
+
+        # Transfer SIP participant to the room
+        try:
+            self.phone_system.transfer_to_room(pending_call, str(room.id))
+            self.phone_system.update_call_status(call_id, PendingCallStatus.TRANSFERRED)
+
+        except TransferError:
+            logger.exception("Transfer failed for call %s", call_id)
+            return drf_response.Response(
+                {"error": "Failed to transfer call"},
+                status=drf_status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        # Generate LiveKit config for the user to join
+        livekit_config = utils.generate_livekit_config(
+            room_id=str(room.id),
+            user=request.user,
+            username=request.user.full_name or str(request.user),
+            configuration=room.configuration,
+            is_admin_or_owner=True,
+        )
+
+        return drf_response.Response(
+            {
+                "status": "success",
+                "room": {
+                    "id": str(room.id),
+                    "name": room.name,
+                    "slug": room.slug,
+                },
+                "livekit": livekit_config,
+                "caller_number": pending_call.caller_number,
+            }
+        )
+
+    @decorators.action(detail=False, methods=["post"], url_path="decline")
+    def decline_call(self, request):
+        """Decline an incoming call."""
+        from core.services.phone_system import PendingCallStatus
+
+        serializer = serializers.DeclineCallSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        call_id = str(serializer.validated_data["call_id"])
+        pending_call = self.phone_system.get_pending_call(call_id)
+
+        if not pending_call:
+            return drf_response.Response(
+                {"error": "Call not found or expired"},
+                status=drf_status.HTTP_404_NOT_FOUND,
+            )
+
+        # Verify the call belongs to this user
+        if pending_call.target_user_id != str(request.user.id):
+            return drf_response.Response(
+                {"error": "Unauthorized"},
+                status=drf_status.HTTP_403_FORBIDDEN,
+            )
+
+        # Update status and hangup
+        self.phone_system.update_call_status(call_id, PendingCallStatus.DECLINED)
+        self.phone_system.hangup_participant(
+            pending_call.lobby_room_name,
+            pending_call.sip_participant_identity,
+        )
+        self.phone_system.clear_pending_call(call_id)
+
+        return drf_response.Response({"status": "success"})

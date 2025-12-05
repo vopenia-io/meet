@@ -780,6 +780,54 @@ class Application(BaseModel):
         return self.allowed_domains.filter(domain__iexact=domain).exists()
 
 
+class PhoneNumber(BaseModel):
+    """Model for user phone numbers assigned via SIP trunks.
+
+    Each user can have one phone number assigned for receiving inbound calls.
+    The phone number is in E.164 format (e.g., +14155551234).
+    """
+
+    phone_number = models.CharField(
+        max_length=20,
+        unique=True,
+        validators=[
+            validators.RegexValidator(
+                regex=r"^\+[1-9]\d{1,14}$",
+                message=_("Phone number must be in E.164 format (e.g., +14155551234)"),
+            )
+        ],
+        verbose_name=_("Phone Number"),
+        help_text=_("E.164 formatted phone number assigned to this user"),
+    )
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="phone_number",
+        verbose_name=_("User"),
+    )
+    trunk_id = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name=_("SIP Trunk ID"),
+        help_text=_("Optional reference to the SIP trunk providing this number"),
+    )
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name=_("Active"),
+        help_text=_("Whether this phone number can receive calls"),
+    )
+
+    class Meta:
+        db_table = "meet_phone_number"
+        ordering = ("-created_at",)
+        verbose_name = _("Phone Number")
+        verbose_name_plural = _("Phone Numbers")
+
+    def __str__(self):
+        return f"{self.phone_number} ({self.user})"
+
+
 class ApplicationDomain(BaseModel):
     """Domain authorized for application delegation."""
 

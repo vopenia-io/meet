@@ -111,6 +111,23 @@ services:
     depends_on:
       - app-dev
 
+  lobby-bot:
+    user: ${DOCKER_USER:-1000}
+    build:
+      context: ./src/agents
+      dockerfile: Dockerfile
+    command: ["python", "lobby-bot.py", "start"]
+    environment:
+      - LIVEKIT_API_KEY=devkey
+      - LIVEKIT_API_SECRET=secret
+      - LIVEKIT_URL=ws://livekit:7880
+      - LOBBY_BOT_AGENT_NAME=lobby-bot
+      - LOBBY_ROOM_PREFIX=sip-lobby-
+    depends_on:
+      - livekit
+    networks:
+      - default
+
   app:
     build:
       context: .
@@ -261,7 +278,7 @@ services:
         - redis
 
   livekit-sip:
-    image: livekit-sip:sip-video
+    image: livekit/sip:latest
     environment:
       - SIP_LISTEN=udp:0.0.0.0:5080,tcp:0.0.0.0:5080
       - SIP_EXTERNAL_ADDR=192.168.0.10
@@ -269,13 +286,26 @@ services:
       - ./docker/livekit-sip/config/livekit-sip.yaml:/sip/config.yaml
     network_mode: "host"
 
+  kamailio-db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: kamailio
+      POSTGRES_USER: kamailio
+      POSTGRES_PASSWORD: kamailio_pass
+    volumes:
+      - ./docker/kamailio/sql:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "15433:5432"
+
   kamailio:
     image: ghcr.io/kamailio/kamailio:6.0.3-focal
     volumes:
       - ./docker/kamailio/kamailio.cfg:/etc/kamailio/kamailio.cfg
-      - ./docker/kamailio/kamailio.db:/etc/kamailio/db
+    env_file:
+      - ./docker/kamailio/kamailio.env
     depends_on:
       - livekit-sip
+      - kamailio-db
     network_mode: "host"
 
   redis-summary:

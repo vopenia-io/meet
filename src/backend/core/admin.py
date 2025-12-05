@@ -233,6 +233,17 @@ class RecordingAdmin(admin.ModelAdmin):
         return str(owners[0].user)
 
 
+@admin.register(models.PhoneNumber)
+class PhoneNumberAdmin(admin.ModelAdmin):
+    """Admin interface for managing phone numbers assigned to users."""
+
+    list_display = ("phone_number", "user", "trunk_id", "is_active", "created_at")
+    list_filter = ("is_active", "created_at")
+    search_fields = ("phone_number", "user__email", "user__full_name", "trunk_id")
+    readonly_fields = ("id", "created_at", "updated_at")
+    autocomplete_fields = ["user"]
+
+
 class ApplicationDomainInline(admin.TabularInline):
     """Inline admin for managing allowed domains per application."""
 

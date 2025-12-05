@@ -301,3 +301,56 @@ class UpdateParticipantSerializer(BaseParticipantsManagementSerializer):
                 ) from e
 
         return attrs
+
+
+# Device Registration Serializers (Push Notifications)
+
+
+class APNSDeviceSerializer(BaseValidationOnlySerializer):
+    """Serializer for APNS (iOS) device registration."""
+
+    registration_id = serializers.CharField(required=True, max_length=200)
+    device_id = serializers.UUIDField(required=False, allow_null=True)
+    name = serializers.CharField(required=False, max_length=255, allow_blank=True)
+
+
+class WebPushDeviceSerializer(BaseValidationOnlySerializer):
+    """Serializer for WebPush device registration."""
+
+    registration_id = serializers.CharField(required=True)  # Base64 encoded
+    p256dh = serializers.CharField(required=True, max_length=200)
+    auth = serializers.CharField(required=True, max_length=50)
+    browser = serializers.CharField(required=False, max_length=50, allow_blank=True)
+
+
+# Call Management Serializers
+
+
+class AcceptCallSerializer(BaseValidationOnlySerializer):
+    """Serializer for accepting an incoming call."""
+
+    call_id = serializers.UUIDField(required=True)
+    room_name = serializers.CharField(
+        required=False,
+        max_length=255,
+        allow_blank=True,
+        help_text="Optional custom room name. If not provided, a new room is created.",
+    )
+
+
+class DeclineCallSerializer(BaseValidationOnlySerializer):
+    """Serializer for declining an incoming call."""
+
+    call_id = serializers.UUIDField(required=True)
+
+
+class PendingCallSerializer(serializers.Serializer):
+    """Serializer for pending call data in responses."""
+
+    call_id = serializers.CharField()
+    caller_number = serializers.CharField()
+    callee_number = serializers.CharField()
+    lobby_room_name = serializers.CharField()
+    sip_participant_identity = serializers.CharField()
+    status = serializers.CharField()
+    created_at = serializers.FloatField()

@@ -57,6 +57,7 @@ dependencies = [
     "mozilla-django-oidc==4.0.1",
     "livekit-api==1.0.7",
     "aiohttp==3.13.2",
+    "django-push-notifications[APNS,WP]>=3.0.0",
 ]
 
 [project.urls]
