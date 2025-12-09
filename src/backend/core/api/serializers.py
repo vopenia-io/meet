@@ -354,3 +354,13 @@ class PendingCallSerializer(serializers.Serializer):
     sip_participant_identity = serializers.CharField()
     status = serializers.CharField()
     created_at = serializers.FloatField()
+
+
+class InitiateOutboundCallSerializer(BaseValidationOnlySerializer):
+    """Serializer for initiating an outbound SIP call."""
+
+    phone_number = serializers.CharField(
+        required=True,
+        max_length=20,
+        help_text="Phone number to dial (E.164 or local French format)",
+    )

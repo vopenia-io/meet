@@ -7,6 +7,7 @@ import { Screen } from '@/layout/Screen'
 import { generateRoomId, useCreateRoom } from '@/features/rooms'
 import { useUser, UserAware } from '@/features/auth'
 import { JoinMeetingDialog } from '../components/JoinMeetingDialog'
+import { OutboundCallInput } from '../components/OutboundCallInput'
 import { RiAddLine, RiLink } from '@remixicon/react'
 import { LaterMeetingDialog } from '@/features/home/components/LaterMeetingDialog'
 import { IntroSlider } from '@/features/home/components/IntroSlider'
@@ -231,6 +232,7 @@ export const Home = () => {
                 <JoinMeetingDialog />
               </DialogTrigger>
             </div>
+            {isLoggedIn && <OutboundCallInput />}
             <Separator />
             <div
               className={css({

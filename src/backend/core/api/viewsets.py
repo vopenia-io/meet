@@ -1168,3 +1168,105 @@ class CallViewSet(viewsets.GenericViewSet):
         self.phone_system.clear_pending_call(call_id)
 
         return drf_response.Response({"status": "success"})
+
+    @decorators.action(detail=False, methods=["post"], url_path="initiate")
+    def initiate_outbound_call(self, request):
+        """Initiate an outbound SIP call to a phone number."""
+        from core.services.outbound_call import (
+            OutboundCallException,
+            OutboundCallService,
+        )
+
+        logger.info("initiate_outbound_call: request.data=%s", request.data)
+        logger.info(
+            "initiate_outbound_call: OUTBOUND_CALL_ENABLED=%s, OUTBOUND_SIP_TRUNK_ID=%s",
+            settings.OUTBOUND_CALL_ENABLED,
+            settings.OUTBOUND_SIP_TRUNK_ID,
+        )
+
+        serializer = serializers.InitiateOutboundCallSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        phone_number = serializer.validated_data["phone_number"]
+
+        # Normalize phone number to E.164
+        if phone_number.startswith("0"):
+            phone_number = "+33" + phone_number[1:]
+
+        logger.info("Creating room for outbound call to %s", phone_number)
+
+        try:
+            # Create a new room for this call (same pattern as incoming calls)
+            # Set name=slug so that slug is auto-generated from name via slugify
+            max_attempts = 10
+            room = None
+            for _ in range(max_attempts):
+                slug = utils.generate_room_slug()
+                if not models.Room.objects.filter(slug=slug).exists():
+                    room = models.Room.objects.create(
+                        name=slug,  # slug is derived from name via slugify
+                        access_level=models.RoomAccessLevel.RESTRICTED,
+                    )
+                    break
+            if room is None:
+                raise OutboundCallException("Failed to generate unique room slug")
+            logger.info("Room created: slug=%s, id=%s", room.slug, room.id)
+
+            # Set the user as owner of the room
+            models.ResourceAccess.objects.create(
+                resource=room,
+                user=request.user,
+                role=models.RoleChoices.OWNER,
+            )
+            logger.info("ResourceAccess created for user %s", request.user)
+
+            # Generate LiveKit token for user
+            livekit_config = utils.generate_livekit_config(
+                room_id=str(room.id),
+                user=request.user,
+                username=request.user.full_name or str(request.user),
+                configuration=room.configuration,
+                is_admin_or_owner=True,
+            )
+            logger.info("LiveKit config generated")
+
+            # Initiate outbound call
+            outbound_service = OutboundCallService()
+            call_result = outbound_service.initiate_call(
+                phone_number=phone_number,
+                room_name=str(room.id),
+                participant_identity=f"sip_{phone_number}",
+                participant_name=phone_number,
+            )
+            logger.info("Outbound call initiated: %s", call_result)
+
+        except OutboundCallException as e:
+            logger.error("initiate_outbound_call OutboundCallException: %s", str(e))
+            if 'room' in locals():
+                room.delete()
+            return drf_response.Response(
+                {"error": str(e)},
+                status=drf_status.HTTP_400_BAD_REQUEST,
+            )
+        except Exception as e:
+            logger.exception("initiate_outbound_call unexpected error: %s", str(e))
+            if 'room' in locals():
+                room.delete()
+            return drf_response.Response(
+                {"error": f"Unexpected error: {str(e)}"},
+                status=drf_status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        return drf_response.Response(
+            {
+                "status": "success",
+                "room": {
+                    "id": str(room.id),
+                    "name": room.name,
+                    "slug": room.slug,
+                },
+                "livekit": livekit_config,
+                "sip_call_id": call_result["sip_call_id"],
+                "phone_number": phone_number,
+            }
+        )

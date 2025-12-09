@@ -57,5 +57,11 @@
       "body": "Obtenez des transcriptions précises et actionnables, pour booster votre productivité. Fonctionnalité en beta, essayez-la maintenant !",
       "imgAlt": "Illustration de prise de notes assistée par l'IA dans une réunion virtuelle"
     }
+  },
+  "outboundCall": {
+    "label": "Entrer un numéro de téléphone",
+    "placeholder": "+33 6 12 34 56 78",
+    "callButton": "Appeler",
+    "error": "Échec de l'appel. Veuillez réessayer."
   }
 }

@@ -762,6 +762,28 @@ class Base(Configuration):
         environ_prefix=None,
     )
 
+    # Outbound Calls (SIP)
+    OUTBOUND_CALL_ENABLED = values.BooleanValue(
+        False,
+        environ_name="OUTBOUND_CALL_ENABLED",
+        environ_prefix=None,
+    )
+    OUTBOUND_SIP_TRUNK_ID = values.Value(
+        None,
+        environ_name="OUTBOUND_SIP_TRUNK_ID",
+        environ_prefix=None,
+    )
+    OUTBOUND_CALLER_NUMBER = values.Value(
+        "+33535005942",  # IPPI DID
+        environ_name="OUTBOUND_CALLER_NUMBER",
+        environ_prefix=None,
+    )
+    OUTBOUND_SIP_ADDRESS = values.Value(
+        "192.168.0.10:5060",  # Kamailio address
+        environ_name="OUTBOUND_SIP_ADDRESS",
+        environ_prefix=None,
+    )
+
     # Push Notifications (django-push-notifications)
     PUSH_NOTIFICATIONS_SETTINGS = {
         # APNS (iOS) settings

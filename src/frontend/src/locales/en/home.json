@@ -57,5 +57,11 @@
       "body": "Get accurate and actionable transcripts to boost your productivity. Feature in beta—try it now!",
       "imgAlt": "Illustration of AI-powered note-taking in a virtual meeting"
     }
+  },
+  "outboundCall": {
+    "label": "Enter a phone number",
+    "placeholder": "+33 6 12 34 56 78",
+    "callButton": "Call",
+    "error": "Call failed. Please try again."
   }
 }
