@@ -937,7 +937,7 @@ class Development(Base):
 
     ALLOWED_HOSTS = ["*"]
     CORS_ALLOW_ALL_ORIGINS = True
-    CSRF_TRUSTED_ORIGINS = ["http://localhost:8072", "http://localhost:3000", "http://192.168.0.10:3000", "http://192.168.0.10:8071", "https://192.168.0.10:3000", "https://192.168.0.10"]
+    CSRF_TRUSTED_ORIGINS = ["http://localhost:8072", "http://localhost:3000", "http://localhost:8071", "http://192.168.0.10:3000", "http://192.168.0.10:8071", "https://192.168.0.10:3000", "https://192.168.0.10"]
     DEBUG = True
 
     SESSION_COOKIE_NAME = "meet_sessionid"
