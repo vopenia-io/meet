@@ -278,7 +278,7 @@ services:
         - redis
 
   livekit-sip:
-    image: livekit/sip:latest
+    image: livekit-sip:local
     environment:
       - SIP_LISTEN=udp:0.0.0.0:5080,tcp:0.0.0.0:5080
       - SIP_EXTERNAL_ADDR=192.168.0.10
