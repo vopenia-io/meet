@@ -211,7 +211,7 @@ export const Conference = ({
           serverUrl={serverUrl}
           token={data?.livekit?.token}
           connect={isConnectionWarmedUp}
-          audio={userConfig.audioEnabled}
+          audio={isPhoneCall || userConfig.audioEnabled}
           video={
             !isPhoneCall &&
             userConfig.videoEnabled && {
