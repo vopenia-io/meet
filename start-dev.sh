@@ -14,6 +14,7 @@ docker compose -f /home/vopenia/dev/meet/compose.yml up -d \
   livekit \
   livekit-egress \
   livekit-sip \
+  rtpengine \
   kamailio \
   mailcatcher
 

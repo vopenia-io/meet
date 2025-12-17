@@ -858,6 +858,9 @@ class Development(Base):
     CSRF_TRUSTED_ORIGINS = ["http://localhost:8072", "http://localhost:3000", "http://localhost:8071", "http://192.168.0.10:3000", "http://192.168.0.10:8071", "https://192.168.0.10:3000", "https://192.168.0.10"]
     DEBUG = True
 
+    # Trust X-Forwarded-Proto header from nginx proxy for HTTPS detection
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
     SESSION_COOKIE_NAME = "meet_sessionid"
 
     USE_SWAGGER = True

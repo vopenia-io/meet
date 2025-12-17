@@ -269,13 +269,36 @@ services:
       - ./docker/livekit-sip/config/livekit-sip.yaml:/sip/config.yaml
     network_mode: "host"
 
+  rtpengine:
+    image: drachtio/rtpengine:latest
+    entrypoint: rtpengine
+    command: >
+      --interface=192.168.0.10
+      --listen-ng=192.168.0.10:22222
+      --port-min=20000
+      --port-max=22221
+      --timeout=60
+      --silent-timeout=3600
+      --log-level=7
+      --foreground
+      --log-stderr
+      --table=-1
+    network_mode: "host"
+    restart: unless-stopped
+
   kamailio:
     image: ghcr.io/kamailio/kamailio:6.0.3-focal
+    environment:
+      - MY_IP_ADDR=192.168.0.10
+      - LIVEKIT_SIP_ADDR=192.168.0.10
+      - KAMAILIO_DB_URL=postgres://dinum:pass@localhost:15432/meet
+      - RTPENGINE_ADDR=udp:192.168.0.10:22222
     volumes:
       - ./docker/kamailio/kamailio.cfg:/etc/kamailio/kamailio.cfg
       - ./docker/kamailio/kamailio.db:/etc/kamailio/db
     depends_on:
       - livekit-sip
+      - rtpengine
     network_mode: "host"
 
   redis-summary:
