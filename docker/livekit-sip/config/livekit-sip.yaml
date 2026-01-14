@@ -18,7 +18,7 @@ insecure: true
 # SIP configuration
 sip_port: 5080
 advertised_ip: 192.168.0.10
-rtp_port: 20000-20100
+rtp_port: 20301-30100
 pin_required: false
 
 use_external_ip: false
