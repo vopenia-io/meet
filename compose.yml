@@ -272,18 +272,9 @@ services:
   rtpengine:
     image: audiocodes/rtpengine:13.5.1.3-2
     entrypoint: rtpengine
-    command: >
-      --interface=192.168.0.10
-      --listen-ng=192.168.0.10:22222
-      --port-min=20000
-      --port-max=22221
-      --timeout=60
-      --silent-timeout=3600
-      --log-level=5
-      --foreground
-      --log-stderr
-      --table=-1
-      --tos=184
+    command: --config-file=/etc/rtpengine/rtpengine.conf --foreground --log-stderr
+    volumes:
+      - ./docker/rtpengine/rtpengine.conf:/etc/rtpengine/rtpengine.conf:ro
     network_mode: "host"
     restart: unless-stopped
 
@@ -292,7 +283,7 @@ services:
     environment:
       - MY_IP_ADDR=192.168.0.10
       - LIVEKIT_SIP_ADDR=192.168.0.10
-      - KAMAILIO_DB_URL=postgres://dinum:pass@localhost:15432/meet
+      - KAMAILIO_DB_URL=postgres://dinum:pass@localhost:15432/kamailio
       - RTPENGINE_ADDR=udp:192.168.0.10:22222
     volumes:
       - ./docker/kamailio/kamailio.cfg:/etc/kamailio/kamailio.cfg
