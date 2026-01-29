@@ -282,15 +282,15 @@ services:
     image: ghcr.io/kamailio/kamailio:6.0.3-focal
     environment:
       - MY_IP_ADDR=192.168.0.10
-      - LIVEKIT_SIP_ADDR=192.168.0.10
+      - SIP_REALM=192.168.0.10
+      - SIP_ADVERTISE_IP=192.168.0.10
       - KAMAILIO_DB_URL=postgres://dinum:pass@localhost:15432/kamailio
-      - RTPENGINE_ADDR=udp:192.168.0.10:22222
     volumes:
       - ./docker/kamailio/kamailio.cfg:/etc/kamailio/kamailio.cfg
-      - ./docker/kamailio/kamailio.db:/etc/kamailio/db
     depends_on:
       - livekit-sip
       - rtpengine
+      - postgresql
     network_mode: "host"
 
   redis-summary:
