@@ -20,4 +20,4 @@ docker compose -f /home/vopenia/dev/meet/compose.yml up -d \
 
 # Start frontend dev server in foreground (Ctrl+C to stop)
 cd /home/vopenia/dev/meet/src/frontend
-npm run dev -- --host 0.0.0.0
+npm run dev -- --host 0.0.0.0 --port 3002

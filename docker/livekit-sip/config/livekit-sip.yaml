@@ -21,6 +21,9 @@ advertised_ip: 192.168.0.10
 rtp_port: 20301-30000
 pin_required: false
 
+pprof_port: 6060
+prometheus_port: 9101
+health_port: 8081
 use_external_ip: false
 logging:
   level: debug
