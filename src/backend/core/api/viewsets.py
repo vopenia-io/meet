@@ -180,6 +180,7 @@ class RoomViewSet(
     permission_classes = [permissions.RoomPermissions]
     queryset = models.Room.objects.all()
     serializer_class = serializers.RoomSerializer
+    throttle_classes = [throttling.RoomCreationUserRateThrottle]
 
     def get_object(self):
         """Allow getting a room by its slug."""

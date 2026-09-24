@@ -8,6 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- 🔒(backend) throttle meeting link generation
+
 ## [1.33.0] - 2026-09-30
 
 ### Added
