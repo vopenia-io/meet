@@ -11,6 +11,7 @@ and this project adheres to
 ### Added
 
 - 🔒(backend) throttle meeting link generation
+- 🔒️(backend) add a daily cap on room creation
 
 ## [1.33.0] - 2026-09-30
 

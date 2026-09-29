@@ -9,6 +9,10 @@ from django.core.cache import cache
 import pytest
 from rest_framework.test import APIClient
 
+from ...api.throttling import (
+    RoomCreationDailyUserRateThrottle,
+    RoomCreationUserRateThrottle,
+)
 from ...factories import RoomFactory, UserFactory
 from ...models import Room, RoomAccessLevel
 
@@ -373,3 +377,84 @@ def test_api_rooms_create_throttle_does_not_limit_other_actions(room_creation_th
         ).status_code
         == 200
     )
+
+
+@pytest.fixture
+def daily_room_creation_throttle(monkeypatch):
+    """Use a tiny daily cap, a loose burst limit and a controllable clock.
+
+    Rates are patched with monkeypatch.setitem so they are restored after the
+    test. Returns a one-item list holding the current fake timestamp.
+    """
+    rates = RoomCreationDailyUserRateThrottle.THROTTLE_RATES
+    monkeypatch.setitem(rates, "room_creation", "100/minute")
+    monkeypatch.setitem(rates, "room_creation_daily", "3/day")
+    now = [1_000_000.0]
+    monkeypatch.setattr(RoomCreationUserRateThrottle, "timer", lambda self: now[0])
+    return now
+
+
+def test_api_rooms_create_daily_throttled(daily_room_creation_throttle):
+    """The daily cap still applies once the short-term window has elapsed."""
+    now = daily_room_creation_throttle
+    client = APIClient()
+    client.force_login(UserFactory())
+
+    for index in range(3):
+        response = client.post("/api/v1.0/rooms/", {"name": f"Room {index}"})
+        assert response.status_code == 201
+        now[0] += 120  # Spread creations beyond the short-term window.
+
+    response = client.post("/api/v1.0/rooms/", {"name": "Blocked room"})
+    assert response.status_code == 429
+    assert int(response["Retry-After"]) > 60
+    assert Room.objects.count() == 3
+
+
+def test_api_rooms_create_daily_throttle_resets(daily_room_creation_throttle):
+    """Room creation is allowed again once a day has passed."""
+    now = daily_room_creation_throttle
+    client = APIClient()
+    client.force_login(UserFactory())
+
+    for index in range(3):
+        response = client.post("/api/v1.0/rooms/", {"name": f"Room {index}"})
+        assert response.status_code == 201
+
+    response = client.post("/api/v1.0/rooms/", {"name": "Blocked room"})
+    assert response.status_code == 429
+
+    now[0] += 24 * 60 * 60 + 1
+    response = client.post("/api/v1.0/rooms/", {"name": "Next day room"})
+    assert response.status_code == 201
+
+
+def test_api_rooms_create_daily_throttle_per_user(daily_room_creation_throttle):
+    """Each user has its own daily cap."""
+    client = APIClient()
+    client.force_login(UserFactory())
+    for index in range(3):
+        response = client.post("/api/v1.0/rooms/", {"name": f"Room {index}"})
+        assert response.status_code == 201
+    assert client.post("/api/v1.0/rooms/", {"name": "Blocked"}).status_code == 429
+
+    client.force_login(UserFactory())
+    response = client.post("/api/v1.0/rooms/", {"name": "Other user room"})
+    assert response.status_code == 201
+
+
+def test_api_rooms_create_daily_throttle_does_not_limit_other_actions(
+    daily_room_creation_throttle,
+):
+    """Reaching the daily cap leaves listing and updating available."""
+    client = APIClient()
+    client.force_login(UserFactory())
+    for index in range(3):
+        response = client.post("/api/v1.0/rooms/", {"name": f"Room {index}"})
+        assert response.status_code == 201
+    room_id = response.json()["id"]
+
+    assert client.post("/api/v1.0/rooms/", {"name": "Blocked"}).status_code == 429
+    assert client.get("/api/v1.0/rooms/").status_code == 200
+    response = client.patch(f"/api/v1.0/rooms/{room_id}/", {"name": "Renamed"})
+    assert response.status_code == 200

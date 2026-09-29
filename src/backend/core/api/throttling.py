@@ -37,6 +37,16 @@ class RoomCreationUserRateThrottle(MonitoredUserRateThrottle):
         return super().get_cache_key(request, view)
 
 
+class RoomCreationDailyUserRateThrottle(RoomCreationUserRateThrottle):
+    """Cap room creation per authenticated user over a day.
+
+    Complements the short-term RoomCreationUserRateThrottle, which absorbs
+    bursts but lets a user steadily create rooms over hours or days.
+    """
+
+    scope = "room_creation_daily"
+
+
 class RequestEntryAuthenticatedUserRateThrottle(MonitoredUserRateThrottle):
     """Throttle authenticated user requesting room entry"""
 

@@ -366,6 +366,11 @@ class Base(Configuration):
                 environ_name="ROOM_CREATION_THROTTLE_RATES",
                 environ_prefix=None,
             ),
+            "room_creation_daily": values.Value(
+                default="1000/day",
+                environ_name="ROOM_CREATION_DAILY_THROTTLE_RATES",
+                environ_prefix=None,
+            ),
             "request_entry": values.Value(
                 default="150/minute",
                 environ_name="REQUEST_ENTRY_THROTTLE_RATES",
