@@ -10,7 +10,6 @@ from django.conf import settings
 from django.utils.translation import get_language, gettext, gettext_noop, override
 from django.utils.translation import gettext_lazy as _
 
-import aiohttp
 import requests
 from asgiref.sync import async_to_sync
 from celery.exceptions import OperationalError as CeleryOperationalError
@@ -138,11 +137,7 @@ class NotificationService:
         if not worker_id:
             return None, None
 
-        custom_configuration = {
-            **settings.LIVEKIT_CONFIGURATION,
-            "timeout": aiohttp.ClientTimeout(total=10),
-        }
-        lkapi = utils.create_livekit_client(custom_configuration=custom_configuration)
+        lkapi = utils.create_livekit_client()
         try:
             egress_list = await lkapi.egress.list_egress(
                 livekit_api.ListEgressRequest(egress_id=worker_id)  # pylint: disable=no-member
