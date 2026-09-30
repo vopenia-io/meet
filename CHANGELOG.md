@@ -16,6 +16,7 @@ and this project adheres to
 
 ### Fixed
 
+- 🔒️(backend) fix critical and high CVEs in PyJWT
 - ⚡️(frontend) disable posthog-js periodic feature flag reloads
 
 ## [1.32.1] - 2026-09-25
