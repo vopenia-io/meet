@@ -45,6 +45,10 @@ export const ScreenRecordingSidePanel = () => {
     FeatureFlags.ScreenRecording
   )
 
+  const hasTranscriptAccess = useHasRecordingAccess(
+    RecordingMode.Transcript,
+    FeatureFlags.Transcript
+  )
   const { notifyParticipants } = useNotifyParticipants()
   const { selectedLanguageKey, isLanguageSetToAuto } =
     useTranscriptionLanguage()
@@ -88,7 +92,7 @@ export const ScreenRecordingSidePanel = () => {
           ...(!isLanguageSetToAuto && {
             language: selectedLanguageKey,
           }),
-          ...(includeTranscript && { transcribe: true }),
+          ...(includeTranscript && hasTranscriptAccess && { transcribe: true }),
         }
 
         await startRecording({
@@ -182,24 +186,26 @@ export const ScreenRecordingSidePanel = () => {
         <RowWrapper iconName="mail" position="last">
           <Text variant="sm">{t('details.receiver')}</Text>
         </RowWrapper>
-
-        <div className={css({ height: '15px' })} />
-
-        <div
-          className={css({
-            width: '100%',
-            marginLeft: '20px',
-          })}
-        >
-          <Checkbox
-            size="sm"
-            isSelected={includeTranscript}
-            onChange={setIncludeTranscript}
-            isDisabled={statuses.isActive || isPendingToStart}
-          >
-            <Text variant="sm">{t('details.transcription')}</Text>
-          </Checkbox>
-        </div>
+        {hasTranscriptAccess && (
+          <>
+            <div className={css({ height: '15px' })} />
+            <div
+              className={css({
+                width: '100%',
+                marginLeft: '20px',
+              })}
+            >
+              <Checkbox
+                size="sm"
+                isSelected={includeTranscript}
+                onChange={setIncludeTranscript}
+                isDisabled={statuses.isActive || isPendingToStart}
+              >
+                <Text variant="sm">{t('details.transcription')}</Text>
+              </Checkbox>
+            </div>
+          </>
+        )}
       </VStack>
       <ControlsButton
         i18nKeyPrefix={keyPrefix}

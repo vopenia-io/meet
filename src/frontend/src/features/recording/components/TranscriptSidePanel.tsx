@@ -53,6 +53,10 @@ export const TranscriptSidePanel = () => {
     FeatureFlags.Transcript
   )
 
+  const hasScreenRecordingAccess = useHasRecordingAccess(
+    RecordingMode.ScreenRecording,
+    FeatureFlags.ScreenRecording
+  )
   const hasFeatureWithoutAdminRights = useHasFeatureWithoutAdminRights(
     RecordingMode.Transcript,
     FeatureFlags.Transcript
@@ -97,7 +101,9 @@ export const TranscriptSidePanel = () => {
           room.localParticipant
         )
       } else {
-        const recordingMode = includeScreenRecording
+        const withScreenRecording =
+          includeScreenRecording && hasScreenRecordingAccess
+        const recordingMode = withScreenRecording
           ? RecordingMode.ScreenRecording
           : RecordingMode.Transcript
 
@@ -105,7 +111,7 @@ export const TranscriptSidePanel = () => {
           ...(!isLanguageSetToAuto && {
             language: selectedLanguageKey,
           }),
-          ...(includeScreenRecording && {
+          ...(withScreenRecording && {
             transcribe: true,
             original_mode: RecordingMode.Transcript,
           }),
@@ -122,7 +128,7 @@ export const TranscriptSidePanel = () => {
           type: NotificationType.TranscriptionStarted,
         })
         captureEvent('transcript-started', {
-          includeScreenRecording: includeScreenRecording,
+          includeScreenRecording: withScreenRecording,
           language: selectedLanguageKey,
         })
       }
@@ -234,22 +240,26 @@ export const TranscriptSidePanel = () => {
             </Button>
           </Text>
         </RowWrapper>
-        <div className={css({ height: '15px' })} />
-        <div
-          className={css({
-            width: '100%',
-            marginLeft: '20px',
-          })}
-        >
-          <Checkbox
-            size="sm"
-            isSelected={includeScreenRecording}
-            onChange={setIncludeScreenRecording}
-            isDisabled={statuses.isActive || isPendingToStart}
-          >
-            <Text variant="sm">{t('details.recording')}</Text>
-          </Checkbox>
-        </div>
+        {hasScreenRecordingAccess && (
+          <>
+            <div className={css({ height: '15px' })} />
+            <div
+              className={css({
+                width: '100%',
+                marginLeft: '20px',
+              })}
+            >
+              <Checkbox
+                size="sm"
+                isSelected={includeScreenRecording}
+                onChange={setIncludeScreenRecording}
+                isDisabled={statuses.isActive || isPendingToStart}
+              >
+                <Text variant="sm">{t('details.recording')}</Text>
+              </Checkbox>
+            </div>
+          </>
+        )}
       </VStack>
       <ControlsButton
         i18nKeyPrefix={keyPrefix}
