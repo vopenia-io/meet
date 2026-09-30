@@ -8,6 +8,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [1.33.0] - 2026-09-30
+
 ### Added
 
 - ✨(backend) purge rooms inactive for a configurable period
