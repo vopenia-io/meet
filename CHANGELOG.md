@@ -16,6 +16,7 @@ and this project adheres to
 ### Fixed
 
 - 🐛(frontend) enforce recording-mode permissions on the checkboxes
+- 🔒️(agents) fix util-linux CVEs reported by Cyberwatch
 
 ## [1.33.0] - 2026-09-30
 
