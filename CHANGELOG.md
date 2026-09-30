@@ -8,11 +8,19 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- ✨(backend) purge rooms inactive for a configurable period
+- 🔨(makefile) add targets to list and download files stored in Garage
+
 ### Changed
 
 - ⬆️(backend) update python dependencies
 - ⬆️(summary) update python dependencies
 - ⬆️(agents) update python dependencies
+- ♻️(agents) replace the minio client by boto3
+- 🔧(compose) replace MinIO by Garage for local development
+- 🔧(helm) point media services to Garage by default
 
 ### Fixed
 
@@ -31,10 +39,8 @@ and this project adheres to
 ### Added
 
 - ✨(backend) make the LiveKit default video codec configurable
-- ✨(backend) purge rooms inactive for a configurable period
 - 🔧(dev) add support for Bureautix workstations
 - ✨(frontend) add screen share zoom controls #1498
-- 🔨(makefile) add targets to list and download files stored in Garage
 
 ### Changed
 
@@ -53,9 +59,6 @@ and this project adheres to
 - ⬆️(addons) upgrade i18next from 26.4.0 to 26.4.2
 - 🔖(helm) release chart 0.0.28
 - ♻️(backend) decouple recording event handling from LiveKit egress statuses
-- ♻️(agents) replace the minio client by boto3
-- 🔧(compose) replace MinIO by Garage for local development
-- 🔧(helm) point media services to Garage by default
 
 ### Fixed
 
