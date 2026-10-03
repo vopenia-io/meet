@@ -40,6 +40,7 @@ DOCKER_UID          = $(shell id -u)
 DOCKER_GID          = $(shell id -g)
 DOCKER_USER         = $(DOCKER_UID):$(DOCKER_GID)
 COMPOSE                  = DOCKER_USER=$(DOCKER_USER) docker compose
+COMPOSE_ILIMO            = $(COMPOSE) -f compose.yml -f compose.ilimo.yml
 COMPOSE_EXEC             = $(COMPOSE) exec
 COMPOSE_EXEC_APP         = $(COMPOSE_EXEC) app-dev
 COMPOSE_RUN              = $(COMPOSE) run --rm
@@ -48,6 +49,8 @@ COMPOSE_RUN_LINT_BACK    = $(COMPOSE_RUN) --no-deps app-dev
 COMPOSE_RUN_LINT_AGENTS  = $(COMPOSE_RUN) --no-deps multi-user-transcriber-dev
 COMPOSE_RUN_LINT_SUMMARY = $(COMPOSE_RUN) --no-deps app-summary-dev
 COMPOSE_RUN_CROWDIN      = $(COMPOSE_RUN) crowdin crowdin
+ILIMO_REPO              ?= ../../ilimo/repos/ilimo
+ILIMO_PUBLIC_IP         ?= $(shell ipconfig getifaddr en0 2>/dev/null || hostname -I 2>/dev/null | cut -d' ' -f1)
 WAIT_DB                  = @$(COMPOSE_RUN) dockerize -wait tcp://$(DB_HOST):$(DB_PORT) -timeout 60s
 
 # -- Backend
@@ -189,6 +192,29 @@ run: ## start the wsgi (production) and development server
 	@$(MAKE) run-agents
 	@$(COMPOSE) up --force-recreate -d frontend
 .PHONY: run
+
+run-ilimo: ## start Meet with the Ilimo SFU instead of livekit-server
+	@$(COMPOSE) stop livekit livekit-egress
+	@$(COMPOSE_ILIMO) up --force-recreate -d celery-dev --remove-orphans
+	@$(COMPOSE_ILIMO) up --force-recreate -d nginx
+	@echo "Wait for postgresql to be up..."
+	@$(WAIT_DB)
+	@$(COMPOSE_ILIMO) up --force-recreate -d frontend
+	@$(MAKE) ilimo
+.PHONY: run-ilimo
+
+ilimo: ## build Ilimo from ILIMO_REPO and run it on the host, logging to data/ilimo.log
+	@$(MAKE) stop-ilimo
+	cd $(ILIMO_REPO) && cargo build --release -p ilimo
+	@mkdir -p data
+	@sed "s/^  public_ip: .*/  public_ip: $(ILIMO_PUBLIC_IP)/" docker/ilimo/ilimo.yaml > data/ilimo.yaml
+	@nohup $(ILIMO_REPO)/target/release/ilimo --config data/ilimo.yaml > data/ilimo.log 2>&1 & echo $$! > data/ilimo.pid
+	@echo "Ilimo is running on 127.0.0.1.nip.io:7880, media on $(ILIMO_PUBLIC_IP) (log: data/ilimo.log)"
+.PHONY: ilimo
+
+stop-ilimo: ## stop the Ilimo SFU started by `make ilimo`
+	@if [ -f data/ilimo.pid ]; then kill $$(cat data/ilimo.pid) 2>/dev/null || true; rm -f data/ilimo.pid; fi
+.PHONY: stop-ilimo
 
 status: ## an alias for "docker compose ps"
 	@$(COMPOSE) ps
