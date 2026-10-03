@@ -1,0 +1,24 @@
+# Meet's development stack with Ilimo as the SFU instead of livekit-server
+# (see docs/ilimo.md). Ilimo runs on the host and keeps livekit-server's
+# address, 127.0.0.1.nip.io:7880, for the browser and the backend alike.
+# The services needing livekit-server move to the `livekit` profile, and
+# telephony is off: Ilimo has no SIP API yet.
+services:
+  app-dev:
+    environment:
+      - ROOM_TELEPHONY_ENABLED=False
+  celery-dev:
+    environment:
+      - ROOM_TELEPHONY_ENABLED=False
+    extra_hosts:
+      - "127.0.0.1.nip.io:host-gateway"
+  livekit:
+    profiles: ["livekit"]
+  livekit-egress:
+    profiles: ["livekit"]
+  app:
+    profiles: ["livekit"]
+  celery:
+    profiles: ["livekit"]
+  metadata-collector-dev:
+    profiles: ["livekit"]

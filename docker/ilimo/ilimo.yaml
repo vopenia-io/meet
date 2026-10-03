@@ -1,0 +1,16 @@
+# Ilimo for Meet's development stack (see docs/ilimo.md): same API key,
+# signaling port and media port as docker/livekit/config/livekit-server.yaml.
+keys:
+  devkey: secret
+signal:
+  bind: 0.0.0.0:7880
+rtc:
+  # Replaced by `make ilimo` with this machine's network address: Chrome
+  # gathers no candidate on the loopback interface.
+  public_ip: 127.0.0.1
+  udp_port: 7882
+  shards: 2
+webhooks:
+  urls:
+    - http://127.0.0.1:8071/api/v1.0/rooms/webhooks-livekit/
+  api_key: devkey
