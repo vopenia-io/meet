@@ -106,6 +106,12 @@ export const Conference = ({
     return {
       adaptiveStream: true,
       dynacast: true,
+      // Ilimo only, no effect against livekit-server: signaling moves onto
+      // the _signal data channel once in conference, and remote tracks
+      // arrive through a fixed set of receive sections whatever the room
+      // size (visible tiles and loudest speakers).
+      signalOverDataChannel: true,
+      subscriberSlots: true,
       publishDefaults: {
         videoCodec: apiConfig?.livekit.default_video_codec ?? 'vp9',
       },
