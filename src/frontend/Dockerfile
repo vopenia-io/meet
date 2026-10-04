@@ -6,6 +6,7 @@ WORKDIR /home/frontend/
 
 COPY --chown=node:node ./src/frontend/package.json ./package.json
 COPY --chown=node:node ./src/frontend/package-lock.json ./package-lock.json
+COPY --chown=node:node ./src/frontend/vendor ./vendor
 
 RUN npm ci
 
