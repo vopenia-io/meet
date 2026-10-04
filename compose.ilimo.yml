@@ -7,6 +7,8 @@ services:
   app-dev:
     environment:
       - ROOM_TELEPHONY_ENABLED=False
+      # Ilimo selects simulcast layers for VP8 only.
+      - LIVEKIT_DEFAULT_VIDEO_CODEC=vp8
   celery-dev:
     environment:
       - ROOM_TELEPHONY_ENABLED=False
