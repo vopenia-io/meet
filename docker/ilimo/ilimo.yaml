@@ -10,6 +10,7 @@ rtc:
   public_ip: 127.0.0.1
   udp_port: 7882
   shards: 2
+  video_codecs: [vp8]
 webhooks:
   urls:
     - http://127.0.0.1:8071/api/v1.0/rooms/webhooks-livekit/
