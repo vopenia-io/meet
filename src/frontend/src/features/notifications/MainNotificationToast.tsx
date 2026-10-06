@@ -1,10 +1,10 @@
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { useRoomContext } from '@livekit/components-react'
 import { Participant, RemoteParticipant, RoomEvent } from 'livekit-client'
 import { type ChatMessage, isMobileBrowser } from '@livekit/components-core'
 import { useTranslation } from 'react-i18next'
 import { NotificationType } from './NotificationType'
-import { NotificationDuration } from './NotificationDuration'
+import { JOIN_BURST_MS, NotificationDuration } from './NotificationDuration'
 import { decodeNotificationDataReceived } from './utils'
 import { useNotificationSound } from '@/features/notifications/hooks/useSoundNotification'
 import { toastQueue } from './components/ToastProvider'
@@ -150,21 +150,34 @@ export const MainNotificationToast = () => {
     [room, data, triggerNotificationSound]
   )
 
+  // Joins closer together than JOIN_BURST_MS share one notification: a
+  // large room filling up would otherwise queue one per participant.
+  const joinBurst = useRef<{ key: string; others: number; at: number }>()
+
   useEffect(() => {
     const showJoinNotification = (participant: Participant) => {
       if (isMobileBrowser()) {
         return
       }
       triggerNotificationSoundIfRoomIsSmall(NotificationType.ParticipantJoined)
-      toastQueue.add(
+      const now = Date.now()
+      const burst = joinBurst.current
+      let others = 0
+      if (burst && now - burst.at < JOIN_BURST_MS) {
+        toastQueue.close(burst.key)
+        others = burst.others + 1
+      }
+      const key = toastQueue.add(
         {
           participant,
+          others,
           type: NotificationType.ParticipantJoined,
         },
         {
           timeout: NotificationDuration.PARTICIPANT_JOINED,
         }
       )
+      joinBurst.current = { key, others, at: now }
     }
     room.on(RoomEvent.ParticipantConnected, showJoinNotification)
     return () => {
