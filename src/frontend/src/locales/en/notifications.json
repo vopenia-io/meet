@@ -1,7 +1,9 @@
 {
   "defaultName": "A contributor",
   "joined": {
-    "description": "{{name}} has joined the room"
+    "description": "{{name}} has joined the room",
+    "others_one": "{{name}} and {{count}} other have joined the room",
+    "others_other": "{{name}} and {{count}} others have joined the room"
   },
   "raised": {
     "description": "{{name}} has raised their hand.",

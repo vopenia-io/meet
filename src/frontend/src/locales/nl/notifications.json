@@ -1,7 +1,9 @@
 {
   "defaultName": "Een deelnemer",
   "joined": {
-    "description": "{{name}} is in de ruimte gekomen"
+    "description": "{{name}} is in de ruimte gekomen",
+    "others_one": "{{name}} en {{count}} andere zijn in de ruimte gekomen",
+    "others_other": "{{name}} en {{count}} anderen zijn in de ruimte gekomen"
   },
   "raised": {
     "description": "{{name}} heeft een hand opgestoken.",

@@ -1,7 +1,9 @@
 {
   "defaultName": "Un contributeur",
   "joined": {
-    "description": "{{name}} participe à l'appel"
+    "description": "{{name}} participe à l'appel",
+    "others_one": "{{name}} et {{count}} autre participent à l'appel",
+    "others_other": "{{name}} et {{count}} autres participent à l'appel"
   },
   "raised": {
     "description": "{{name}} a levé la main.",

@@ -1,7 +1,9 @@
 {
   "defaultName": "Eine Person",
   "joined": {
-    "description": "{{name}} ist dem Raum beigetreten"
+    "description": "{{name}} ist dem Raum beigetreten",
+    "others_one": "{{name}} und {{count}} weitere Person sind dem Raum beigetreten",
+    "others_other": "{{name}} und {{count}} weitere Personen sind dem Raum beigetreten"
   },
   "raised": {
     "description": "{{name}} hat die Hand gehoben.",

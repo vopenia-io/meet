@@ -1,7 +1,9 @@
 {
   "defaultName": "Un colaborador",
   "joined": {
-    "description": "{{name}} participa en la llamada"
+    "description": "{{name}} participa en la llamada",
+    "others_one": "{{name}} y {{count}} persona más participan en la llamada",
+    "others_other": "{{name}} y {{count}} personas más participan en la llamada"
   },
   "raised": {
     "description": "{{name}} ha levantado la mano.",
