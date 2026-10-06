@@ -65,9 +65,14 @@ export function ToastJoined({ state, ...props }: Readonly<ToastProps>) {
             />
           </Div>
           <Div padding={20} {...titleProps}>
-            {t('joined.description', {
-              name: participant.name || t('defaultName'),
-            })}
+            {props.toast.content.others
+              ? t('joined.others', {
+                  name: participant.name || t('defaultName'),
+                  count: props.toast.content.others,
+                })
+              : t('joined.description', {
+                  name: participant.name || t('defaultName'),
+                })}
           </Div>
         </HStack>
       </ClickableToast>

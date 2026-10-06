@@ -5,6 +5,9 @@ export enum ToastDuration {
   EXTRA_LONG = 7000,
 }
 
+// Joins closer together than this share one notification.
+export const JOIN_BURST_MS = 2000
+
 export const NotificationDuration = {
   ALERT: ToastDuration.SHORT,
   MESSAGE: ToastDuration.LONG,
