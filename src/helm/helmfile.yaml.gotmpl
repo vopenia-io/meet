@@ -9,6 +9,9 @@ environments:
       - env.d/dev-dinum/values.secrets.yaml
 
 ---
+# The SFU of the dev environments: livekit (default) or ilimo, set by MEET_SFU.
+# Ilimo takes livekit-server's host, API key and webhooks: Meet is unchanged.
+{{- $sfu := env "MEET_SFU" | default "livekit" }}
 repositories:
 - name: livekit
   url: https://helm.livekit.io
@@ -44,7 +47,7 @@ releases:
   - env.d/{{ .Environment.Name }}/secrets.enc.yaml
 
 - name: livekit
-  installed: {{ regexMatch "^dev.*" .Environment.Name }}
+  installed: {{ and (regexMatch "^dev.*" .Environment.Name) (eq $sfu "livekit") }}
   missingFileHandler: Warn
   namespace: {{ .Namespace }}
   chart: livekit/livekit-server
@@ -55,12 +58,24 @@ releases:
   - env.d/{{ .Environment.Name }}/secrets.enc.yaml
 
 - name: livekit-egress
-  installed: {{ regexMatch "^dev.*" .Environment.Name }}
+  installed: {{ and (regexMatch "^dev.*" .Environment.Name) (eq $sfu "livekit") }}
   missingFileHandler: Warn
   namespace: {{ .Namespace }}
   chart: livekit/egress
   values:
   - env.d/{{ .Environment.Name }}/values.egress.yaml.gotmpl
   - env.d/{{ .Environment.Name }}/values.secrets.yaml
+  secrets:
+  - env.d/{{ .Environment.Name }}/secrets.enc.yaml
+
+# Ilimo's chart (vopenia-io/ilimo-deploy); ILIMO_CHART points to another
+# copy, a local checkout for instance.
+- name: ilimo
+  installed: {{ and (regexMatch "^dev.*" .Environment.Name) (eq $sfu "ilimo") }}
+  missingFileHandler: Warn
+  namespace: {{ .Namespace }}
+  chart: {{ env "ILIMO_CHART" | default "git::https://github.com/vopenia-io/ilimo-deploy.git@charts/ilimo?ref=main" }}
+  values:
+  - env.d/{{ .Environment.Name }}/values.ilimo.yaml.gotmpl
   secrets:
   - env.d/{{ .Environment.Name }}/secrets.enc.yaml

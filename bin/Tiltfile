@@ -105,13 +105,17 @@ k8s_yaml(secret_yaml_generic(
 k8s_yaml(local('cd ../src/helm && helmfile -n meet -e ${DEV_ENV:-dev-keycloak} template .'))
 
 k8s_resource('garage-cors', resource_deps=['garage'])
-k8s_resource('meet-backend', resource_deps=['postgresql', 'garage-cors', 'redis', 'livekit-livekit-server'])
+# MEET_SFU=ilimo replaces livekit-server with Ilimo (src/helm/helmfile.yaml.gotmpl).
+sfu = os.getenv('MEET_SFU', 'livekit')
+sfu_resource = 'livekit-livekit-server' if sfu == 'livekit' else 'ilimo-ilimo'
+k8s_resource('meet-backend', resource_deps=['postgresql', 'garage-cors', 'redis', sfu_resource])
 k8s_resource('meet-celery-backend', resource_deps=['redis'])
 k8s_resource('meet-celery-summarize', resource_deps=['redis'])
 k8s_resource('meet-celery-summary-backend', resource_deps=['redis'])
 k8s_resource('meet-celery-transcribe-default', resource_deps=['redis'])
-k8s_resource('livekit-livekit-server', resource_deps=['redis'])
-k8s_resource('livekit-livekit-server-test-connection', resource_deps=['livekit-livekit-server'])
+if sfu == 'livekit':
+    k8s_resource('livekit-livekit-server', resource_deps=['redis'])
+    k8s_resource('livekit-livekit-server-test-connection', resource_deps=['livekit-livekit-server'])
 k8s_resource('keycloak', resource_deps=['kc-postgresql'])
 # Trigger once on launch
 k8s_resource(

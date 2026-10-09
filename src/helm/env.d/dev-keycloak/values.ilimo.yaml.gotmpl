@@ -1,0 +1,34 @@
+# Ilimo instead of livekit-server (MEET_SFU=ilimo): same host, API key and
+# webhooks, one node, no TURN yet (see docs/ilimo.md).
+replicaCount: 1
+hostNetwork: true
+
+image:
+  repository: {{ env "ILIMO_IMAGE" | default "ghcr.io/vopenia-io/ilimo" }}
+  tag: {{ env "ILIMO_TAG" | default "latest" | quote }}
+  pullPolicy: Always
+
+keys:
+  inline:
+    {{- .Values.livekit.keys | toYaml | nindent 4 }}
+
+config:
+  webhooks:
+    urls:
+      - https://meet.127.0.0.1.nip.io/api/v1.0/rooms/webhooks-livekit/
+    api_key: {{ .Values.livekit.webhook.api_key }}
+
+cluster:
+  natsUrl: ""
+
+ingress:
+  enabled: true
+  className: nginx
+  host: livekit.127.0.0.1.nip.io
+  tlsSecret: livekit-dinum-cert
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+
+resources: {}
+terminationGracePeriodSeconds: 600
