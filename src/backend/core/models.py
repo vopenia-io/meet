@@ -743,10 +743,37 @@ class Recording(BaseModel):
         return {
             "destroy": is_owner_or_admin and is_final_status,
             "partial_update": False,
-            "retrieve": is_owner_or_admin,
+            "retrieve": bool(roles),
             "stop": is_owner_or_admin and not is_final_status,
             "update": False,
         }
+
+    def grant_initial_accesses(self, starter):
+        """Grant the starter and the room's owners/administrators access to the recording.
+
+        The starter's access is created first, so it is the oldest one: the
+        transcript summary, which goes to a single user, is sent to them.
+
+        Room roles are copied when the recording starts: later changes to the
+        room's accesses do not affect existing recordings.
+        """
+        room_privileged_user_ids = set(
+            self.room.accesses.filter(
+                role__in=[RoleChoices.OWNER, RoleChoices.ADMIN]
+            ).values_list("user_id", flat=True)
+        )
+        starter_is_privileged = starter.id in room_privileged_user_ids
+        room_privileged_user_ids.discard(starter.id)
+
+        RecordingAccess.objects.create(
+            user=starter,
+            role=RoleChoices.OWNER if starter_is_privileged else RoleChoices.MEMBER,
+            recording=self,
+        )
+        RecordingAccess.objects.bulk_create(
+            RecordingAccess(user_id=user_id, role=RoleChoices.OWNER, recording=self)
+            for user_id in room_privileged_user_ids
+        )
 
     def is_savable(self) -> bool:
         """Determine if the recording can be saved based on its current status."""

@@ -24,6 +24,13 @@ Deleting a room now only soft deletes it: it is hidden but keeps its slug and PI
 - The new `ROOM_DELETED_RETENTION_DAYS` setting purges soft-deleted rooms that many days after their deletion, whether they are inactive or not. It is unset by default.
 - As for inactive rooms, a deleted room holding a saved recording its users may still access is kept until that recording expires.
 
+### Recording permission
+
+We've introduced the ability for any authenticated participant to start a recording or transcription, but this behavior remains configurable.
+You can keep recording and transcription restricted to room admins and owners by setting `RECORDING_AUTHENTICATED_PARTICIPANTS_ENABLED` to `false`.
+
+## [v1.34.0]
+
 ### Marketing / Brevo integration now uses `django-lasuite`
 
 The in-house marketing service (`core.services.marketing`) has been removed and

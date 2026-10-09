@@ -68,7 +68,8 @@ class NotificationService:
     @staticmethod
     def _notify_user_by_email(recording) -> bool:
         """
-        Queue an email notification to recording owners when their recording is ready.
+        Queue an email notification to every user with access to the recording
+        when it is ready: its starter and the room's owners/administrators.
 
         The email includes a direct link that redirects owners to a dedicated download
         page in the frontend where they can access their specific recording.
@@ -80,10 +81,7 @@ class NotificationService:
 
         owner_accesses = (
             models.RecordingAccess.objects.select_related("user")
-            .filter(
-                role=models.RoleChoices.OWNER,
-                recording_id=recording.id,
-            )
+            .filter(recording_id=recording.id)
             .order_by("created_at")
         )
 
@@ -208,6 +206,27 @@ class NotificationService:
         )
 
     @staticmethod
+    def _get_summary_recipient(recording: models.Recording):
+        """Return the single user who receives the transcript summary.
+
+        A recording can have multiple accesses (the starter and the room's
+        owners/administrators), but its summary is generated only once.
+
+        Temporarily, until the document can be created and shared with all
+        recording accesses, the summary is assigned to the oldest access,
+        which belongs to the starter (see `Recording.grant_initial_accesses`).
+
+        Since the starter may have a MEMBER role, the lookup must not filter by role.
+        """
+        oldest_access = (
+            models.RecordingAccess.objects.select_related("user")
+            .filter(recording_id=recording.id)
+            .order_by("created_at")
+            .first()
+        )
+        return oldest_access.user if oldest_access else None
+
+    @staticmethod
     def _notify_summary_service_v1(recording: models.Recording):
         """Notify summary service about a new recording."""
 
@@ -218,14 +237,7 @@ class NotificationService:
             logger.error("Summary service not configured")
             return False
 
-        owner_access = (
-            models.RecordingAccess.objects.select_related("user")
-            .filter(
-                role=models.RoleChoices.OWNER,
-                recording_id=recording.id,
-            )
-            .first()
-        )
+        recipient = NotificationService._get_summary_recipient(recording)
 
         if settings.METADATA_COLLECTOR_ENABLED and recording.options.get(
             "collect_metadata", False
@@ -235,7 +247,7 @@ class NotificationService:
         else:
             metadata_filename = None
 
-        if not owner_access:
+        if not recipient:
             logger.error("No owner found for recording %s", recording.id)
             return False
 
@@ -244,16 +256,16 @@ class NotificationService:
         )(recording.worker_id)
 
         payload = {
-            "owner_id": str(owner_access.user.id),
+            "owner_id": str(recipient.id),
             "recording_filename": recording.key,
             "metadata_filename": metadata_filename,
-            "email": owner_access.user.email,
-            "sub": owner_access.user.sub,
+            "email": recipient.email,
+            "sub": recipient.sub,
             "room": recording.room.name,
             "language": recording.options.get("language"),
-            "owner_timezone": str(owner_access.user.timezone),
+            "owner_timezone": str(recipient.timezone),
             "download_link": f"{get_recording_download_base_url()}/{recording.id}",
-            "context_language": owner_access.user.language,
+            "context_language": recipient.language,
             "recording_start_at": (started_at.isoformat() if started_at else None),
             "recording_end_at": (ended_at.isoformat() if ended_at else None),
         }
@@ -293,14 +305,7 @@ class NotificationService:
             logger.error("Summary service not configured")
             return False
 
-        owner_access = (
-            models.RecordingAccess.objects.select_related("user")
-            .filter(
-                role=models.RoleChoices.OWNER,
-                recording_id=recording.id,
-            )
-            .first()
-        )
+        recipient = NotificationService._get_summary_recipient(recording)
         metadata_filename: None | str = None
         if settings.METADATA_COLLECTOR_ENABLED and recording.options.get(
             "collect_metadata", False
@@ -308,7 +313,7 @@ class NotificationService:
             output_folder = settings.METADATA_COLLECTOR_OUTPUT_FOLDER
             metadata_filename = f"{output_folder}/{recording.id}-metadata.json"
 
-        if not owner_access:
+        if not recipient:
             logger.error("No owner found for recording %s", recording.id)
             return False
 
@@ -335,8 +340,8 @@ class NotificationService:
             }
 
         payload = {
-            "user_sub": owner_access.user.sub,
-            "user_email": owner_access.user.email,
+            "user_sub": recipient.sub,
+            "user_email": recipient.email,
             "cloud_storage_url": generate_download_s3_url(
                 recording.key,
                 expires_in=settings.SUMMARY_SERVICE_CLOUD_STORAGE_SIGNED_URL_EXPIRY_SECONDS,
@@ -345,20 +350,20 @@ class NotificationService:
             "language": recording.options.get(
                 "language", get_language().split("-")[0].lower()
             ),
-            "context_language": owner_access.user.language,
+            "context_language": recipient.language,
             "push_to_docs_config": {
-                "user_email": owner_access.user.email,
+                "user_email": recipient.email,
                 "title": NotificationService._generate_title(
-                    locale=owner_access.user.language
+                    locale=recipient.language
                     or recording.options.get("language", get_language()),
                     room=recording.room.name,
                     recording_datetime=started_at,
-                    owner_timezone=str(owner_access.user.timezone),
+                    owner_timezone=str(recipient.timezone),
                 ),
                 "download_link": f"{get_recording_download_base_url()}/{recording.id}",
                 "form_link": form_link,
                 "auto_create_summary": is_user_feature_flag_enabled(
-                    owner_access.user, UserFeatureFlag.TRANSCRIPT_SUMMARY_ENABLED
+                    recipient, UserFeatureFlag.TRANSCRIPT_SUMMARY_ENABLED
                 ),
             },
             "metadata": metadata_payload,

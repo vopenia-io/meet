@@ -100,7 +100,7 @@ def test_notify_external_services_unknown_mode(caplog):
 
 # pylint: disable=too-many-locals
 def test_notify_user_by_email_success(mocked_current_site, settings):
-    """Test successful email notification to recording owners."""
+    """Test successful email notification to every user with access to the recording."""
     settings.EMAIL_BRAND_NAME = "ACME"
     settings.EMAIL_SUPPORT_EMAIL = "support@acme.com"
     settings.EMAIL_LOGO_IMG = "https://acme.com/logo"
@@ -133,12 +133,10 @@ def test_notify_user_by_email_success(mocked_current_site, settings):
         recording=recording, role=models.RoleChoices.OWNER, user=english_user
     )
 
-    # Create non-owner users to verify they don't receive emails
+    # Members (e.g. a starter with no privileged room role) are notified too
+    member = factories.UserFactory(email="member@test.com", language="en-us")
     factories.UserRecordingAccessFactory(
-        recording=recording, role=models.RoleChoices.MEMBER
-    )
-    factories.UserRecordingAccessFactory(
-        recording=recording, role=models.RoleChoices.ADMIN
+        recording=recording, role=models.RoleChoices.MEMBER, user=member
     )
 
     notification_service = NotificationService()
@@ -147,7 +145,7 @@ def test_notify_user_by_email_success(mocked_current_site, settings):
         result = notification_service._notify_user_by_email(recording)
 
         assert result is True
-        assert mock_send_mail.call_count == 3
+        assert mock_send_mail.call_count == 4
 
         call_args_list = mock_send_mail.call_args_list
 
@@ -210,6 +208,9 @@ def test_notify_user_by_email_success(mocked_current_site, settings):
 
         assert recipients3 == ["john@test.com"]
         assert sender3 == "notifications@acme.com"
+
+        _, _, _, recipients4 = call_args_list[3][0]
+        assert recipients4 == ["member@test.com"]
 
 
 def test_notify_user_by_email_no_owners(mocked_current_site, caplog):
@@ -534,3 +535,37 @@ def test_notify_summary_service_v2_payload_json_serializable_without_timestamps(
     assert isinstance(title, str)
     # ...so the payload serializes exactly the way ``requests`` serializes it.
     json.dumps(payload)
+
+
+def test_summary_recipient_is_oldest_access():
+    """With several accesses, the summary goes to the oldest one."""
+    recording = factories.RecordingFactory()
+    oldest = factories.UserRecordingAccessFactory(
+        recording=recording, role=models.RoleChoices.OWNER
+    )
+    for _ in range(2):
+        factories.UserRecordingAccessFactory(
+            recording=recording, role=models.RoleChoices.OWNER
+        )
+
+    assert NotificationService._get_summary_recipient(recording) == oldest.user
+
+
+def test_summary_recipient_is_member_starter():
+    """A starter holding a MEMBER access still receives the summary."""
+    recording = factories.RecordingFactory()
+    starter = factories.UserRecordingAccessFactory(
+        recording=recording, role=models.RoleChoices.MEMBER
+    )
+    factories.UserRecordingAccessFactory(
+        recording=recording, role=models.RoleChoices.OWNER
+    )
+
+    assert NotificationService._get_summary_recipient(recording) == starter.user
+
+
+def test_summary_recipient_none_without_access():
+    """No access: nobody to send the summary to."""
+    recording = factories.RecordingFactory()
+
+    assert NotificationService._get_summary_recipient(recording) is None

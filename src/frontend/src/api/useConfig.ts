@@ -43,6 +43,7 @@ export interface ApiConfig {
       default_resolution?: string | null
       default_profile?: string | null
     }
+    authenticated_participants_enabled?: boolean
   }
   background_image: {
     upload_is_enabled: boolean

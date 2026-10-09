@@ -12,6 +12,7 @@ and this project adheres to
 
 - ⚡️(backend) add UPPER(email) index for case-insensitive user lookups
 - ✨(backend) add room soft-deletion to the external API
+- ✨(all) allow any authenticated user to start a recording
 
 ## [1.35.0] - 2026-10-13
 
