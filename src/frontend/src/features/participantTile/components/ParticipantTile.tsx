@@ -26,6 +26,8 @@ import { getShortcutDescriptorById } from '@/features/shortcuts/catalog'
 import { formatShortcutLabel } from '@/features/shortcuts/formatLabels'
 import { KeyboardShortcutHint } from './KeyboardShortcutHint'
 import { layoutStore, clearPinnedTrack } from '@/stores/layout'
+import { subscriptionStore } from '@/stores/subscription'
+import { useCameraSubscription } from '@/features/rooms/livekit/hooks/useCameraSubscription'
 import { ParticipantMetadata } from './ParticipantMetadata'
 import { getParticipantColor } from '@/features/rooms/utils/getParticipantColor'
 
@@ -75,6 +77,14 @@ const ParticipantTileBase = /* @__PURE__ */ React.forwardRef<
 
   const handleSubscribe = React.useCallback(
     (subscribed: boolean) => {
+      // In a large room a camera is subscribed only once its tile shows up,
+      // so a pinned camera starts unsubscribed: that is no reason to unpin it.
+      if (
+        subscriptionStore.isSelective &&
+        trackReference.source === Track.Source.Camera
+      ) {
+        return
+      }
       if (
         trackReference.source &&
         !subscribed &&
@@ -111,6 +121,8 @@ const ParticipantTileBase = /* @__PURE__ */ React.forwardRef<
     },
     [ref]
   )
+
+  useCameraSubscription(trackReference, tileRef)
 
   const { t } = useTranslation('rooms', { keyPrefix: 'participantTileFocus' })
 

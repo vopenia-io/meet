@@ -213,6 +213,10 @@ export const Conference = ({
   const connectOptions = {
     maxRetries: 5, // Default: 1. Only for unreachable server scenarios
     peerConnectionTimeout: 60000, // Default: 15s. Extended for slow TURN/TLS negotiation
+    // With a selective subscription threshold, SubscriptionManager subscribes
+    // instead of the server: everything in a small room, only what is played
+    // in a large one.
+    autoSubscribe: !apiConfig?.selective_subscription_threshold,
   }
 
   return (

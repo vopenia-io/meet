@@ -492,6 +492,14 @@ class Base(Configuration):
         "auto_mute_on_join_threshold": values.PositiveIntegerValue(
             50, environ_name="FRONTEND_AUTO_MUTE_ON_JOIN_THRESHOLD", environ_prefix=None
         ),
+        # Above this many participants, clients subscribe only to the cameras
+        # they show, the screen shares and the open microphones. Unset, they
+        # subscribe to every track whatever the size of the room.
+        "selective_subscription_threshold": values.PositiveIntegerValue(
+            None,
+            environ_name="FRONTEND_SELECTIVE_SUBSCRIPTION_THRESHOLD",
+            environ_prefix=None,
+        ),
     }
 
     # Mail

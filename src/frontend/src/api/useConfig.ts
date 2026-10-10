@@ -69,6 +69,7 @@ export interface ApiConfig {
   transcription_destination?: string
   max_participants_for_sound: number
   auto_mute_on_join_threshold: number
+  selective_subscription_threshold?: number | null
   authenticated_users_can_edit_display_name: boolean
 }
 

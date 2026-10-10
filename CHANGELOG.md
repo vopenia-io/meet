@@ -15,6 +15,7 @@ and this project adheres to
 - 🔧(summary) add setting to control Sentry traces sampling rate
 - ✨(frontend) let signed-out visitors start a meeting
 - ✨(backend) expose `allow_unregistered_rooms` in the frontend configuration
+- ✨(frontend) subscribe only to the tracks played in large rooms
 
 ### Changed
 
