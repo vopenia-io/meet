@@ -1,5 +1,5 @@
 import { createPortal } from 'react-dom'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Text } from '@/primitives'
 import { css } from '@/styled-system/css'
 import { useSnapshot } from 'valtio'
@@ -29,35 +29,30 @@ export function FloatingReaction({
   speed = 1,
   scale = 1,
 }: FloatingReactionProps) {
-  const [deltaY, setDeltaY] = useState(0)
-  const [opacity, setOpacity] = useState(1)
+  const ref = useRef<HTMLDivElement>(null)
 
   const [left] = useState(
     () => Math.random() * window.innerWidth * REACTION_SPAWN_WIDTH_RATIO
   )
 
+  // Animated by the compositor, not by React: a state update per frame per
+  // reaction made a burst of applause re-render dozens of components at
+  // every frame.
   useEffect(() => {
-    let start: number | null = null
-    function animate(timestamp: number) {
-      if (start === null) start = timestamp
-      const elapsed = timestamp - start
-      if (elapsed < 0) {
-        setOpacity(0)
-      } else {
-        const progress = Math.min(elapsed / ANIMATION_DURATION, 1)
-        const distance = ANIMATION_DISTANCE * speed
-        const newY = progress * distance
-        setDeltaY(newY)
-        if (progress > FADE_OUT_THRESHOLD) {
-          setOpacity(1 - (progress - FADE_OUT_THRESHOLD) / 0.3)
-        }
-      }
-      if (elapsed < ANIMATION_DURATION) {
-        requestAnimationFrame(animate)
-      }
-    }
-    const req = requestAnimationFrame(animate)
-    return () => cancelAnimationFrame(req)
+    const distance = ANIMATION_DISTANCE * speed
+    const animation = ref.current?.animate(
+      [
+        { transform: 'translateY(0)', opacity: 1 },
+        {
+          transform: `translateY(${-distance * FADE_OUT_THRESHOLD}px)`,
+          opacity: 1,
+          offset: FADE_OUT_THRESHOLD,
+        },
+        { transform: `translateY(${-distance}px)`, opacity: 0 },
+      ],
+      { duration: ANIMATION_DURATION, easing: 'linear', fill: 'forwards' }
+    )
+    return () => animation?.cancel()
   }, [speed])
 
   return (
@@ -68,10 +63,10 @@ export function FloatingReaction({
         alignItems: 'center',
         flexDirection: 'column',
       })}
+      ref={ref}
       style={{
         left: left,
-        bottom: INITIAL_POSITION + deltaY,
-        opacity: opacity,
+        bottom: INITIAL_POSITION,
       }}
     >
       <img
@@ -113,9 +108,28 @@ export function FloatingReaction({
   )
 }
 
-const ReactionPortal = ({ reaction }: { reaction: Reaction }) => {
+const ReactionInstance = ({ reaction }: { reaction: Reaction }) => {
   const [speed] = useState(() => Math.random() * 1.5 + 0.5)
   const [scale] = useState(() => Math.max(Math.random() + 0.5, 1))
+  return (
+    <FloatingReaction
+      emoji={reaction.emoji}
+      speed={speed}
+      scale={scale}
+      name={reaction.participantName}
+      isLocal={reaction.isLocal}
+    />
+  )
+}
+
+export const ReactionPortals = () => {
+  const { reactions } = useSnapshot(reactionsStore)
+  const latestReaction = reactions.at(-1)
+
+  useAnnounceReaction(latestReaction)
+
+  if (reactions.length === 0) return null
+
   return createPortal(
     <div
       className={css({
@@ -127,29 +141,10 @@ const ReactionPortal = ({ reaction }: { reaction: Reaction }) => {
         pointerEvents: 'none',
       })}
     >
-      <FloatingReaction
-        emoji={reaction.emoji}
-        speed={speed}
-        scale={scale}
-        name={reaction.participantName}
-        isLocal={reaction.isLocal}
-      />
+      {reactions.map((instance) => (
+        <ReactionInstance key={instance.id} reaction={instance} />
+      ))}
     </div>,
     document.body
-  )
-}
-
-export const ReactionPortals = () => {
-  const { reactions } = useSnapshot(reactionsStore)
-  const latestReaction = reactions.at(-1)
-
-  useAnnounceReaction(latestReaction)
-
-  return (
-    <>
-      {reactions.map((instance) => (
-        <ReactionPortal key={instance.id} reaction={instance} />
-      ))}
-    </>
   )
 }

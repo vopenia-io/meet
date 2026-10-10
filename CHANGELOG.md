@@ -24,6 +24,7 @@ and this project adheres to
 - 🔧(backend) configure the technical documentation url
 - ⚡️(frontend) list the room tracks only while a recording starts
 - ⚡️(frontend) re-render only the tiles whose participant changed
+- ⚡️(frontend) animate reactions without re-rendering every frame
 
 ### Fixed
 
