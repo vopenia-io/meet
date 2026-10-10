@@ -15,6 +15,7 @@ import { Emoji } from '@/features/reactions/types'
 import { useReactions } from '@/features/reactions/hooks/useReactions'
 import { NotificationProvider } from './NotificationProvider'
 import { useConfig } from '@/api/useConfig'
+import { subscriptionStore } from '@/stores/subscription'
 
 export const MainNotificationToast = () => {
   const room = useRoomContext()
@@ -155,6 +156,18 @@ export const MainNotificationToast = () => {
       if (isMobileBrowser()) {
         return
       }
+      // In a large room arrivals come in waves: each toast mounts a video
+      // tile, and the queue drains far slower than it fills. Only while
+      // subscriptions are selective: with autoSubscribe, the toast's brief
+      // attach is what lets adaptiveStream pause a camera nobody shows.
+      const threshold = data?.join_notification_threshold
+      if (
+        threshold &&
+        subscriptionStore.isSelective &&
+        room.remoteParticipants.size + 1 > threshold
+      ) {
+        return
+      }
       triggerNotificationSoundIfRoomIsSmall(NotificationType.ParticipantJoined)
       toastQueue.add(
         {
@@ -170,7 +183,7 @@ export const MainNotificationToast = () => {
     return () => {
       room.off(RoomEvent.ParticipantConnected, showJoinNotification)
     }
-  }, [room, triggerNotificationSoundIfRoomIsSmall])
+  }, [room, triggerNotificationSoundIfRoomIsSmall, data])
 
   useEffect(() => {
     const handleAttributeChanged = (

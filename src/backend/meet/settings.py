@@ -500,6 +500,14 @@ class Base(Configuration):
             environ_name="FRONTEND_SELECTIVE_SUBSCRIPTION_THRESHOLD",
             environ_prefix=None,
         ),
+        # Above this many participants, arrivals no longer raise a toast, as
+        # long as subscriptions are selective (see above). Unset, every
+        # arrival does.
+        "join_notification_threshold": values.PositiveIntegerValue(
+            None,
+            environ_name="FRONTEND_JOIN_NOTIFICATION_THRESHOLD",
+            environ_prefix=None,
+        ),
     }
 
     # Mail
