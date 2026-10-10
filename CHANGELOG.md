@@ -21,6 +21,7 @@ and this project adheres to
 - ✨(frontend) warn users when the connection falls back to TURN
 - 🔧(backend) configure the technical documentation url
 - ⚡️(frontend) list the room tracks only while a recording starts
+- ⚡️(frontend) re-render only the tiles whose participant changed
 
 ### Fixed
 

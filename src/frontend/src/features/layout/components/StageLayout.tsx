@@ -13,17 +13,20 @@ import { Track } from 'livekit-client'
 import { useSnapshot } from 'valtio'
 import { clearPinnedTrack, layoutStore, setPinnedTrack } from '@/stores/layout'
 import { useEffect, useRef } from 'react'
+import { useStableTrackRefs } from '../hooks/useStableTrackRefs'
 
 export const StageLayout = () => {
   const lastAutoFocusedScreenShareTrack =
     useRef<TrackReferenceOrPlaceholder | null>(null)
 
-  const tracks = useTracks(
-    [
-      { source: Track.Source.Camera, withPlaceholder: true },
-      { source: Track.Source.ScreenShare, withPlaceholder: false },
-    ],
-    { updateOnlyOn: [], onlySubscribed: false }
+  const tracks = useStableTrackRefs(
+    useTracks(
+      [
+        { source: Track.Source.Camera, withPlaceholder: true },
+        { source: Track.Source.ScreenShare, withPlaceholder: false },
+      ],
+      { updateOnlyOn: [], onlySubscribed: false }
+    )
   )
 
   const screenShareTracks = tracks

@@ -38,7 +38,7 @@ export interface GridLayoutProps
  * @public
  */
 export function GridLayout({ tracks, ...props }: GridLayoutProps) {
-  const gridEl = React.createRef<HTMLDivElement>()
+  const gridEl = React.useRef<HTMLDivElement>(null)
 
   const elementProps = React.useMemo(
     () => mergeProps(props, { className: 'lk-grid-layout' }),

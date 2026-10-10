@@ -49,9 +49,7 @@ interface ParticipantTileExtendedProps extends ParticipantTileProps {
   disableTileControls?: boolean
 }
 
-export const ParticipantTile: (
-  props: ParticipantTileExtendedProps & React.RefAttributes<HTMLDivElement>
-) => React.ReactNode = /* @__PURE__ */ React.forwardRef<
+const ParticipantTileBase = /* @__PURE__ */ React.forwardRef<
   HTMLDivElement,
   ParticipantTileExtendedProps
 >(function ParticipantTile(
@@ -212,3 +210,7 @@ export const ParticipantTile: (
     </div>
   )
 })
+
+// Memoized: the grid re-renders on every arrival, departure or publication,
+// and a tile only needs to follow its own participant (see useStableTrackRefs).
+export const ParticipantTile = /* @__PURE__ */ React.memo(ParticipantTileBase)
