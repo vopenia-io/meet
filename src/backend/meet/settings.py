@@ -500,6 +500,15 @@ class Base(Configuration):
             environ_name="FRONTEND_SELECTIVE_SUBSCRIPTION_THRESHOLD",
             environ_prefix=None,
         ),
+        # Above this many participants (and the threshold above), muted
+        # microphones are not subscribed either: a microphone is subscribed
+        # when it opens, which clips the first words. Unset, it follows
+        # selective_subscription_threshold.
+        "selective_audio_subscription_threshold": values.PositiveIntegerValue(
+            None,
+            environ_name="FRONTEND_SELECTIVE_AUDIO_SUBSCRIPTION_THRESHOLD",
+            environ_prefix=None,
+        ),
         # Above this many participants, arrivals no longer raise a toast, as
         # long as subscriptions are selective (see above). Unset, every
         # arrival does.

@@ -37,11 +37,17 @@ export const SubscriptionManager = () => {
   const room = useRoomContext()
   const { data } = useConfig()
   const threshold = data?.selective_subscription_threshold
+  // Muted microphones stay subscribed up to this size: subscribing on unmute
+  // clips the first words of whoever starts speaking. Defaults to the video
+  // threshold.
+  const audioThreshold =
+    data?.selective_audio_subscription_threshold ?? threshold
 
   useEffect(() => {
-    if (!threshold) return
+    if (!threshold || !audioThreshold) return
 
     let isSelective = false
+    let isAudioSelective = false
     let sweepTimer: ReturnType<typeof setTimeout> | undefined
     const muteTimers = new Map<string, ReturnType<typeof setTimeout>>()
 
@@ -66,7 +72,7 @@ export const SubscriptionManager = () => {
           if (!isCameraHeld(pub.trackSid)) setSubscribed(pub, false)
           return
         case Track.Source.Microphone:
-          if (!pub.isMuted) {
+          if (!pub.isMuted || !isAudioSelective) {
             clearMuteTimer(pub.trackSid)
             setSubscribed(pub, true)
           } else if (pub.isDesired && !muteTimers.has(pub.trackSid)) {
@@ -74,7 +80,9 @@ export const SubscriptionManager = () => {
               pub.trackSid,
               setTimeout(() => {
                 muteTimers.delete(pub.trackSid)
-                if (isSelective && pub.isMuted) setSubscribed(pub, false)
+                if (isSelective && isAudioSelective && pub.isMuted) {
+                  setSubscribed(pub, false)
+                }
               }, MUTED_MICROPHONE_GRACE_MS)
             )
           }
@@ -93,6 +101,15 @@ export const SubscriptionManager = () => {
 
     const updateMode = () => {
       const count = room.remoteParticipants.size + 1
+      const nextAudio = isAudioSelective
+        ? count > Math.floor(audioThreshold * HYSTERESIS)
+        : count > audioThreshold
+      if (nextAudio !== isAudioSelective) {
+        isAudioSelective = nextAudio
+        forEachPublication((pub) => {
+          if (pub.source === Track.Source.Microphone) apply(pub)
+        })
+      }
       const next = isSelective
         ? count > Math.floor(threshold * HYSTERESIS)
         : count > threshold
@@ -153,7 +170,7 @@ export const SubscriptionManager = () => {
       muteTimers.forEach(clearTimeout)
       subscriptionStore.isSelective = false
     }
-  }, [room, threshold])
+  }, [room, threshold, audioThreshold])
 
   return null
 }

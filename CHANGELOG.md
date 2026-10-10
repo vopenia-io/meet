@@ -17,6 +17,7 @@ and this project adheres to
 - ✨(backend) expose `allow_unregistered_rooms` in the frontend configuration
 - ✨(frontend) subscribe only to the tracks played in large rooms
 - ✨(frontend) stop announcing arrivals in large rooms
+- ✨(frontend) keep muted microphones subscribed up to their own threshold
 
 ### Changed
 
