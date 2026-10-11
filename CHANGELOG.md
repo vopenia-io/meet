@@ -26,6 +26,7 @@ and this project adheres to
 - ⚡️(frontend) list the room tracks only while a recording starts
 - ⚡️(frontend) re-render only the tiles whose participant changed
 - ⚡️(frontend) animate reactions without re-rendering every frame
+- ✨(frontend) keep the last speakers subscribed in large rooms
 
 ### Fixed
 

@@ -15,6 +15,12 @@ import { isCameraHeld } from '@/features/rooms/livekit/utils/cameraSubscriptions
 // often speaks again soon, and resubscribing costs a renegotiation.
 const MUTED_MICROPHONE_GRACE_MS = 30_000
 
+// The microphones of the last speakers stay subscribed even when muted, for
+// as long as nobody else takes their place: a meeting usually comes back to
+// the same few voices, and subscribing on unmute clips their first words. A
+// muted microphone sends nothing, so keeping one costs an m= section only.
+const RECENT_SPEAKERS_KEPT = 8
+
 // Leave the selective mode only well below the threshold, so a room hovering
 // around it does not flip every subscription back and forth.
 const HYSTERESIS = 0.8
@@ -50,6 +56,8 @@ export const SubscriptionManager = () => {
     let isAudioSelective = false
     let sweepTimer: ReturnType<typeof setTimeout> | undefined
     const muteTimers = new Map<string, ReturnType<typeof setTimeout>>()
+    // Microphones that were open lately, least recent first.
+    const recentSpeakers = new Map<string, RemoteTrackPublication>()
 
     const setSubscribed = (pub: RemoteTrackPublication, want: boolean) => {
       if (pub.isDesired !== want) pub.setSubscribed(want)
@@ -60,7 +68,48 @@ export const SubscriptionManager = () => {
       muteTimers.delete(trackSid)
     }
 
+    const applyMicrophone = (pub: RemoteTrackPublication) => {
+      if (
+        !isSelective ||
+        !isAudioSelective ||
+        !pub.isMuted ||
+        recentSpeakers.has(pub.trackSid)
+      ) {
+        clearMuteTimer(pub.trackSid)
+        setSubscribed(pub, true)
+      } else if (pub.isDesired && !muteTimers.has(pub.trackSid)) {
+        muteTimers.set(
+          pub.trackSid,
+          setTimeout(() => {
+            muteTimers.delete(pub.trackSid)
+            if (
+              isSelective &&
+              isAudioSelective &&
+              pub.isMuted &&
+              !recentSpeakers.has(pub.trackSid)
+            ) {
+              setSubscribed(pub, false)
+            }
+          }, MUTED_MICROPHONE_GRACE_MS)
+        )
+      }
+    }
+
+    // Followed in every mode, so the regular voices are already known when
+    // the room crosses the threshold.
+    const noteSpeaker = (pub: RemoteTrackPublication) => {
+      recentSpeakers.delete(pub.trackSid)
+      recentSpeakers.set(pub.trackSid, pub)
+      if (recentSpeakers.size <= RECENT_SPEAKERS_KEPT) return
+      const [oldest] = recentSpeakers.values()
+      recentSpeakers.delete(oldest.trackSid)
+      applyMicrophone(oldest)
+    }
+
     const apply = (pub: RemoteTrackPublication) => {
+      if (pub.source === Track.Source.Microphone && !pub.isMuted) {
+        noteSpeaker(pub)
+      }
       if (!isSelective) {
         clearMuteTimer(pub.trackSid)
         setSubscribed(pub, true)
@@ -72,20 +121,7 @@ export const SubscriptionManager = () => {
           if (!isCameraHeld(pub.trackSid)) setSubscribed(pub, false)
           return
         case Track.Source.Microphone:
-          if (!pub.isMuted || !isAudioSelective) {
-            clearMuteTimer(pub.trackSid)
-            setSubscribed(pub, true)
-          } else if (pub.isDesired && !muteTimers.has(pub.trackSid)) {
-            muteTimers.set(
-              pub.trackSid,
-              setTimeout(() => {
-                muteTimers.delete(pub.trackSid)
-                if (isSelective && isAudioSelective && pub.isMuted) {
-                  setSubscribed(pub, false)
-                }
-              }, MUTED_MICROPHONE_GRACE_MS)
-            )
-          }
+          applyMicrophone(pub)
           return
         default:
           setSubscribed(pub, true)
@@ -139,8 +175,10 @@ export const SubscriptionManager = () => {
         apply(pub)
       }
     }
-    const onUnpublished = (pub: RemoteTrackPublication) =>
+    const onUnpublished = (pub: RemoteTrackPublication) => {
       clearMuteTimer(pub.trackSid)
+      recentSpeakers.delete(pub.trackSid)
+    }
     const onReconnected = () => {
       updateMode()
       forEachPublication(apply)
