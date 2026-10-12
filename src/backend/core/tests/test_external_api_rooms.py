@@ -17,6 +17,7 @@ from lasuite.oidc_resource_server.authentication import ResourceServerAuthentica
 from rest_framework.test import APIClient
 
 from core.analytics import AnalyticsEvent
+from core.external_api.serializers import RoomSerializer
 from core.factories import ApplicationFactory, RoomFactory, UserFactory
 from core.models import (
     Application,
@@ -1442,6 +1443,47 @@ def test_api_rooms_update_tracks_analytics(mock_update_metadata, mock_capture):
     }
 
     mock_update_metadata.assert_called_once()
+
+
+@mock.patch("core.external_api.viewsets.analytics.capture")
+@mock.patch.object(RoomManagement, "sync_room_metadata")
+def test_api_rooms_update_soft_deleted_after_load(
+    mock_sync_room_metadata, mock_capture
+):
+    """A room soft deleted while an update is in flight should not be restored."""
+
+    user = UserFactory()
+    room = RoomFactory(
+        users=[(user, RoleChoices.OWNER)], access_level=RoomAccessLevel.TRUSTED
+    )
+
+    original_is_valid = RoomSerializer.is_valid
+
+    def soft_delete_while_validating(self, **kwargs):
+        is_valid = original_is_valid(self, **kwargs)
+        Room.all_objects.get(pk=self.instance.pk).soft_delete()
+        return is_valid
+
+    token = generate_test_token(user, [ApplicationScope.ROOMS_UPDATE])
+
+    client = APIClient()
+    client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
+
+    with mock.patch.object(RoomSerializer, "is_valid", soft_delete_while_validating):
+        response = client.patch(
+            f"/external-api/v1.0/rooms/{room.id}/",
+            {"access_level": RoomAccessLevel.RESTRICTED},
+            format="json",
+        )
+
+    assert response.status_code == 410
+
+    refreshed_room = Room.all_objects.get(pk=room.pk)
+    assert refreshed_room.deleted_at is not None
+    assert refreshed_room.access_level == RoomAccessLevel.TRUSTED
+
+    mock_sync_room_metadata.assert_not_called()
+    mock_capture.assert_not_called()
 
 
 @mock.patch.object(RoomManagement, "delete_room")

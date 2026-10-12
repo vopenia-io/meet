@@ -26,6 +26,7 @@ from rest_framework.generics import get_object_or_404
 from core import analytics, api, models
 from core.api.exceptions import ensure_room_not_deleted
 from core.api.feature_flag import FeatureFlag
+from core.api.locks import room_locked_for_update
 from core.services.jwt_token import JwtTokenService
 from core.services.room_management import RoomManagement, RoomManagementException
 from core.services.transit_code import TransitCodeService
@@ -268,14 +269,17 @@ class RoomViewSet(
         self._track_room_event(instance, analytics.AnalyticsEvent.ROOM_DELETED)
 
     def perform_update(self, serializer: serializers.RoomSerializer):
-        """Persist the room update, sync it to LiveKit, then log and track it."""
+        """Persist the room update under a row lock, sync it to LiveKit, then track it."""
 
-        previous_values = {
-            "access_level": serializer.instance.access_level,
-            "configuration": copy.deepcopy(serializer.instance.configuration),
-        }
+        with room_locked_for_update(serializer.instance) as locked_room:
+            serializer.instance = locked_room
 
-        room = serializer.save()
+            previous_values = {
+                "access_level": locked_room.access_level,
+                "configuration": copy.deepcopy(locked_room.configuration),
+            }
+
+            room = serializer.save()
 
         # Report the fields that actually changed, not the ones that were submitted.
         updated_fields = sorted(

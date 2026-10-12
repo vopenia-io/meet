@@ -44,6 +44,7 @@ from core import analytics, enums, models, utils
 from core.api import throttling
 from core.api.exceptions import ensure_room_not_deleted
 from core.api.filters import ListFileFilter
+from core.api.locks import room_locked_for_update
 from core.enums import MEDIA_STORAGE_URL_PATTERN
 from core.recording.enums import FileExtension
 from core.recording.event.authentication import RecordingProcessWebhookAuthentication
@@ -405,12 +406,20 @@ class RoomViewSet(  # pylint: disable=too-many-public-methods
         )
 
     def perform_update(self, serializer):
-        """Persist the room update, then sync metadata to LiveKit."""
+        """Persist the room update under a row lock, then sync metadata to LiveKit.
 
-        old_configuration = serializer.instance.configuration
-        old_access_level = serializer.instance.access_level
+        The lock is what keeps a concurrent soft delete from being undone: the
+        full-row write of `save()` would otherwise carry back the `deleted_at`
+        read before the deletion committed.
+        """
 
-        room = serializer.save()
+        with room_locked_for_update(serializer.instance) as locked_room:
+            serializer.instance = locked_room
+
+            old_configuration = locked_room.configuration
+            old_access_level = locked_room.access_level
+
+            room = serializer.save()
 
         if (
             room.configuration == old_configuration
