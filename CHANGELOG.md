@@ -29,6 +29,7 @@ and this project adheres to
 - ♻️️️(backend) use a dedicated auth scheme for LiveKit token auth
 - ♻️(all) stop relying on cookies for the lobby flow
 - ♿️(frontend) show a visible focus outline on menu items #1797
+- ⬆️(backend) upgrade pylint to 4.1.3
 
 ### Fixed
 
