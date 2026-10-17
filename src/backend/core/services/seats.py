@@ -198,6 +198,25 @@ def seat_info(participant) -> dict:
     return info
 
 
+def livekit_permission(room, viewer: bool) -> dict:
+    """LiveKit permission of a participant or a viewer of the room.
+
+    UpdateParticipant replaces the whole permission, so every field is given.
+    """
+    sources = []
+    if not viewer:
+        sources = (room.configuration or {}).get("can_publish_sources")
+        if sources is None:
+            sources = settings.LIVEKIT_DEFAULT_SOURCES
+
+    return {
+        "can_subscribe": True,
+        "can_publish": bool(sources),
+        "can_publish_data": True,
+        "can_publish_sources": [source.upper() for source in sources],
+    }
+
+
 class SeatService:
     """Allocate and track the seats of the people who can speak in a room."""
 

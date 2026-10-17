@@ -20,6 +20,7 @@ and this project adheres to
 - ✨(frontend) keep muted microphones subscribed up to their own threshold
 - ✨(backend) count the seats of the people who can speak in a room
 - ✨(backend) let arrivals beyond the room threshold join as viewers
+- ✨(backend) follow the seats of a room from LiveKit webhooks
 
 ### Changed
 

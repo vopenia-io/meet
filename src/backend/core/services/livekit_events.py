@@ -11,6 +11,7 @@ from django.conf import settings
 from django.utils import timezone
 
 from livekit import api
+from livekit.protocol.models import DisconnectReason, ParticipantInfo
 
 from core import models
 from core.recording.enums import RecordingWorkerEvent
@@ -21,12 +22,17 @@ from core.recording.services.metadata_collector import (
 from core.recording.services.recording_events import RecordingEventsService
 
 from .lobby import LobbyService
+from .participants_management import (
+    ParticipantsManagement,
+    ParticipantsManagementException,
+)
 from .presence import PresenceCache
 from .room_management import (
     RoomManagement,
     RoomManagementException,
     RoomNotFoundException,
 )
+from .seats import SeatService, is_publisher, livekit_permission, seat_info
 from .sip_management import SIPException, SIPManagement
 
 logger = getLogger(__name__)
@@ -117,7 +123,9 @@ class LiveKitEventsService:
             "egress_ended": self._handle_egress_ended,
             "room_started": self._handle_room_started,
             "room_finished": self._handle_room_finished,
+            "participant_joined": self._handle_participant_joined,
             "participant_left": self._handle_participant_left,
+            "participant_connection_aborted": self._handle_participant_connection_aborted,
         }
 
         token_verifier = api.TokenVerifier(
@@ -129,6 +137,7 @@ class LiveKitEventsService:
         self.presence_cache = PresenceCache()
         self.sip_management = SIPManagement()
         self.recording_events = RecordingEventsService()
+        self.seats = SeatService()
 
         self._filter_regex = None
         if settings.LIVEKIT_WEBHOOK_EVENTS_FILTER_REGEX:
@@ -313,6 +322,7 @@ class LiveKitEventsService:
                 ) from e
 
         self.presence_cache.clear_room(room_id)
+        self.seats.clear(room_id)
 
         try:
             self.lobby_service.clear_room_cache(room_id)
@@ -321,8 +331,94 @@ class LiveKitEventsService:
                 f"Failed to clear room cache for room {room_id}"
             ) from e
 
+    @staticmethod
+    def _get_viewers_room_id(room_name: str):
+        """Id of a registered room whose seats are counted, None otherwise."""
+        if not settings.VIEWERS_ENABLED:
+            return None
+        try:
+            return uuid.UUID(room_name)
+        except ValueError:
+            return None
+
+    def _handle_participant_joined(self, data):
+        """Handle 'participant_joined': mark the participant's seat as active.
+
+        Phone callers, owners and administrators get a seat even beyond the
+        threshold. Egress and agents never hold one.
+        """
+        room_id = self._get_viewers_room_id(data.room.name)
+        participant = data.participant
+        if room_id is None or participant.kind in (
+            ParticipantInfo.Kind.EGRESS,
+            ParticipantInfo.Kind.AGENT,
+        ):
+            return
+
+        info = seat_info(participant)
+        joined_as_viewer = not is_publisher(participant)
+
+        if participant.kind == ParticipantInfo.Kind.SIP:
+            self.seats.activate(room_id, participant.identity, info, force=True)
+
+        elif self.seats.activate(room_id, participant.identity, info):
+            if joined_as_viewer:
+                self._restore_participant(room_id, participant.identity)
+
+        elif not joined_as_viewer:
+            self.seats.activate(room_id, participant.identity, info, force=True)
+
+    @staticmethod
+    def _restore_participant(room_id, identity):
+        """Give back their rights to a participant who joined with a viewer token.
+
+        Their token predates their promotion, e.g. a reconnection that missed
+        the refreshed token LiveKit sends after a permission change.
+        """
+        try:
+            room = models.Room.objects.get(pk=room_id)
+        except models.Room.DoesNotExist:
+            return
+
+        try:
+            ParticipantsManagement().update(
+                room_name=str(room_id),
+                identity=identity,
+                attributes={"viewer": "false"},
+                permission=livekit_permission(room, viewer=False),
+            )
+        except ParticipantsManagementException:
+            logger.exception("Could not restore participant %s rights", identity)
+
+    def _handle_participant_connection_aborted(self, data):
+        """Handle 'participant_connection_aborted': free a seat never used."""
+        room_id = self._get_viewers_room_id(data.room.name)
+        if room_id is None or not data.participant.identity:
+            return
+        self.seats.remove(room_id, data.participant.identity, only_pending=True)
+
+    def _release_seat(self, data):
+        """Keep the seat of a participant who left for the grace period.
+
+        A removed participant loses their seat at once, and leaving because
+        the same identity joined again from another session keeps it.
+        """
+        room_id = self._get_viewers_room_id(data.room.name)
+        participant = data.participant
+        if room_id is None or not participant.identity:
+            return
+
+        reason = participant.disconnect_reason
+        if reason == DisconnectReason.DUPLICATE_IDENTITY:
+            return
+        if reason == DisconnectReason.PARTICIPANT_REMOVED:
+            self.seats.remove(room_id, participant.identity)
+            return
+
+        self.seats.release(room_id, participant.identity, participant.sid)
+
     def _handle_participant_left(self, data):
-        """Handle 'participant_left': invalidate the presence cache.
+        """Handle 'participant_left': release the seat and the presence cache.
 
         Presence entries are created lazily (only for users who administrate
         the lobby of a trusted room), so for most participants this delete is
@@ -333,6 +429,8 @@ class LiveKitEventsService:
         measured and the behaviour reverted independently of the feature.
         When disabled, invalidation relies on `room_finished` and the TTL.
         """
+        self._release_seat(data)
+
         if not settings.PRESENCE_CLEAR_ON_PARTICIPANT_LEFT:
             return
 
