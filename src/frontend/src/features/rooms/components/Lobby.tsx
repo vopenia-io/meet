@@ -15,8 +15,12 @@ import { useUser } from '@/features/auth/api/useUser'
 import { useConfig } from '@/api/useConfig'
 import { saveUsername, userStore } from '@/stores/user'
 import { fetchRoom } from '../api/fetchRoom'
-import { ApiAccessLevel } from '../api/ApiRoom'
-import { ApiLobbyStatus, type ApiRequestEntry } from '../api/requestEntry'
+import { ApiAccessLevel, type ApiRoom } from '../api/ApiRoom'
+import {
+  ApiLobbyStatus,
+  requestEntry,
+  type ApiRequestEntry,
+} from '../api/requestEntry'
 import { useLobby } from '../hooks/useLobby'
 
 export const Lobby = ({
@@ -58,16 +62,18 @@ export const Lobby = ({
   }, [isError, error, enterRoom])
 
   const handleAccepted = (response: ApiRequestEntry) => {
-    queryClient.setQueryData([keys.room, roomId], {
-      ...roomData,
-      livekit: response.livekit,
+    queryClient.setQueryData<ApiRoom>([keys.room, roomId], (room) => {
+      const current = room ?? roomData
+      return current && { ...current, livekit: response.livekit }
     })
     enterRoom()
   }
 
+  const lobbyUsername = username || user?.full_name || 'anonymous'
+
   const { status, startWaiting } = useLobby({
     roomId,
-    username: username || user?.full_name || 'anonymous',
+    username: lobbyUsername,
     onAccepted: handleAccepted,
   })
 
@@ -75,6 +81,17 @@ export const Lobby = ({
 
   const handleSubmit = async () => {
     const { data } = await refetchRoom()
+
+    // In rooms with viewers, reading the room gives no token: people join
+    // through request-entry, which lets them in at once unless they have to
+    // wait in the lobby.
+    if (data && !data.livekit && configData?.viewers?.enabled) {
+      const response = await requestEntry({ roomId, username: lobbyUsername })
+      if (response.status === ApiLobbyStatus.ACCEPTED) {
+        handleAccepted(response)
+        return
+      }
+    }
 
     if (!data?.livekit) {
       // Display a message to inform the user that by logging in, they won't have to wait for room entry approval.

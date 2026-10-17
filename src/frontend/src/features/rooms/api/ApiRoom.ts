@@ -5,6 +5,8 @@ export type ApiLiveKit = {
   url: string
   room: string
   token: string
+  /** Only set in rooms with viewers: viewers cannot publish. */
+  role?: 'participant' | 'viewer'
 }
 
 export enum ApiAccessLevel {
@@ -16,6 +18,7 @@ export enum ApiAccessLevel {
 export type RoomConfiguration = {
   can_publish_sources?: Source[] | null
   everyone_can_mute?: boolean | null
+  viewers_threshold?: number | null
 }
 
 export type ParticipantRole = 'member' | 'administrator' | 'owner'

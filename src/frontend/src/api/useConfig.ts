@@ -72,6 +72,10 @@ export interface ApiConfig {
   selective_subscription_threshold?: number | null
   selective_audio_subscription_threshold?: number | null
   join_notification_threshold?: number | null
+  viewers?: {
+    enabled: boolean
+    default_threshold: number
+  }
   authenticated_users_can_edit_display_name: boolean
 }
 

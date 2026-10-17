@@ -21,7 +21,7 @@ import { Screen } from '@/layout/Screen'
 import { QueryAware } from '@/components/QueryAware'
 import { ErrorScreen } from '@/components/ErrorScreen'
 import { fetchRoom } from '../api/fetchRoom'
-import type { ApiRoom } from '../api/ApiRoom'
+import type { ApiLiveKit, ApiRoom } from '../api/ApiRoom'
 import { useCreateRoom } from '../api/createRoom'
 import { InviteDialog } from './InviteDialog'
 import { VideoConference } from '../livekit/prefabs/VideoConference'
@@ -94,13 +94,34 @@ export const Conference = ({
       fetchRoom({
         roomId: roomId as string,
         username: username,
-      }).catch((error) => {
-        if (error.statusCode == '404') {
-          createRoom({ slug: roomId, username })
-        }
-      }),
+      })
+        .then(
+          (room): ApiRoom => ({
+            ...room,
+            // In rooms with viewers, reading the room gives no token to people
+            // who joined through request-entry: keep the one they got.
+            livekit:
+              room.livekit ??
+              queryClient.getQueryData<ApiRoom>(fetchKey)?.livekit,
+          })
+        )
+        .catch((error) => {
+          if (error.statusCode == '404') {
+            createRoom({ slug: roomId, username })
+          }
+        }),
     retry: false,
   })
+
+  // The connection keeps the token it started with: a token changing while
+  // reconnecting would open a second connection.
+  const [livekit, setLivekit] = useState<ApiLiveKit | undefined>(data?.livekit)
+  useEffect(() => {
+    if (!livekit && data?.livekit) setLivekit(data.livekit)
+  }, [livekit, data?.livekit])
+
+  // Viewers cannot publish: never turn their microphone or camera on.
+  const isViewer = livekit?.role === 'viewer'
 
   const roomOptions = useMemo((): RoomOptions => {
     return {
@@ -225,10 +246,11 @@ export const Conference = ({
         <LiveKitRoom
           room={room}
           serverUrl={serverUrl}
-          token={data?.livekit?.token}
+          token={livekit?.token}
           connect={isConnectionWarmedUp}
-          audio={userConfig.audioEnabled}
+          audio={!isViewer && userConfig.audioEnabled}
           video={
+            !isViewer &&
             userConfig.videoEnabled && {
               processor: BackgroundProcessorFactory.fromProcessorConfig(
                 userConfig.processorConfig
@@ -261,6 +283,7 @@ export const Conference = ({
             if (
               userPreferencesSnap.is_auto_mute_large_room_enabled &&
               !hasAutoMutedRef.current &&
+              !isViewer &&
               userConfig.audioEnabled &&
               room.numParticipants > apiConfig.auto_mute_on_join_threshold
             ) {
