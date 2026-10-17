@@ -14,6 +14,7 @@ import { useEffect } from 'react'
 import { closeSidePanel } from '@/stores/layout'
 import { useIsAdminOrOwner } from '../hooks/useIsAdminOrOwner'
 import { reportError } from '@/features/analytics/telemetry'
+import { ViewersThresholdField } from '@/features/viewers/components/ViewersThresholdField'
 
 export const Admin = () => {
   const { t } = useTranslation('rooms', { keyPrefix: 'admin' })
@@ -155,6 +156,7 @@ export const Admin = () => {
               fullWidth: true,
             }}
           />
+          <ViewersThresholdField />
         </div>
       </div>
       <div

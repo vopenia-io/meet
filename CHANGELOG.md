@@ -32,6 +32,7 @@ and this project adheres to
 - ✨(frontend) let viewers ask to speak once their microphone works
 - ✨(frontend) let participants promote viewers and send them back
 - ✨(frontend) let a signed-in viewer take a seat when nobody lets them in
+- ✨(frontend) let owners set how many people can speak in a meeting
 
 ### Changed
 

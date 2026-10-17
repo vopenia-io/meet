@@ -628,6 +628,12 @@
         "label": "Mute others",
         "description": "When disabled, participants will no longer be able to mute other participants."
       }
+    },
+    "viewers": {
+      "label": "People who can speak",
+      "description_one": "Beyond this, arrivals join as viewers. Empty: {{count}} person, the default.",
+      "description_other": "Beyond this, arrivals join as viewers. Empty: {{count}} people, the default.",
+      "invalid": "Enter a whole number of at least 1."
     }
   },
   "rating": {

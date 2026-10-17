@@ -627,6 +627,12 @@
         "label": "Silenciar a los demás",
         "description": "Si desactivas esta opción, los participantes ya no podrán silenciar a otros participantes."
       }
+    },
+    "viewers": {
+      "label": "Personas que pueden hablar",
+      "description_one": "Por encima, quienes lleguen entrarán como espectadores. Vacío: {{count}} persona, el valor por defecto.",
+      "description_other": "Por encima, quienes lleguen entrarán como espectadores. Vacío: {{count}} personas, el valor por defecto.",
+      "invalid": "Introduzca un número entero mayor o igual que 1."
     }
   },
   "rating": {

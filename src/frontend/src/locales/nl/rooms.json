@@ -628,6 +628,12 @@
         "label": "Anderen dempen",
         "description": "Wanneer uitgeschakeld, kunnen deelnemers andere deelnemers niet meer dempen."
       }
+    },
+    "viewers": {
+      "label": "Personen die kunnen spreken",
+      "description_one": "Daarboven nemen nieuwkomers deel als toeschouwer. Leeg: {{count}} persoon, de standaardwaarde.",
+      "description_other": "Daarboven nemen nieuwkomers deel als toeschouwer. Leeg: {{count}} personen, de standaardwaarde.",
+      "invalid": "Voer een geheel getal van minstens 1 in."
     }
   },
   "rating": {

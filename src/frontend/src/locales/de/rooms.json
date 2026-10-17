@@ -628,6 +628,12 @@
         "label": "Andere stummschalten",
         "description": "Wenn deaktiviert, können Teilnehmer andere Teilnehmer nicht mehr stummschalten."
       }
+    },
+    "viewers": {
+      "label": "Personen, die sprechen können",
+      "description_one": "Darüber hinaus nehmen Neuankömmlinge als Zuschauer teil. Leer: {{count}} Person, der Standardwert.",
+      "description_other": "Darüber hinaus nehmen Neuankömmlinge als Zuschauer teil. Leer: {{count}} Personen, der Standardwert.",
+      "invalid": "Geben Sie eine ganze Zahl ab 1 ein."
     }
   },
   "rating": {

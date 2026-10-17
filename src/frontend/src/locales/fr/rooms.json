@@ -628,6 +628,12 @@
         "label": "Muter les autres",
         "description": "En désactivant cette option, les participants ne pourront plus muter d'autres participants."
       }
+    },
+    "viewers": {
+      "label": "Personnes qui peuvent parler",
+      "description_one": "Au-delà, les arrivants entrent comme spectateurs. Vide : {{count}} personne, la valeur par défaut.",
+      "description_other": "Au-delà, les arrivants entrent comme spectateurs. Vide : {{count}} personnes, la valeur par défaut.",
+      "invalid": "Saisissez un nombre entier supérieur ou égal à 1."
     }
   },
   "rating": {
