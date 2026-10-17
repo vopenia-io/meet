@@ -855,6 +855,18 @@
       "heading": "Zuschauer",
       "search": "Zuschauer suchen",
       "empty": "Kein Zuschauer gefunden"
+    },
+    "takeSeat": {
+      "banner": "Kein angemeldeter Teilnehmer kann Zuschauern das Wort erteilen. Sie sind angemeldet: Sie können einen Platz einnehmen.",
+      "open": "Platz einnehmen",
+      "title": "Platz einnehmen",
+      "body": "Wählen Sie einen nicht angemeldeten Teilnehmer: Er wird Zuschauer und Sie übernehmen seinen Platz.",
+      "choose": "Teilnehmer",
+      "silentFor_one": "Still seit {{count}} Min.",
+      "silentFor_other": "Still seit {{count}} Min.",
+      "spokeRecently": "Hat vor weniger als einer Minute gesprochen",
+      "cancel": "Abbrechen",
+      "confirm": "Platz übernehmen"
     }
   }
 }

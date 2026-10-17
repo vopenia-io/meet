@@ -855,6 +855,18 @@
       "heading": "Toeschouwers",
       "search": "Een toeschouwer zoeken",
       "empty": "Geen toeschouwer gevonden"
+    },
+    "takeSeat": {
+      "banner": "Geen aangemelde deelnemer kan toeschouwers het woord geven. U bent aangemeld: u kunt een plaats innemen.",
+      "open": "Een plaats innemen",
+      "title": "Een plaats innemen",
+      "body": "Kies een niet-aangemelde deelnemer: hij wordt toeschouwer en u neemt zijn plaats in.",
+      "choose": "Deelnemer",
+      "silentFor_one": "Stil sinds {{count}} min",
+      "silentFor_other": "Stil sinds {{count}} min",
+      "spokeRecently": "Sprak minder dan een minuut geleden",
+      "cancel": "Annuleren",
+      "confirm": "Zijn plaats innemen"
     }
   }
 }

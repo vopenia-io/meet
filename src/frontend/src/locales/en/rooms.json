@@ -855,6 +855,18 @@
       "heading": "Viewers",
       "search": "Search a viewer",
       "empty": "No viewer found"
+    },
+    "takeSeat": {
+      "banner": "No signed-in participant can let viewers speak. You are signed in: you can take a seat.",
+      "open": "Take a seat",
+      "title": "Take a seat",
+      "body": "Choose a participant who is not signed in: they will become a viewer and you will take their seat.",
+      "choose": "Participant",
+      "silentFor_one": "Silent for {{count}} min",
+      "silentFor_other": "Silent for {{count}} min",
+      "spokeRecently": "Spoke less than a minute ago",
+      "cancel": "Cancel",
+      "confirm": "Take their seat"
     }
   }
 }

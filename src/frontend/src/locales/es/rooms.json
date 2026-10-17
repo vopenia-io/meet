@@ -850,6 +850,18 @@
       "heading": "Espectadores",
       "search": "Buscar un espectador",
       "empty": "Ningún espectador encontrado"
+    },
+    "takeSeat": {
+      "banner": "Ningún participante conectado puede dar la palabra a los espectadores. Usted está conectado: puede ocupar una plaza.",
+      "open": "Ocupar una plaza",
+      "title": "Ocupar una plaza",
+      "body": "Elija un participante no conectado: pasará a espectador y usted ocupará su plaza.",
+      "choose": "Participante",
+      "silentFor_one": "En silencio desde hace {{count}} min",
+      "silentFor_other": "En silencio desde hace {{count}} min",
+      "spokeRecently": "Habló hace menos de un minuto",
+      "cancel": "Cancelar",
+      "confirm": "Ocupar su plaza"
     }
   }
 }

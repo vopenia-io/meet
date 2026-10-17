@@ -855,6 +855,18 @@
       "heading": "Spectateurs",
       "search": "Rechercher un spectateur",
       "empty": "Aucun spectateur trouvé"
+    },
+    "takeSeat": {
+      "banner": "Aucun participant connecté ne peut faire intervenir les spectateurs. Vous êtes connecté : vous pouvez prendre une place.",
+      "open": "Prendre une place",
+      "title": "Prendre une place",
+      "body": "Choisissez un participant non connecté : il passera spectateur et vous prendrez sa place.",
+      "choose": "Participant",
+      "silentFor_one": "Silencieux depuis {{count}} min",
+      "silentFor_other": "Silencieux depuis {{count}} min",
+      "spokeRecently": "A parlé il y a moins d'une minute",
+      "cancel": "Annuler",
+      "confirm": "Prendre sa place"
     }
   }
 }
