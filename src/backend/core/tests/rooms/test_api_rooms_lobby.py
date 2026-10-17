@@ -18,6 +18,7 @@ from ...models import RoomAccessLevel
 from ...services.lobby import (
     LobbyService,
 )
+from ..lobby_cookie import sign_lobby_cookie, unsign_lobby_cookie
 
 pytestmark = pytest.mark.django_db
 
@@ -53,7 +54,7 @@ def test_request_entry_anonymous(settings):
     cookie = response.cookies.get("mocked-cookie")
     assert cookie is not None
 
-    participant_id = cookie.value
+    participant_id = unsign_lobby_cookie(cookie.value)
 
     # Verify response content matches expected structure and values
     assert response.json() == {
@@ -104,7 +105,7 @@ def test_request_entry_authenticated_user(settings):
     cookie = response.cookies.get("mocked-cookie")
     assert cookie is not None
 
-    participant_id = cookie.value
+    participant_id = unsign_lobby_cookie(cookie.value)
 
     # Verify response content matches expected structure and values
     assert response.json() == {
@@ -180,7 +181,7 @@ def test_request_entry_with_existing_participants(settings):
     cookie = response.cookies.get("mocked-cookie")
     assert cookie is not None
 
-    participant_id = cookie.value
+    participant_id = unsign_lobby_cookie(cookie.value)
 
     # Verify response content matches expected structure and values
     assert response.json() == {
@@ -234,7 +235,7 @@ def test_request_entry_public_room(settings):
     # Verify the lobby cookie was set
     cookie = response.cookies.get("mocked-cookie")
     assert cookie is not None
-    assert cookie.value == "123"
+    assert unsign_lobby_cookie(cookie.value) == "123"
 
     # Verify response content matches expected structure and values
     assert response.json() == {
@@ -288,7 +289,7 @@ def test_request_entry_authenticated_user_public_room(settings):
     # Verify the lobby cookie was set
     cookie = response.cookies.get("mocked-cookie")
     assert cookie is not None
-    assert cookie.value == "2f7f162f-e7d1-421b-90e7-02bfbfbf8def"
+    assert unsign_lobby_cookie(cookie.value) == "2f7f162f-e7d1-421b-90e7-02bfbfbf8def"
 
     # Verify response content matches expected structure and values
     assert response.json() == {
@@ -327,7 +328,9 @@ def test_request_entry_waiting_participant_public_room(settings):
     )
 
     # Simulate a browser with existing participant cookie
-    client.cookies.load({"mocked-cookie": "2f7f162f-e7d1-421b-90e7-02bfbfbf8def"})
+    client.cookies.load(
+        {"mocked-cookie": sign_lobby_cookie("2f7f162f-e7d1-421b-90e7-02bfbfbf8def")}
+    )
 
     with (
         mock.patch.object(utils, "notify_participants", return_value=None),
@@ -345,7 +348,7 @@ def test_request_entry_waiting_participant_public_room(settings):
     # Verify the lobby cookie was set
     cookie = response.cookies.get("mocked-cookie")
     assert cookie is not None
-    assert cookie.value == "2f7f162f-e7d1-421b-90e7-02bfbfbf8def"
+    assert unsign_lobby_cookie(cookie.value) == "2f7f162f-e7d1-421b-90e7-02bfbfbf8def"
 
     # Verify response content matches expected structure and values
     assert response.json() == {
@@ -706,7 +709,7 @@ def test_request_entry_throttling_anonymous_with_cookie(
     settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["request_entry"] = "2/minute"
 
     participant_id = str(uuid.uuid4())
-    client.cookies.load({"mocked-cookie": participant_id})
+    client.cookies.load({"mocked-cookie": sign_lobby_cookie(participant_id)})
 
     response = client.post(
         f"/api/v1.0/rooms/{room.id}/request-entry/",

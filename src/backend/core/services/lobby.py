@@ -15,6 +15,8 @@ from core import models, utils
 
 logger = logging.getLogger(__name__)
 
+LOBBY_COOKIE_SALT = "core.services.lobby"
+
 
 class LobbyParticipantStatus(Enum):
     """Possible states of a participant in the lobby system.
@@ -133,16 +135,25 @@ class LobbyService:
 
     @staticmethod
     def _get_or_create_participant_id(request) -> str:
-        """Extract unique participant identifier from the request."""
-        return request.COOKIES.get(settings.LOBBY_COOKIE_NAME, str(uuid.uuid4()))
+        """Extract unique participant identifier from the request.
+
+        The cookie is signed: the participant id becomes the LiveKit identity,
+        which every participant of the room can read, so an unsigned cookie
+        would let anyone impersonate an admitted participant.
+        """
+        participant_id = request.get_signed_cookie(
+            settings.LOBBY_COOKIE_NAME, default=None, salt=LOBBY_COOKIE_SALT
+        )
+        return participant_id or str(uuid.uuid4())
 
     @staticmethod
     def prepare_response(response, participant_id):
         """Set participant cookie if needed."""
         if not response.cookies.get(settings.LOBBY_COOKIE_NAME):
-            response.set_cookie(
+            response.set_signed_cookie(
                 key=settings.LOBBY_COOKIE_NAME,
                 value=participant_id,
+                salt=LOBBY_COOKIE_SALT,
                 httponly=True,
                 secure=True,
                 samesite="Lax",

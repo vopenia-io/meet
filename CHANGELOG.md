@@ -30,6 +30,7 @@ and this project adheres to
 
 ### Fixed
 
+- 🔒️(backend) sign the lobby participant cookie
 - 🐛(frontend) enforce recording-mode permissions on the checkboxes
 - 🔒️(agents) fix util-linux CVEs reported by Cyberwatch
 - 🔒️(backend) fix HIGH CVEs in Django and urllib3

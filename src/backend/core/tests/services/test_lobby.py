@@ -12,6 +12,7 @@ from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.core.cache import cache
 from django.http import HttpResponse
+from django.test import RequestFactory
 
 import pytest
 from freezegun import freeze_time
@@ -25,6 +26,7 @@ from core.services.lobby import (
     LobbyParticipantStatus,
     LobbyService,
 )
+from core.tests.lobby_cookie import sign_lobby_cookie, unsign_lobby_cookie
 from core.utils import NotificationError
 
 pytestmark = pytest.mark.django_db
@@ -157,8 +159,8 @@ def test_get_cache_key(lobby_service, participant_id):
 
 def test_get_or_create_participant_id_from_cookie(lobby_service):
     """Test extracting participant ID from cookie."""
-    request = mock.Mock()
-    request.COOKIES = {settings.LOBBY_COOKIE_NAME: "existing-id"}
+    request = RequestFactory().get("/")
+    request.COOKIES = {settings.LOBBY_COOKIE_NAME: sign_lobby_cookie("existing-id")}
 
     participant_id = lobby_service._get_or_create_participant_id(request)
 
@@ -166,9 +168,21 @@ def test_get_or_create_participant_id_from_cookie(lobby_service):
 
 
 @mock.patch.object(uuid, "uuid4", return_value="generated-id")
+def test_get_or_create_participant_id_forged_cookie(mock_uuid4, lobby_service):
+    """An unsigned cookie must not let a client pick another participant's id."""
+    request = RequestFactory().get("/")
+    request.COOKIES = {settings.LOBBY_COOKIE_NAME: "someone-else-id"}
+
+    participant_id = lobby_service._get_or_create_participant_id(request)
+
+    assert participant_id == "generated-id"
+    mock_uuid4.assert_called_once()
+
+
+@mock.patch.object(uuid, "uuid4", return_value="generated-id")
 def test_get_or_create_participant_id_new(mock_uuid4, lobby_service):
     """Test creating new participant ID when cookie is missing."""
-    request = mock.Mock()
+    request = RequestFactory().get("/")
     request.COOKIES = {}
 
     participant_id = lobby_service._get_or_create_participant_id(request)
@@ -199,7 +213,7 @@ def test_prepare_response_new_cookie(lobby_service, participant_id):
     # Verify cookie was set
     cookie = response.cookies.get(settings.LOBBY_COOKIE_NAME)
     assert cookie is not None
-    assert cookie.value == participant_id
+    assert unsign_lobby_cookie(cookie.value) == participant_id
     assert cookie["httponly"] is True
     assert cookie["secure"] is True
     assert cookie["samesite"] == "Lax"
