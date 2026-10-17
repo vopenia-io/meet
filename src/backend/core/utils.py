@@ -69,6 +69,7 @@ def generate_token(  # noqa: PLR0917
     role: Optional[str] = None,
     participant_id: Optional[str] = None,
     ttl: Optional[timedelta] = None,
+    viewer: Optional[bool] = None,
 ) -> str:
     """Generate a LiveKit access token for a user in a specific room.
 
@@ -85,6 +86,8 @@ def generate_token(  # noqa: PLR0917
         participant_id (Optional[str]): Stable identifier for anonymous users;
                          used as identity when user.is_anonymous.
         ttl (Optional[timedelta]): Token validity duration. Defaults to LiveKit SDK default.
+        viewer (Optional[bool]): Whether the user joins as a viewer, who cannot
+                         publish. None when the room has no viewers.
 
     Returns:
         str: The LiveKit JWT access token.
@@ -96,6 +99,9 @@ def generate_token(  # noqa: PLR0917
 
     if sources is None:
         sources = settings.LIVEKIT_DEFAULT_SOURCES
+
+    if viewer:
+        sources = []
 
     video_grants = VideoGrants(
         room=room,
@@ -122,6 +128,14 @@ def generate_token(  # noqa: PLR0917
     )
     display_name = (username or default_username) if can_edit else default_username
 
+    attributes = {
+        "color": color,
+        "room_role": role,
+        "is_authenticated": "true" if user.is_authenticated else "false",
+    }
+    if viewer is not None:
+        attributes["viewer"] = "true" if viewer else "false"
+
     token = (
         AccessToken(
             api_key=settings.LIVEKIT_CONFIGURATION["api_key"],
@@ -130,13 +144,7 @@ def generate_token(  # noqa: PLR0917
         .with_grants(video_grants)
         .with_identity(identity)
         .with_name(display_name)
-        .with_attributes(
-            {
-                "color": color,
-                "room_role": role,
-                "is_authenticated": "true" if user.is_authenticated else "false",
-            }
-        )
+        .with_attributes(attributes)
     )
     if ttl is not None:
         token = token.with_ttl(ttl)
@@ -152,6 +160,7 @@ def generate_livekit_config(  # noqa: PLR0917
     color: Optional[str] = None,
     configuration: Optional[dict] = None,
     participant_id: Optional[str] = None,
+    viewer: Optional[bool] = None,
 ) -> dict:
     """Generate LiveKit configuration for room access.
 
@@ -164,6 +173,8 @@ def generate_livekit_config(  # noqa: PLR0917
         configuration (Optional[dict]): Room configuration dict that can override default settings.
         participant_id (Optional[str]): Stable identifier for anonymous users;
                          used as identity when user.is_anonymous.
+        viewer (Optional[bool]): Whether the user joins as a viewer. When set,
+                         the configuration also tells the role the user joins with.
 
     Returns:
         dict: LiveKit configuration with URL, room and access token
@@ -173,7 +184,7 @@ def generate_livekit_config(  # noqa: PLR0917
     if configuration is not None:
         sources = configuration.get("can_publish_sources", None)
 
-    return {
+    livekit_config = {
         "url": settings.LIVEKIT_CONFIGURATION["url"],
         "room": room_id,
         "token": generate_token(
@@ -184,8 +195,13 @@ def generate_livekit_config(  # noqa: PLR0917
             sources=sources,
             role=role,
             participant_id=participant_id,
+            viewer=viewer,
         ),
     }
+    if viewer is not None:
+        livekit_config["role"] = "viewer" if viewer else "participant"
+
+    return livekit_config
 
 
 def generate_s3_authorization_headers(key):

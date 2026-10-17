@@ -38,6 +38,8 @@ logger = logging.getLogger(__name__)
 
 # Seats keys outlive any meeting; they are deleted when the room finishes.
 SEATS_KEY_TIMEOUT = 24 * 3600
+# Seconds the number of seats taken is cached for the people about to join.
+SEATS_TAKEN_CACHE_TIMEOUT = 5
 
 _PURGE = """
 local function purge(seats, info, now)
@@ -282,6 +284,21 @@ class SeatService:
         """Whether an identity holds a seat, pending, active or kept."""
         score = self._redis().zscore(self._keys(room_id)[0], identity)
         return score is not None and score > time.time()
+
+    def is_full(self, room) -> bool:
+        """Whether a person joining the room now would be a viewer.
+
+        Polled by everyone waiting to join, so the count is cached briefly.
+        """
+        if not is_viewers_enabled(room):
+            return False
+
+        taken = cache.get_or_set(
+            f"{settings.VIEWERS_KEY_PREFIX}-taken_{room.id!s}",
+            lambda: self._redis().zcount(self._keys(room.id)[0], time.time(), "+inf"),
+            timeout=SEATS_TAKEN_CACHE_TIMEOUT,
+        )
+        return taken >= get_threshold(room)
 
     def clear(self, room_id: UUID | str) -> None:
         """Drop every seat of a room."""

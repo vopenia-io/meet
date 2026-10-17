@@ -13,9 +13,14 @@ from django.utils import timezone
 
 from core import models, utils
 
+from .seats import JoinRole, SeatService, is_viewers_enabled
+
 logger = logging.getLogger(__name__)
 
 LOBBY_COOKIE_SALT = "core.services.lobby"
+
+# Namespace of the participant ids of the tabs of a browser.
+LOBBY_TAB_NAMESPACE = uuid.UUID("799a5fa5-b2bb-47f1-a4c4-981fe84b6f43")
 
 
 class LobbyParticipantStatus(Enum):
@@ -146,6 +151,23 @@ class LobbyService:
         )
         return participant_id or str(uuid.uuid4())
 
+    def get_browser_id(self, request) -> str:
+        """Id of the browser asking to join, kept in the lobby cookie."""
+        return self._get_or_create_participant_id(request)
+
+    @staticmethod
+    def get_tab_participant_id(browser_id: str, tab: Optional[str]) -> str:
+        """Participant id of a tab of the browser.
+
+        Each tab joins as its own participant: LiveKit disconnects a
+        participant when another one joins with the same identity. Derived
+        from the signed browser id, it cannot be forged from the identities
+        other participants see.
+        """
+        if not tab:
+            return browser_id
+        return str(uuid.uuid5(LOBBY_TAB_NAMESPACE, f"{browser_id}/{tab}"))
+
     @staticmethod
     def prepare_response(response, participant_id):
         """Set participant cookie if needed."""
@@ -186,11 +208,28 @@ class LobbyService:
             )
         )
 
-    def request_entry(
+    @staticmethod
+    def _joins_as_viewer(room, request, participant_id, role) -> Optional[bool]:
+        """Whether the participant joins as a viewer, None if the room has none.
+
+        Called each time a token is issued: the seat of a participant is kept
+        across calls, so asking again never takes a second seat.
+        """
+        if not is_viewers_enabled(room):
+            return None
+
+        user = request.user
+        identity = participant_id if user.is_anonymous else str(user.sub)
+        return SeatService().assign_role(room, identity, user, role) == JoinRole.VIEWER
+
+    def request_entry(  # pylint: disable=too-many-arguments
         self,
         room: models.Room,
         request,
         username: str,
+        *,
+        tab: Optional[str] = None,
+        browser_id: Optional[str] = None,
     ) -> Tuple[LobbyParticipant, Optional[Dict]]:
         """Request entry to a room for a participant.
 
@@ -203,9 +242,12 @@ class LobbyService:
         3. If unknown, add to waiting list
         4. If accepted, generate LiveKit config
         5. If denied, do nothing.
+
+        Each tab of a browser, identified by `tab`, is a participant of its own.
         """
 
-        participant_id = self._get_or_create_participant_id(request)
+        browser_id = browser_id or self.get_browser_id(request)
+        participant_id = self.get_tab_participant_id(browser_id, tab)
         participant = self._get_participant(room.id, participant_id)
 
         room_id = str(room.id)
@@ -231,6 +273,7 @@ class LobbyService:
                 configuration=room.configuration,
                 participant_id=participant_id,
                 role=user_role,
+                viewer=self._joins_as_viewer(room, request, participant_id, user_role),
             )
             return participant, livekit_config
 
@@ -252,6 +295,7 @@ class LobbyService:
                 configuration=room.configuration,
                 participant_id=participant_id,
                 role=user_role,
+                viewer=self._joins_as_viewer(room, request, participant_id, user_role),
             )
 
         return participant, livekit_config

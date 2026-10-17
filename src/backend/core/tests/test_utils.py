@@ -262,3 +262,33 @@ def test_notify_participants_success(mock_create_livekit_client):
 
     # Verify aclose was called
     mock_api_instance.aclose.assert_called_once()
+
+
+def test_generate_token_without_viewers():
+    """Rooms without viewers keep their tokens unchanged."""
+    claims = decode_token(generate_token(room="my-room", user=AnonymousUser()))
+
+    assert "viewer" not in claims["attributes"]
+    assert claims["video"]["canPublish"] is True
+
+
+def test_generate_token_participant():
+    """A participant of a room with viewers is flagged as such."""
+    claims = decode_token(
+        generate_token(room="my-room", user=AnonymousUser(), viewer=False)
+    )
+
+    assert claims["attributes"]["viewer"] == "false"
+    assert claims["video"]["canPublish"] is True
+
+
+def test_generate_token_viewer():
+    """A viewer cannot publish anything."""
+    claims = decode_token(
+        generate_token(room="my-room", user=AnonymousUser(), viewer=True)
+    )
+
+    assert claims["attributes"]["viewer"] == "true"
+    assert claims["video"].get("canPublish", False) is False
+    assert not claims["video"].get("canPublishSources")
+    assert claims["video"]["canSubscribe"] is True

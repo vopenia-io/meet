@@ -81,6 +81,7 @@ from core.services.room_roles import (
     RoomRoleError,
     RoomRoleService,
 )
+from core.services.seats import SeatService, get_threshold
 from core.services.subtitle import SubtitleException, SubtitleService
 from core.tasks.connection_test import delete_connection_test_room
 from core.tasks.file import process_file_deletion
@@ -167,7 +168,7 @@ class UserViewSet(
         )
 
 
-class RoomViewSet(
+class RoomViewSet(  # pylint: disable=too-many-public-methods
     mixins.CreateModelMixin,
     mixins.DestroyModelMixin,
     mixins.UpdateModelMixin,
@@ -442,16 +443,36 @@ class RoomViewSet(
 
         room = self.get_object()
         lobby_service = LobbyService()
+        browser_id = lobby_service.get_browser_id(request)
 
         participant, livekit = lobby_service.request_entry(
             room=room,
             request=request,
+            browser_id=browser_id,
             **serializer.validated_data,
         )
         response = drf_response.Response({**participant.to_dict(), "livekit": livekit})
-        lobby_service.prepare_response(response, participant.id)
+        lobby_service.prepare_response(response, browser_id)
 
         return response
+
+    @decorators.action(
+        detail=True,
+        methods=["get"],
+        url_path="seats",
+        permission_classes=[],
+    )
+    def seats(self, request, pk=None):  # pylint: disable=unused-argument
+        """Tell whether the requester would join the room as a viewer.
+
+        Shown before joining: beyond the threshold, arrivals join as viewers,
+        except owners and administrators.
+        """
+        room = self.get_object()
+        full = SeatService().is_full(room) and not room.is_administrator_or_owner(
+            request.user
+        )
+        return drf_response.Response({"full": full, "threshold": get_threshold(room)})
 
     @decorators.action(
         detail=True,

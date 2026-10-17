@@ -25,6 +25,7 @@ from rest_framework.exceptions import PermissionDenied
 from timezone_field.rest_framework import TimeZoneSerializerField
 
 from core import models, utils
+from core.services.seats import is_viewers_enabled
 
 logger = logging.getLogger(__name__)
 
@@ -199,18 +200,28 @@ class RoomSerializer(serializers.ModelSerializer):
             or instance.is_public
         )
 
-        if should_access_room:
-            room_id = f"{instance.id!s}"
-            username = request.query_params.get("username", None)
-            output["livekit"] = utils.generate_livekit_config(
-                room_id=room_id,
-                user=request.user,
-                username=username,
-                configuration=output["configuration"],
-                role=role,
-            )
-        else:
+        if not should_access_room:
             del output["pin_code"]
+            return output
+
+        viewer = None
+        if is_viewers_enabled(instance):
+            if not is_admin_or_owner:
+                # Seats are only given when joining through request-entry:
+                # a token issued on every read would hold a seat for nothing.
+                return output
+            viewer = False
+
+        room_id = f"{instance.id!s}"
+        username = request.query_params.get("username", None)
+        output["livekit"] = utils.generate_livekit_config(
+            room_id=room_id,
+            user=request.user,
+            username=username,
+            configuration=output["configuration"],
+            role=role,
+            viewer=viewer,
+        )
 
         return output
 
@@ -356,6 +367,11 @@ class RequestEntrySerializer(BaseValidationOnlySerializer):
     """Validate request entry data."""
 
     username = serializers.CharField(required=True)
+    tab = serializers.CharField(
+        required=False,
+        max_length=64,
+        help_text="Id of the browser tab: each tab joins as its own participant",
+    )
 
 
 class ParticipantEntrySerializer(BaseValidationOnlySerializer):
