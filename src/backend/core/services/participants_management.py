@@ -161,6 +161,30 @@ class ParticipantsManagement:
         finally:
             await lkapi.aclose()
 
+    @async_to_sync
+    async def get(self, room_name: str, identity: str) -> ParticipantInfo:
+        """Return a participant of the room, as LiveKit knows them."""
+
+        lkapi = utils.create_livekit_client()
+
+        try:
+            return await lkapi.room.get_participant(
+                RoomParticipantIdentity(room=room_name, identity=identity)
+            )
+        except TwirpError as e:
+            if e.code == "not_found":
+                raise ParticipantNotFoundException("Participant does not exist") from e
+
+            logger.exception(
+                "Unexpected error getting participant %s in room %s",
+                identity,
+                room_name,
+            )
+            raise ParticipantsManagementException("Could not get participant") from e
+
+        finally:
+            await lkapi.aclose()
+
     def check_if_in_meeting_cached(self, room_name: str, identity: str) -> bool:
         """Cache-first variant of `check_if_in_meeting`.
 

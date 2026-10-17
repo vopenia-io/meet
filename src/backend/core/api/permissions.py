@@ -190,6 +190,25 @@ class HoldsSeat(permissions.BasePermission):
         return SeatService().has_seat(obj.pk, identity)
 
 
+class CanLetViewersSpeak(permissions.BasePermission):
+    """Grant letting viewers speak, or sending participants back to viewers.
+
+    Owners and administrators always can. Any other authenticated user must
+    hold a seat in the room: be a participant, not a viewer.
+    """
+
+    message = "Only authenticated participants can let viewers speak."
+
+    def has_object_permission(self, request, view, obj):
+        """Check the requester is an authenticated participant of the room."""
+        user = request.user
+        if not user or not user.is_authenticated:
+            return False
+        if obj.is_administrator_or_owner(user):
+            return True
+        return SeatService().has_seat(obj.pk, str(user.sub))
+
+
 class IsPresentInMeeting(permissions.BasePermission):
     """Check that the requesting user is currently connected to the meeting.
 

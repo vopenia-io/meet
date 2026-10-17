@@ -315,3 +315,71 @@ def test_seats_is_viewers_enabled(settings):
     settings.VIEWERS_ENABLED = True
     assert is_viewers_enabled(room)
     assert not is_viewers_enabled(None)
+
+
+def test_seats_demote(seats, room_id):
+    """Going back to viewers frees the seat."""
+    seats.activate(room_id, "a", {"sid": "PA_a", "auth": False}, force=True)
+
+    assert seats.demote(room_id, "a") == 1
+    assert not seats.has_seat(room_id, "a")
+    assert seats.demote(room_id, "a") == 0
+
+
+def test_seats_demote_last_authenticated(seats, room_id):
+    """The last authenticated participant connected keeps their seat."""
+    seats.activate(room_id, "auth", {"sid": "PA_1", "auth": True}, force=True)
+    seats.activate(room_id, "anon", {"sid": "PA_2", "auth": False}, force=True)
+
+    assert seats.demote(room_id, "auth") == -1
+    assert seats.has_seat(room_id, "auth")
+    assert seats.demote(room_id, "auth", check_last=False) == 1
+
+
+def test_seats_demote_authenticated_with_another_one(seats, room_id):
+    """An authenticated participant can leave when another one stays."""
+    seats.activate(room_id, "auth-1", {"sid": "PA_1", "auth": True}, force=True)
+    seats.activate(room_id, "auth-2", {"sid": "PA_2", "auth": True}, force=True)
+
+    assert seats.demote(room_id, "auth-1") == 1
+
+
+def test_seats_demote_authenticated_with_another_one_disconnected(seats, room_id):
+    """A disconnected authenticated participant cannot let viewers speak."""
+    seats.activate(room_id, "auth-1", {"sid": "PA_1", "auth": True}, force=True)
+    seats.activate(room_id, "auth-2", {"sid": "PA_2", "auth": True}, force=True)
+    seats.release(room_id, "auth-2", "PA_2")
+
+    assert seats.demote(room_id, "auth-1") == -1
+
+
+def test_seats_take_seat(seats, room_id):
+    """An authenticated viewer takes the seat of an unauthenticated participant."""
+    seats.activate(room_id, "anon", {"sid": "PA_anon", "auth": False}, force=True)
+
+    assert seats.take_seat(room_id, "viewer", "anon", {"sid": "PA_v", "auth": True})
+    assert seats.has_seat(room_id, "viewer")
+    assert not seats.has_seat(room_id, "anon")
+    assert seats.get_info(room_id, "viewer") == {"sid": "PA_v", "auth": True}
+
+
+def test_seats_take_seat_with_authenticated_participant(seats, room_id):
+    """No seat is taken while an authenticated participant is connected."""
+    seats.activate(room_id, "auth", {"sid": "PA_1", "auth": True}, force=True)
+    seats.activate(room_id, "anon", {"sid": "PA_2", "auth": False}, force=True)
+
+    assert seats.take_seat(room_id, "viewer", "anon", {"auth": True}) == -1
+    assert seats.has_seat(room_id, "anon")
+
+
+@pytest.mark.parametrize("info", [{"auth": True}, {"auth": False, "sip": True}])
+def test_seats_take_seat_invalid_target(seats, room_id, info):
+    """The seat of an authenticated participant or a phone caller is not taken."""
+    seats.allocate(room_id, "target", 5, **info)
+
+    assert seats.take_seat(room_id, "viewer", "target", {"auth": True}) == -3
+
+
+def test_seats_take_seat_target_without_seat(seats, room_id):
+    """Only a seat that exists can be taken."""
+    assert seats.take_seat(room_id, "viewer", "nobody", {"auth": True}) == -2

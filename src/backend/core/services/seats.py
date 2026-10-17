@@ -130,6 +130,73 @@ redis.call('HDEL', KEYS[2], ARGV[1])
 return 1
 """
 
+# KEYS: seats, info. ARGV: identity, now, check_last.
+# Frees the seat of a participant going back to viewers. With check_last,
+# the last authenticated participant connected keeps their seat: someone must
+# stay able to let viewers speak. Returns 1 when freed, 0 without a seat, -1
+# for the last authenticated participant.
+_DEMOTE = (
+    _PURGE
+    + """
+purge(KEYS[1], KEYS[2], ARGV[2])
+if not redis.call('ZSCORE', KEYS[1], ARGV[1]) then
+  return 0
+end
+if ARGV[3] == '1' then
+  local raw = redis.call('HGET', KEYS[2], ARGV[1])
+  if raw and cjson.decode(raw).auth then
+    local others = 0
+    for _, member in ipairs(redis.call('ZRANGEBYSCORE', KEYS[1], '+inf', '+inf')) do
+      local info = redis.call('HGET', KEYS[2], member)
+      if member ~= ARGV[1] and info and cjson.decode(info).auth then
+        others = others + 1
+      end
+    end
+    if others == 0 then
+      return -1
+    end
+  end
+end
+redis.call('ZREM', KEYS[1], ARGV[1])
+redis.call('HDEL', KEYS[2], ARGV[1])
+return 1
+"""
+)
+
+# KEYS: seats, info. ARGV: caller, target, now, caller info, ttl.
+# Gives the seat of an unauthenticated participant to an authenticated
+# viewer, only while no authenticated participant is connected. Returns 1 when
+# done, -1 when an authenticated participant is connected, -2 when the target
+# holds no seat, -3 when the target is authenticated or a phone caller.
+_TAKE_SEAT = (
+    _PURGE
+    + """
+purge(KEYS[1], KEYS[2], ARGV[3])
+for _, member in ipairs(redis.call('ZRANGEBYSCORE', KEYS[1], '+inf', '+inf')) do
+  local info = redis.call('HGET', KEYS[2], member)
+  if info and cjson.decode(info).auth then
+    return -1
+  end
+end
+if not redis.call('ZSCORE', KEYS[1], ARGV[2]) then
+  return -2
+end
+local raw = redis.call('HGET', KEYS[2], ARGV[2])
+if raw then
+  local target = cjson.decode(raw)
+  if target.auth or target.sip then
+    return -3
+  end
+end
+redis.call('ZREM', KEYS[1], ARGV[2])
+redis.call('HDEL', KEYS[2], ARGV[2])
+redis.call('ZADD', KEYS[1], '+inf', ARGV[1])
+redis.call('HSET', KEYS[2], ARGV[1], ARGV[4])
+touch(KEYS[1], KEYS[2], ARGV[5])
+return 1
+"""
+)
+
 # KEYS: seats, info. ARGV: now, grace_until, present, ttl.
 # Aligns the seats with the participants LiveKit reports: an active seat whose
 # holder is gone starts its grace period, a present publisher gets a seat.
@@ -298,6 +365,42 @@ class SeatService:
     ) -> bool:
         """Free a seat right away, or only if its holder has not joined yet."""
         return bool(self._run(_REMOVE, room_id, identity, "1" if only_pending else "0"))
+
+    def demote(
+        self, room_id: UUID | str, identity: str, check_last: bool = True
+    ) -> int:
+        """Free the seat of a participant going back to viewers.
+
+        Returns 1 when freed, 0 when the identity holds no seat, and -1 when
+        refused to the last authenticated participant connected.
+        """
+        return self._run(
+            _DEMOTE, room_id, identity, time.time(), "1" if check_last else "0"
+        )
+
+    def take_seat(
+        self, room_id: UUID | str, caller: str, target: str, caller_info: dict
+    ) -> int:
+        """Give the seat of an unauthenticated participant to a viewer.
+
+        Returns 1 when done, -1 while an authenticated participant is
+        connected, -2 when the target holds no seat, and -3 when the target
+        is authenticated or a phone caller.
+        """
+        return self._run(
+            _TAKE_SEAT,
+            room_id,
+            caller,
+            target,
+            time.time(),
+            json.dumps(caller_info),
+            SEATS_KEY_TIMEOUT,
+        )
+
+    def get_info(self, room_id: UUID | str, identity: str) -> Optional[dict]:
+        """Information kept about the holder of a seat, if any."""
+        raw = self._redis().hget(self._keys(room_id)[1], identity)
+        return json.loads(raw) if raw else None
 
     def has_seat(self, room_id: UUID | str, identity: str) -> bool:
         """Whether an identity holds a seat, pending, active or kept."""

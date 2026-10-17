@@ -88,6 +88,7 @@ from core.services.seats import (
     livekit_permission,
 )
 from core.services.subtitle import SubtitleException, SubtitleService
+from core.services.viewers import ViewersError, ViewersService
 from core.tasks.connection_test import delete_connection_test_room
 from core.tasks.file import process_file_deletion
 from core.utils import generate_token
@@ -847,6 +848,122 @@ class RoomViewSet(  # pylint: disable=too-many-public-methods
 
         return drf_response.Response(
             {"status": "success"}, status=drf_status.HTTP_200_OK
+        )
+
+    @staticmethod
+    def _viewers_response(action):
+        """Run a role change and turn its failures into responses."""
+        try:
+            action()
+        except ParticipantNotFoundException:
+            return drf_response.Response(
+                {"error": "Participant not found"},
+                status=drf_status.HTTP_404_NOT_FOUND,
+            )
+        except ViewersError as e:
+            return drf_response.Response({"error": str(e)}, status=e.status_code)
+        except ParticipantsManagementException:
+            return drf_response.Response(
+                {"error": "Failed to change the participant's role"},
+                status=drf_status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+        return drf_response.Response(
+            {"status": "success"}, status=drf_status.HTTP_200_OK
+        )
+
+    def _get_viewers_room(self):
+        """The room of the request, which must have viewers."""
+        room = self.get_object()
+        if not is_viewers_enabled(room):
+            raise Http404("This room has no viewers.")
+        return room
+
+    @decorators.action(
+        detail=True,
+        methods=["post"],
+        url_path="promote-viewer",
+        url_name="promote-viewer",
+        permission_classes=[permissions.CanLetViewersSpeak],
+    )
+    def promote_viewer(self, request, pk=None):  # pylint: disable=unused-argument
+        """Let a viewer speak: they become a participant."""
+        room = self._get_viewers_room()
+
+        serializer = serializers.BaseParticipantsManagementSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        identity = str(serializer.validated_data["participant_identity"])
+
+        return self._viewers_response(lambda: ViewersService().promote(room, identity))
+
+    @decorators.action(
+        detail=True,
+        methods=["post"],
+        url_path="demote-participant",
+        url_name="demote-participant",
+        permission_classes=[],
+        authentication_classes=[
+            LiveKitTokenAuthentication,
+            *api_settings.DEFAULT_AUTHENTICATION_CLASSES,
+        ],
+    )
+    def demote_participant(self, request, pk=None):  # pylint: disable=unused-argument
+        """Send a participant back to viewers.
+
+        Anyone can do it for themselves, with their LiveKit token. Doing it for
+        someone else takes an authenticated participant of the room.
+        """
+        room = self._get_viewers_room()
+
+        serializer = serializers.BaseParticipantsManagementSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        identity = str(serializer.validated_data["participant_identity"])
+
+        user = request.user
+        is_authenticated = bool(user and user.is_authenticated)
+        livekit_room = getattr(getattr(request.auth, "video", None), "room", None)
+        if livekit_room is not None and livekit_room != str(room.id):
+            raise drf_exceptions.PermissionDenied()
+
+        requester = getattr(request.auth, "identity", None)
+        if requester is None and is_authenticated:
+            requester = str(user.sub)
+        if requester is None:
+            raise drf_exceptions.NotAuthenticated()
+
+        by_privileged = is_authenticated and room.is_administrator_or_owner(user)
+        if identity != requester and not (
+            by_privileged
+            or (is_authenticated and SeatService().has_seat(room.pk, str(user.sub)))
+        ):
+            raise drf_exceptions.PermissionDenied(
+                "Only authenticated participants can do this to someone else."
+            )
+
+        return self._viewers_response(
+            lambda: ViewersService().demote(room, identity, by_privileged)
+        )
+
+    @decorators.action(
+        detail=True,
+        methods=["post"],
+        url_path="take-seat",
+        url_name="take-seat",
+        permission_classes=[permissions.IsAuthenticated],
+    )
+    def take_seat(self, request, pk=None):  # pylint: disable=unused-argument
+        """Let an authenticated viewer take an unauthenticated participant's seat.
+
+        Only possible while no authenticated participant is connected: viewers
+        could otherwise never be let in.
+        """
+        room = self._get_viewers_room()
+
+        serializer = serializers.BaseParticipantsManagementSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        target = str(serializer.validated_data["participant_identity"])
+
+        return self._viewers_response(
+            lambda: ViewersService().take_seat(room, str(request.user.sub), target)
         )
 
     @decorators.action(
