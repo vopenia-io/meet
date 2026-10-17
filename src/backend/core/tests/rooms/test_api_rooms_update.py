@@ -279,6 +279,8 @@ def test_api_rooms_update_last_started_at_ignored(method):
         {"can_publish_sources": None, "everyone_can_mute": False},
         {"can_publish_sources": None, "everyone_can_mute": "yes"},
         {"can_publish_sources": None, "everyone_can_mute": "1"},
+        {"viewers_threshold": 10},
+        {"viewers_threshold": None},
     ],
 )
 @patch.object(RoomManagement, "update_metadata")
@@ -336,6 +338,24 @@ def test_api_rooms_update_configuration_extra_keys_rejected():
                 "arbitrary_key": "value",
             }
         },
+        format="json",
+    )
+    assert response.status_code == 400
+    room.refresh_from_db()
+    assert room.configuration == {}
+
+
+@pytest.mark.parametrize("threshold", [0, -1, "many"])
+def test_api_rooms_update_configuration_invalid_viewers_threshold(threshold):
+    """The number of people who can speak must be a positive integer."""
+    user = UserFactory()
+    room = RoomFactory(users=[(user, "owner")])
+    client = APIClient()
+    client.force_login(user)
+
+    response = client.patch(
+        f"/api/v1.0/rooms/{room.id!s}/",
+        {"configuration": {"viewers_threshold": threshold}},
         format="json",
     )
     assert response.status_code == 400

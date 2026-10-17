@@ -413,6 +413,7 @@ class RoomConfiguration(BaseModel):
 
     can_publish_sources: list[TrackSource] | None = None
     everyone_can_mute: bool | None = None
+    viewers_threshold: int | None = Field(default=None, ge=1)
 
     model_config = {"extra": "forbid"}
 

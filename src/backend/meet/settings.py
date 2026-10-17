@@ -1017,6 +1017,26 @@ class Base(Configuration):
         environ_prefix=None,
     )
 
+    # Viewers: beyond a number of people who can speak, arrivals join as viewers
+    VIEWERS_ENABLED = values.BooleanValue(
+        False, environ_name="VIEWERS_ENABLED", environ_prefix=None
+    )
+    VIEWERS_DEFAULT_THRESHOLD = values.PositiveIntegerValue(
+        50, environ_name="VIEWERS_DEFAULT_THRESHOLD", environ_prefix=None
+    )
+    VIEWERS_PENDING_SEAT_TIMEOUT = values.PositiveIntegerValue(
+        120, environ_name="VIEWERS_PENDING_SEAT_TIMEOUT", environ_prefix=None
+    )
+    VIEWERS_RECONNECT_GRACE_PERIOD = values.PositiveIntegerValue(
+        120, environ_name="VIEWERS_RECONNECT_GRACE_PERIOD", environ_prefix=None
+    )
+    VIEWERS_RECONCILE_INTERVAL = values.PositiveIntegerValue(
+        15, environ_name="VIEWERS_RECONCILE_INTERVAL", environ_prefix=None
+    )
+    VIEWERS_KEY_PREFIX = values.Value(
+        "room_seats", environ_name="VIEWERS_KEY_PREFIX", environ_prefix=None
+    )
+
     # Calendar integrations
     ROOM_CREATION_CALLBACK_CACHE_TIMEOUT = values.PositiveIntegerValue(
         600,  # 10 minutes
@@ -1551,6 +1571,9 @@ class Test(Base):
     ]
     USE_SWAGGER = True
     EXTERNAL_API_ENABLED = True
+    # Tests enable viewers explicitly, whatever the local environment says
+    VIEWERS_ENABLED = False
+    VIEWERS_DEFAULT_THRESHOLD = 50
 
     LIVEKIT_CONFIGURATION = {
         "api_key": "devkey-padded-for-minimum-len!-livekit",

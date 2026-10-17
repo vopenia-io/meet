@@ -18,6 +18,7 @@ and this project adheres to
 - ✨(frontend) subscribe only to the tracks played in large rooms
 - ✨(frontend) stop announcing arrivals in large rooms
 - ✨(frontend) keep muted microphones subscribed up to their own threshold
+- ✨(backend) count the seats of the people who can speak in a room
 
 ### Changed
 

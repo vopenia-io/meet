@@ -74,6 +74,10 @@ def get_frontend_configuration(request):
             "default_video_codec": settings.LIVEKIT_DEFAULT_VIDEO_CODEC,
         },
         "allow_unregistered_rooms": settings.ALLOW_UNREGISTERED_ROOMS,
+        "viewers": {
+            "enabled": settings.VIEWERS_ENABLED,
+            "default_threshold": settings.VIEWERS_DEFAULT_THRESHOLD,
+        },
         "authenticated_users_can_edit_display_name": (
             settings.AUTHENTICATED_PARTICIPANTS_CAN_EDIT_DISPLAY_NAME
         ),
