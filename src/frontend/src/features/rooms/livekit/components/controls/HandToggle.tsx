@@ -12,6 +12,8 @@ import {
 import { useRegisterKeyboardShortcut } from '@/features/shortcuts/useRegisterKeyboardShortcut'
 import { type ButtonRecipeProps } from '@/primitives/buttonRecipe'
 import { ToggleButtonProps } from '@/primitives/ToggleButton'
+import { useIsViewer } from '@/features/rooms/livekit/hooks/useIsViewer'
+import { openRequestToSpeak } from '@/stores/requestToSpeak'
 
 const SPEAKING_DETECTION_DELAY = 3000
 
@@ -42,7 +44,15 @@ export const HandToggle = ({
     closeLowerHandToasts()
   }, [isHandRaised])
 
+  const isViewer = useIsViewer()
+  // A viewer checks their microphone before raising their hand.
+  const asksToSpeak = isViewer && !isHandRaised
+
   const handleToggle = () => {
+    if (asksToSpeak) {
+      openRequestToSpeak()
+      return
+    }
     toggleRaisedHand()
     resetToastState()
   }
@@ -83,7 +93,11 @@ export const HandToggle = ({
     }
   }, [])
 
-  const tooltipLabel = isHandRaised ? 'lower' : 'raise'
+  const tooltipLabel = isHandRaised
+    ? 'lower'
+    : asksToSpeak
+      ? 'requestToSpeak'
+      : 'raise'
 
   return (
     <div

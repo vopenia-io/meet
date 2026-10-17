@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSnapshot } from 'valtio'
 import { css } from '@/styled-system/css'
@@ -465,17 +465,15 @@ const DeviceSelectors = ({
   )
 }
 
-export const Join = ({
-  enterRoom,
-  roomId,
-}: {
-  enterRoom: () => void
-  roomId: string
-}) => {
+/**
+ * Camera preview, microphone and camera toggles and device selectors, with
+ * what to do next on the side: join the room, or ask to speak.
+ */
+export const JoinPreview = ({ children }: { children: ReactNode }) => {
   const { audioTrack, videoTrack } = useJoinTracks()
 
   return (
-    <Screen footer={false}>
+    <>
       <SilentMicDetector track={audioTrack} context="join" />
       <div className={styles.page}>
         <div className={styles.previewColumn}>
@@ -484,10 +482,24 @@ export const Join = ({
             <DeviceSelectors videoTrack={videoTrack} audioTrack={audioTrack} />
           </div>
         </div>
-        <div className={styles.lobbyColumn}>
-          <Lobby roomId={roomId} enterRoom={enterRoom} />
-        </div>
+        <div className={styles.lobbyColumn}>{children}</div>
       </div>
+    </>
+  )
+}
+
+export const Join = ({
+  enterRoom,
+  roomId,
+}: {
+  enterRoom: () => void
+  roomId: string
+}) => {
+  return (
+    <Screen footer={false}>
+      <JoinPreview>
+        <Lobby roomId={roomId} enterRoom={enterRoom} />
+      </JoinPreview>
     </Screen>
   )
 }

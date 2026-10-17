@@ -263,7 +263,8 @@
     },
     "hand": {
       "raise": "Lever la main",
-      "lower": "Baisser la main"
+      "lower": "Baisser la main",
+      "requestToSpeak": "Demander la parole"
     },
     "subtitles": {
       "closed": "Afficher les sous-titres",
@@ -830,6 +831,15 @@
     "badge": "Vous êtes spectateur",
     "joinBanner_one": "Cette réunion compte déjà {{count}} personne qui peut parler : vous entrerez comme spectateur.",
     "joinBanner_other": "Cette réunion compte déjà {{count}} personnes qui peuvent parler : vous entrerez comme spectateur.",
-    "joinAsViewer": "Rejoindre comme spectateur"
+    "joinAsViewer": "Rejoindre comme spectateur",
+    "requestToSpeak": {
+      "title": "Demander la parole",
+      "body": "Vérifiez votre micro, puis levez la main : un participant pourra vous faire intervenir. Vous arriverez micro coupé.",
+      "allowMicrophone": "Autoriser le micro",
+      "recording": "Cette réunion est enregistrée : votre intervention le sera aussi.",
+      "cancel": "Annuler",
+      "raiseHand": "Lever la main",
+      "microphoneRequired": "Autorisez le micro pour lever la main."
+    }
   }
 }

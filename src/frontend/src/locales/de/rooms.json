@@ -263,7 +263,8 @@
     },
     "hand": {
       "raise": "Hand heben",
-      "lower": "Hand senken"
+      "lower": "Hand senken",
+      "requestToSpeak": "Wortmeldung"
     },
     "subtitles": {
       "closed": "Untertitel anzeigen",
@@ -830,6 +831,15 @@
     "badge": "Sie sind Zuschauer",
     "joinBanner_one": "In dieser Besprechung gibt es bereits {{count}} Person, die sprechen kann: Sie nehmen als Zuschauer teil.",
     "joinBanner_other": "In dieser Besprechung gibt es bereits {{count}} Personen, die sprechen können: Sie nehmen als Zuschauer teil.",
-    "joinAsViewer": "Als Zuschauer teilnehmen"
+    "joinAsViewer": "Als Zuschauer teilnehmen",
+    "requestToSpeak": {
+      "title": "Wortmeldung",
+      "body": "Prüfen Sie Ihr Mikrofon und heben Sie dann die Hand: Ein Teilnehmer kann Ihnen das Wort erteilen. Ihr Mikrofon ist beim Eintritt stummgeschaltet.",
+      "allowMicrophone": "Mikrofon erlauben",
+      "recording": "Diese Besprechung wird aufgezeichnet: Ihr Beitrag ebenfalls.",
+      "cancel": "Abbrechen",
+      "raiseHand": "Hand heben",
+      "microphoneRequired": "Erlauben Sie das Mikrofon, um die Hand zu heben."
+    }
   }
 }

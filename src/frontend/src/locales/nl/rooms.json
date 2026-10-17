@@ -263,7 +263,8 @@
     },
     "hand": {
       "raise": "Hand opsteken",
-      "lower": "Hand laten zakken"
+      "lower": "Hand laten zakken",
+      "requestToSpeak": "Het woord vragen"
     },
     "subtitles": {
       "closed": "Ondertitels weergeven",
@@ -830,6 +831,15 @@
     "badge": "U bent toeschouwer",
     "joinBanner_one": "Deze vergadering heeft al {{count}} persoon die kan spreken: u neemt deel als toeschouwer.",
     "joinBanner_other": "Deze vergadering heeft al {{count}} personen die kunnen spreken: u neemt deel als toeschouwer.",
-    "joinAsViewer": "Deelnemen als toeschouwer"
+    "joinAsViewer": "Deelnemen als toeschouwer",
+    "requestToSpeak": {
+      "title": "Het woord vragen",
+      "body": "Controleer uw microfoon en steek dan uw hand op: een deelnemer kan u het woord geven. Uw microfoon staat uit wanneer u binnenkomt.",
+      "allowMicrophone": "Microfoon toestaan",
+      "recording": "Deze vergadering wordt opgenomen: uw bijdrage ook.",
+      "cancel": "Annuleren",
+      "raiseHand": "Hand opsteken",
+      "microphoneRequired": "Sta de microfoon toe om uw hand op te steken."
+    }
   }
 }

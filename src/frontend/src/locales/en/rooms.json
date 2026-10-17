@@ -263,7 +263,8 @@
     },
     "hand": {
       "raise": "Raise hand",
-      "lower": "Lower hand"
+      "lower": "Lower hand",
+      "requestToSpeak": "Ask to speak"
     },
     "subtitles": {
       "closed": "Show subtitles",
@@ -830,6 +831,15 @@
     "badge": "You are a viewer",
     "joinBanner_one": "This meeting already has {{count}} person who can speak: you will join as a viewer.",
     "joinBanner_other": "This meeting already has {{count}} people who can speak: you will join as a viewer.",
-    "joinAsViewer": "Join as a viewer"
+    "joinAsViewer": "Join as a viewer",
+    "requestToSpeak": {
+      "title": "Ask to speak",
+      "body": "Check your microphone, then raise your hand: a participant can let you speak. You will join with your microphone off.",
+      "allowMicrophone": "Allow the microphone",
+      "recording": "This meeting is recorded: so will be what you say.",
+      "cancel": "Cancel",
+      "raiseHand": "Raise your hand",
+      "microphoneRequired": "Allow the microphone to raise your hand."
+    }
   }
 }

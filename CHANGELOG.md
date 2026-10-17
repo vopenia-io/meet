@@ -29,6 +29,7 @@ and this project adheres to
 - ✨(frontend) quiet the arrivals, hands and reactions of viewers
 - ✨(frontend) tell people about to join that they will be viewers
 - ✨(backend) let viewers speak and participants go back to viewers
+- ✨(frontend) let viewers ask to speak once their microphone works
 
 ### Changed
 

@@ -263,7 +263,8 @@
     },
     "hand": {
       "raise": "Levantar la mano",
-      "lower": "Bajar la mano"
+      "lower": "Bajar la mano",
+      "requestToSpeak": "Pedir la palabra"
     },
     "subtitles": {
       "closed": "Mostrar los subtítulos",
@@ -825,6 +826,15 @@
     "badge": "Es espectador",
     "joinBanner_one": "Esta reunión ya tiene {{count}} persona que puede hablar: entrará como espectador.",
     "joinBanner_other": "Esta reunión ya tiene {{count}} personas que pueden hablar: entrará como espectador.",
-    "joinAsViewer": "Unirse como espectador"
+    "joinAsViewer": "Unirse como espectador",
+    "requestToSpeak": {
+      "title": "Pedir la palabra",
+      "body": "Compruebe su micrófono y levante la mano: un participante podrá darle la palabra. Entrará con el micrófono apagado.",
+      "allowMicrophone": "Permitir el micrófono",
+      "recording": "Esta reunión se está grabando: su intervención también.",
+      "cancel": "Cancelar",
+      "raiseHand": "Levantar la mano",
+      "microphoneRequired": "Permita el micrófono para levantar la mano."
+    }
   }
 }

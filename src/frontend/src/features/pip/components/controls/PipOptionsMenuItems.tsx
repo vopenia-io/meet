@@ -8,6 +8,8 @@ import { useRoomContext, useTrackToggle } from '@livekit/components-react'
 import { useRaisedHand } from '@/features/rooms/livekit/hooks/useRaisedHand'
 import { useTranslation } from 'react-i18next'
 import { Track } from 'livekit-client'
+import { useIsViewer } from '@/features/rooms/livekit/hooks/useIsViewer'
+import { openRequestToSpeak } from '@/stores/requestToSpeak'
 
 type PipOverflowItemsProps = {
   overflowControls: Set<CollapsibleControl>
@@ -27,6 +29,7 @@ export const PipOptionsMenuItems = ({
       captureOptions: { audio: true, selfBrowserSurface: 'include' },
     })
   const { toggle: toggleReactions } = useReactionsToolbar()
+  const isViewer = useIsViewer()
   const itemClass = menuRecipe({ icon: true, variant: 'dark' }).item
 
   return (
@@ -61,9 +64,18 @@ export const PipOptionsMenuItems = ({
         </MenuItem>
       )}
       {overflowControls.has(CollapsibleControls.HAND) && (
-        <MenuItem onAction={toggleRaisedHand} className={itemClass}>
+        <MenuItem
+          onAction={
+            isViewer && !isHandRaised ? openRequestToSpeak : toggleRaisedHand
+          }
+          className={itemClass}
+        >
           <RiHand size={20} />
-          {isHandRaised ? t('controls.hand.lower') : t('controls.hand.raise')}
+          {isHandRaised
+            ? t('controls.hand.lower')
+            : isViewer
+              ? t('controls.hand.requestToSpeak')
+              : t('controls.hand.raise')}
         </MenuItem>
       )}
     </RACMenu>
