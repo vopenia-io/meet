@@ -25,6 +25,7 @@ and this project adheres to
 - ⚡️(agents) transcribe only the people who can speak
 - ✨(frontend) let people join a full room as viewers
 - ✨(frontend) give viewers a control bar without publishing controls
+- ✨(frontend) keep viewers off the stage
 
 ### Changed
 

@@ -14,18 +14,21 @@ import { useSnapshot } from 'valtio'
 import { clearPinnedTrack, layoutStore, setPinnedTrack } from '@/stores/layout'
 import { useEffect, useRef } from 'react'
 import { useStableTrackRefs } from '../hooks/useStableTrackRefs'
+import { useWithoutViewers } from '../hooks/useWithoutViewers'
 
 export const StageLayout = () => {
   const lastAutoFocusedScreenShareTrack =
     useRef<TrackReferenceOrPlaceholder | null>(null)
 
-  const tracks = useStableTrackRefs(
-    useTracks(
-      [
-        { source: Track.Source.Camera, withPlaceholder: true },
-        { source: Track.Source.ScreenShare, withPlaceholder: false },
-      ],
-      { updateOnlyOn: [], onlySubscribed: false }
+  const tracks = useWithoutViewers(
+    useStableTrackRefs(
+      useTracks(
+        [
+          { source: Track.Source.Camera, withPlaceholder: true },
+          { source: Track.Source.ScreenShare, withPlaceholder: false },
+        ],
+        { updateOnlyOn: [], onlySubscribed: false }
+      )
     )
   )
 

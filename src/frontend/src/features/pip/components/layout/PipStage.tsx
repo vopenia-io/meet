@@ -8,6 +8,7 @@ import { PipPagination } from './PipPagination'
 import { PipScreenShareLayout } from './PipScreenShareLayout'
 import { StageFrame } from './StageFrame'
 import { MAX_PIP_TILES } from '../../utils/pipGrid'
+import { useWithoutViewers } from '@/features/layout/hooks/useWithoutViewers'
 import {
   isTrackReference,
   TrackReferenceOrPlaceholder,
@@ -22,12 +23,14 @@ import {
  *     + one thumbnail overlay.
  */
 export const PipStage = () => {
-  const tracks = useTracks(
-    [
-      { source: Track.Source.Camera, withPlaceholder: true },
-      { source: Track.Source.ScreenShare, withPlaceholder: false },
-    ],
-    { updateOnlyOn: [RoomEvent.ActiveSpeakersChanged], onlySubscribed: false }
+  const tracks = useWithoutViewers(
+    useTracks(
+      [
+        { source: Track.Source.Camera, withPlaceholder: true },
+        { source: Track.Source.ScreenShare, withPlaceholder: false },
+      ],
+      { updateOnlyOn: [RoomEvent.ActiveSpeakersChanged], onlySubscribed: false }
+    )
   )
 
   const screenShareTrack = useMemo(() => {
