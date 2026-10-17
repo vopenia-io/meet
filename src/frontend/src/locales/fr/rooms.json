@@ -827,6 +827,9 @@
     "screenShare": "Écran de {{name}}"
   },
   "viewers": {
-    "badge": "Vous êtes spectateur"
+    "badge": "Vous êtes spectateur",
+    "joinBanner_one": "Cette réunion compte déjà {{count}} personne qui peut parler : vous entrerez comme spectateur.",
+    "joinBanner_other": "Cette réunion compte déjà {{count}} personnes qui peuvent parler : vous entrerez comme spectateur.",
+    "joinAsViewer": "Rejoindre comme spectateur"
   }
 }

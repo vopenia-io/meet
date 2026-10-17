@@ -27,6 +27,7 @@ and this project adheres to
 - ✨(frontend) give viewers a control bar without publishing controls
 - ✨(frontend) keep viewers off the stage
 - ✨(frontend) quiet the arrivals, hands and reactions of viewers
+- ✨(frontend) tell people about to join that they will be viewers
 
 ### Changed
 

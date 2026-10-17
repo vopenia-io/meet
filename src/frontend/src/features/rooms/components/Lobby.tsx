@@ -22,6 +22,9 @@ import {
   type ApiRequestEntry,
 } from '../api/requestEntry'
 import { useLobby } from '../hooks/useLobby'
+import { fetchSeats } from '../api/fetchSeats'
+
+const SEATS_POLL_INTERVAL_MS = 10_000
 
 export const Lobby = ({
   roomId,
@@ -78,6 +81,18 @@ export const Lobby = ({
   })
 
   const { openLoginHint } = useLoginHint()
+
+  // Tell people beforehand that they will join as viewers. Their role is only
+  // decided when they join: seats may free up or fill up in the meantime.
+  const { t: tViewers } = useTranslation('rooms', { keyPrefix: 'viewers' })
+  const { data: seats } = useQuery({
+    queryKey: [keys.seats, roomId],
+    queryFn: () => fetchSeats(roomId),
+    enabled: !!configData?.viewers?.enabled,
+    refetchInterval: SEATS_POLL_INTERVAL_MS,
+    retry: false,
+  })
+  const joinsAsViewer = !!seats?.full
 
   const handleSubmit = async () => {
     const { data } = await refetchRoom()
@@ -151,7 +166,9 @@ export const Lobby = ({
       return (
         <Form
           onSubmit={handleSubmit}
-          submitLabel={t('joinLabel')}
+          submitLabel={
+            joinsAsViewer ? tViewers('joinAsViewer') : t('joinLabel')
+          }
           submitButtonProps={{
             fullWidth: true,
           }}
@@ -160,6 +177,21 @@ export const Lobby = ({
             <H lvl={1} margin="sm" centered>
               {t('heading')}
             </H>
+            {joinsAsViewer && (
+              <Text
+                as="p"
+                variant="note"
+                className={css({
+                  backgroundColor: 'primary.100',
+                  borderRadius: '8px',
+                  paddingX: '1rem',
+                  paddingY: '0.75rem',
+                  textAlign: 'center',
+                })}
+              >
+                {tViewers('joinBanner', { count: seats.threshold })}
+              </Text>
+            )}
             {(!isLoggedIn ||
               configData?.authenticated_users_can_edit_display_name) && (
               <Field

@@ -827,6 +827,9 @@
     "screenShare": "{{name}}’s Bildschirm"
   },
   "viewers": {
-    "badge": "Sie sind Zuschauer"
+    "badge": "Sie sind Zuschauer",
+    "joinBanner_one": "In dieser Besprechung gibt es bereits {{count}} Person, die sprechen kann: Sie nehmen als Zuschauer teil.",
+    "joinBanner_other": "In dieser Besprechung gibt es bereits {{count}} Personen, die sprechen können: Sie nehmen als Zuschauer teil.",
+    "joinAsViewer": "Als Zuschauer teilnehmen"
   }
 }

@@ -827,6 +827,9 @@
     "screenShare": "{{name}}'s screen"
   },
   "viewers": {
-    "badge": "You are a viewer"
+    "badge": "You are a viewer",
+    "joinBanner_one": "This meeting already has {{count}} person who can speak: you will join as a viewer.",
+    "joinBanner_other": "This meeting already has {{count}} people who can speak: you will join as a viewer.",
+    "joinAsViewer": "Join as a viewer"
   }
 }

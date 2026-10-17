@@ -822,6 +822,9 @@
     "screenShare": "Pantalla de {{name}}"
   },
   "viewers": {
-    "badge": "Es espectador"
+    "badge": "Es espectador",
+    "joinBanner_one": "Esta reunión ya tiene {{count}} persona que puede hablar: entrará como espectador.",
+    "joinBanner_other": "Esta reunión ya tiene {{count}} personas que pueden hablar: entrará como espectador.",
+    "joinAsViewer": "Unirse como espectador"
   }
 }

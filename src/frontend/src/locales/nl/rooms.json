@@ -827,6 +827,9 @@
     "screenShare": "{{name}} scherm"
   },
   "viewers": {
-    "badge": "U bent toeschouwer"
+    "badge": "U bent toeschouwer",
+    "joinBanner_one": "Deze vergadering heeft al {{count}} persoon die kan spreken: u neemt deel als toeschouwer.",
+    "joinBanner_other": "Deze vergadering heeft al {{count}} personen die kunnen spreken: u neemt deel als toeschouwer.",
+    "joinAsViewer": "Deelnemen als toeschouwer"
   }
 }
