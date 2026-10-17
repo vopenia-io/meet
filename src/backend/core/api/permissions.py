@@ -11,6 +11,7 @@ from ..services.participants_management import (
     ParticipantsManagement,
     ParticipantsManagementException,
 )
+from ..services.seats import SeatService, is_viewers_enabled
 
 
 class IsAuthenticated(permissions.BasePermission):
@@ -158,6 +159,35 @@ class CanMuteParticipant(permissions.BasePermission):
 
         # LiveKit token scoped to this room
         return request.auth.video.room == str(obj.id)
+
+
+class HoldsSeat(permissions.BasePermission):
+    """Refuse viewers in a room that has some.
+
+    Owners and administrators always hold a seat. Anyone else must hold one in
+    the seats of the room: a LiveKit token may predate a demotion, so its
+    grants are not trusted.
+    """
+
+    message = "Viewers are not allowed to perform this action."
+
+    def has_object_permission(self, request, view, obj):
+        """Check the requester holds a seat in the room."""
+        if not is_viewers_enabled(obj):
+            return True
+
+        user = request.user
+        is_authenticated = bool(user and user.is_authenticated)
+        if is_authenticated and obj.is_administrator_or_owner(user):
+            return True
+
+        identity = getattr(request.auth, "identity", None)
+        if identity is None and is_authenticated:
+            identity = str(user.sub)
+        if not identity:
+            return False
+
+        return SeatService().has_seat(obj.pk, identity)
 
 
 class IsPresentInMeeting(permissions.BasePermission):

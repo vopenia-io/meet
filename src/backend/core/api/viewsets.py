@@ -81,7 +81,12 @@ from core.services.room_roles import (
     RoomRoleError,
     RoomRoleService,
 )
-from core.services.seats import SeatService, get_threshold
+from core.services.seats import (
+    SeatService,
+    get_threshold,
+    is_viewers_enabled,
+    livekit_permission,
+)
 from core.services.subtitle import SubtitleException, SubtitleService
 from core.tasks.connection_test import delete_connection_test_room
 from core.tasks.file import process_file_deletion
@@ -480,6 +485,7 @@ class RoomViewSet(  # pylint: disable=too-many-public-methods
         url_path="enter",
         permission_classes=[
             permissions.CanManageLobby,
+            permissions.HoldsSeat,
         ],
     )
     def allow_participant_to_enter(self, request, pk=None):  # pylint: disable=unused-argument
@@ -518,6 +524,7 @@ class RoomViewSet(  # pylint: disable=too-many-public-methods
         url_path="waiting-participants",
         permission_classes=[
             permissions.CanManageLobby,
+            permissions.HoldsSeat,
         ],
     )
     def list_waiting_participants(self, request, pk=None):  # pylint: disable=unused-argument
@@ -666,6 +673,7 @@ class RoomViewSet(  # pylint: disable=too-many-public-methods
         url_path="start-subtitle",
         permission_classes=[
             permissions.HasLiveKitRoomAccess,
+            permissions.HoldsSeat,
         ],
         authentication_classes=[LiveKitTokenAuthentication],
     )
@@ -696,7 +704,7 @@ class RoomViewSet(  # pylint: disable=too-many-public-methods
         methods=["post"],
         url_path="mute-participant",
         url_name="mute-participant",
-        permission_classes=[permissions.CanMuteParticipant],
+        permission_classes=[permissions.CanMuteParticipant, permissions.HoldsSeat],
         authentication_classes=[
             LiveKitTokenAuthentication,
             *api_settings.DEFAULT_AUTHENTICATION_CLASSES,
@@ -767,15 +775,26 @@ class RoomViewSet(  # pylint: disable=too-many-public-methods
         serializer = serializers.UpdateParticipantSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
+        identity = str(serializer.validated_data["participant_identity"])
+        attributes = serializer.validated_data.get("attributes")
         permission = serializer.validated_data.get("permission")
+        permission = permission.model_dump() if permission else None
+
+        if is_viewers_enabled(room):
+            # Only the seats decide who is a viewer, whatever the request says.
+            is_viewer = not SeatService().has_seat(room.pk, identity)
+            if attributes is not None:
+                attributes = {**attributes, "viewer": "true" if is_viewer else "false"}
+            if permission is not None and is_viewer:
+                permission = livekit_permission(room, viewer=True)
 
         try:
             ParticipantsManagement().update(
                 room_name=str(room.pk),
-                identity=str(serializer.validated_data["participant_identity"]),
+                identity=identity,
                 metadata=serializer.validated_data.get("metadata"),
-                attributes=serializer.validated_data.get("attributes"),
-                permission=permission.model_dump() if permission else None,
+                attributes=attributes,
+                permission=permission,
                 name=serializer.validated_data.get("name"),
             )
         except ParticipantNotFoundException:

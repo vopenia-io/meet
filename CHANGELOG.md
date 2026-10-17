@@ -21,6 +21,7 @@ and this project adheres to
 - ✨(backend) count the seats of the people who can speak in a room
 - ✨(backend) let arrivals beyond the room threshold join as viewers
 - ✨(backend) follow the seats of a room from LiveKit webhooks
+- 🔒️(backend) keep viewers from muting, subtitling or letting people in
 
 ### Changed
 
