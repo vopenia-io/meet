@@ -303,7 +303,8 @@
         "face-with-open-mouth": "verrast gezicht",
         "party-popper": "feestknaller",
         "folded-hands": "gevouwen handen"
-      }
+      },
+      "viewer": "Een toeschouwer"
     }
   },
   "pictureInPicture": {

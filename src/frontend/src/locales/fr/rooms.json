@@ -303,7 +303,8 @@
         "face-with-open-mouth": "visage étonné",
         "party-popper": "confettis",
         "folded-hands": "mains jointes"
-      }
+      },
+      "viewer": "Un spectateur"
     }
   },
   "pictureInPicture": {

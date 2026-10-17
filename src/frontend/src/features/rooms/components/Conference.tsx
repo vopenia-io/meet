@@ -45,6 +45,14 @@ import { userStore } from '@/stores/user'
 import { WatchMediaDeviceErrors } from './WatchMediaDeviceErrors'
 import { MeetDevtools } from '@/features/devtools'
 import { VOICE_AUDIO_CONSTRAINTS } from '@/features/rooms/livekit/utils/constants'
+import { getParticipantIsViewer } from '../utils/getParticipantIsViewer'
+
+// Viewers never speak: only the others make a room noisy.
+const countSpeakers = (room: Room) =>
+  1 +
+  [...room.remoteParticipants.values()].filter(
+    (participant) => !getParticipantIsViewer(participant)
+  ).length
 
 export const Conference = ({
   roomId,
@@ -285,7 +293,7 @@ export const Conference = ({
               !hasAutoMutedRef.current &&
               !isViewer &&
               userConfig.audioEnabled &&
-              room.numParticipants > apiConfig.auto_mute_on_join_threshold
+              countSpeakers(room) > apiConfig.auto_mute_on_join_threshold
             ) {
               hasAutoMutedRef.current = true
               await room.localParticipant.setMicrophoneEnabled(false)

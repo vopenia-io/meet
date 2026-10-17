@@ -6,7 +6,8 @@ import { useNotifyParticipants } from '@/features/notifications'
 import useRateLimiter from '@/hooks/useRateLimiter'
 import type { Participant } from 'livekit-client'
 import type { Emoji } from '../types'
-import { ANIMATION_DURATION } from '../constants'
+import { ANIMATION_DURATION, MAX_REACTIONS } from '../constants'
+import { getParticipantIsViewer } from '@/features/rooms/utils/getParticipantIsViewer'
 
 export const useReactions = () => {
   const { t } = useTranslation('rooms', { keyPrefix: 'controls.reactions' })
@@ -14,11 +15,21 @@ export const useReactions = () => {
 
   const appendReaction = useCallback(
     (emoji: Emoji, participant?: Participant) => {
+      // Hundreds of viewers can react at once: past a few, drop the others.
+      if (participant && reactionsStore.reactions.length >= MAX_REACTIONS) {
+        return
+      }
+
+      const getParticipantName = (participant: Participant) =>
+        getParticipantIsViewer(participant)
+          ? t('viewer')
+          : participant.name || participant.identity
+
       const newReaction = {
         id: `${emoji}-${Date.now()}-${Math.random()}`,
         emoji,
         participantName: participant
-          ? participant.name || participant.identity
+          ? getParticipantName(participant)
           : t('you'),
         isLocal: !participant,
       }

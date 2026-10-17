@@ -26,6 +26,7 @@ and this project adheres to
 - ✨(frontend) let people join a full room as viewers
 - ✨(frontend) give viewers a control bar without publishing controls
 - ✨(frontend) keep viewers off the stage
+- ✨(frontend) quiet the arrivals, hands and reactions of viewers
 
 ### Changed
 

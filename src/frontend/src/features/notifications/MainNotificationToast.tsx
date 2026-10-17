@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from 'react'
 import { useRoomContext } from '@livekit/components-react'
-import { Participant, RemoteParticipant, RoomEvent } from 'livekit-client'
+import { Participant, RemoteParticipant, Room, RoomEvent } from 'livekit-client'
 import { type ChatMessage, isMobileBrowser } from '@livekit/components-core'
 import { useTranslation } from 'react-i18next'
 import { NotificationType } from './NotificationType'
@@ -16,6 +16,18 @@ import { useReactions } from '@/features/reactions/hooks/useReactions'
 import { NotificationProvider } from './NotificationProvider'
 import { useConfig } from '@/api/useConfig'
 import { subscriptionStore } from '@/stores/subscription'
+import { getParticipantIsViewer } from '@/features/rooms/utils/getParticipantIsViewer'
+import { getParticipantIsAuthenticated } from '@/features/rooms/utils/getParticipantIsAuthenticated'
+
+// Beyond this many raised hands of viewers, no more toast is shown.
+const MAX_VIEWER_HAND_TOASTS = 3
+
+const countViewerHands = (room: Room) =>
+  [...room.remoteParticipants.values()].filter(
+    (participant) =>
+      getParticipantIsViewer(participant) &&
+      !!participant.attributes.handRaisedAt
+  ).length
 
 export const MainNotificationToast = () => {
   const room = useRoomContext()
@@ -153,7 +165,7 @@ export const MainNotificationToast = () => {
 
   useEffect(() => {
     const showJoinNotification = (participant: Participant) => {
-      if (isMobileBrowser()) {
+      if (isMobileBrowser() || getParticipantIsViewer(participant)) {
         return
       }
       // In a large room arrivals come in waves: each toast mounts a video
@@ -250,7 +262,24 @@ export const MainNotificationToast = () => {
       }
 
       if (!existingToast && !!changedAttributes?.handRaisedAt) {
-        triggerNotificationSound(NotificationType.HandRaised)
+        if (getParticipantIsViewer(participant)) {
+          // Only the people who can let a viewer speak are told, without a
+          // sound once the room is large. Many viewers can raise their hand
+          // at once: past a few, or with the queue already open, the
+          // participant list says it better than a pile of toasts.
+          const local = room.localParticipant
+          if (
+            getParticipantIsViewer(local) ||
+            !getParticipantIsAuthenticated(local) ||
+            layoutStore.activePanelId === PanelId.PARTICIPANTS ||
+            countViewerHands(room) > MAX_VIEWER_HAND_TOASTS
+          ) {
+            return
+          }
+          triggerNotificationSoundIfRoomIsSmall(NotificationType.HandRaised)
+        } else {
+          triggerNotificationSound(NotificationType.HandRaised)
+        }
         toastQueue.add(
           {
             participant,
@@ -269,7 +298,7 @@ export const MainNotificationToast = () => {
         handleNotificationReceived
       )
     }
-  }, [room, triggerNotificationSound])
+  }, [room, triggerNotificationSound, triggerNotificationSoundIfRoomIsSmall])
 
   useEffect(() => {
     const closeAllToasts = () => {

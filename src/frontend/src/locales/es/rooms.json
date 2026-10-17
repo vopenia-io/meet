@@ -303,7 +303,8 @@
         "face-with-open-mouth": "cara de asombro",
         "party-popper": "confeti",
         "folded-hands": "manos juntas"
-      }
+      },
+      "viewer": "Un espectador"
     }
   },
   "pictureInPicture": {

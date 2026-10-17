@@ -303,7 +303,8 @@
         "face-with-open-mouth": "surprised face",
         "party-popper": "party popper",
         "folded-hands": "folded hands"
-      }
+      },
+      "viewer": "A viewer"
     }
   },
   "pictureInPicture": {
