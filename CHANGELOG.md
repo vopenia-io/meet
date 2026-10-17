@@ -33,6 +33,7 @@ and this project adheres to
 - ✨(frontend) let participants promote viewers and send them back
 - ✨(frontend) let a signed-in viewer take a seat when nobody lets them in
 - ✨(frontend) let owners set how many people can speak in a meeting
+- 📝(docs) document viewers
 
 ### Changed
 
