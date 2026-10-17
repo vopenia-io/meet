@@ -83,6 +83,11 @@ class Transcriber(Agent):
         self.participant_identity = participant_identity
 
 
+def is_viewer(participant: rtc.RemoteParticipant) -> bool:
+    """Viewers never publish: they need no transcription session."""
+    return participant.attributes.get("viewer") == "true"
+
+
 class MultiUserTranscriber:
     """Manage transcription sessions for multiple room participants."""
 
@@ -97,6 +102,9 @@ class MultiUserTranscriber:
         """Start listening for participant connection events."""
         self.ctx.room.on("participant_connected", self.on_participant_connected)
         self.ctx.room.on("participant_disconnected", self.on_participant_disconnected)
+        self.ctx.room.on(
+            "participant_attributes_changed", self.on_participant_attributes_changed
+        )
 
     async def aclose(self):
         """Close all sessions and cleanup resources."""
@@ -108,11 +116,18 @@ class MultiUserTranscriber:
 
         self.ctx.room.off("participant_connected", self.on_participant_connected)
         self.ctx.room.off("participant_disconnected", self.on_participant_disconnected)
+        self.ctx.room.off(
+            "participant_attributes_changed", self.on_participant_attributes_changed
+        )
 
     def on_participant_connected(self, participant: rtc.RemoteParticipant):
         """Handle new participant connection by starting transcription session."""
         identity = participant.identity
-        if identity in self._sessions or identity in self._starting:
+        if (
+            identity in self._sessions
+            or identity in self._starting
+            or is_viewer(participant)
+        ):
             return
 
         logger.info(f"starting session for {identity}")
@@ -148,6 +163,20 @@ class MultiUserTranscriber:
                 f"close transcription session for {participant.identity}",
             )
         )
+
+    def on_participant_attributes_changed(
+        self, changed_attributes: dict[str, str], participant: rtc.Participant
+    ):
+        """Start or stop transcribing a participant who became or left viewers."""
+        if "viewer" not in changed_attributes or not isinstance(
+            participant, rtc.RemoteParticipant
+        ):
+            return
+
+        if is_viewer(participant):
+            self.on_participant_disconnected(participant)
+        else:
+            self.on_participant_connected(participant)
 
     async def _start_session(self, participant: rtc.RemoteParticipant) -> AgentSession:
         """Create and start transcription session for participant.

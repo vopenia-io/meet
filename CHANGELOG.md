@@ -22,6 +22,7 @@ and this project adheres to
 - ✨(backend) let arrivals beyond the room threshold join as viewers
 - ✨(backend) follow the seats of a room from LiveKit webhooks
 - 🔒️(backend) keep viewers from muting, subtitling or letting people in
+- ⚡️(agents) transcribe only the people who can speak
 
 ### Changed
 
