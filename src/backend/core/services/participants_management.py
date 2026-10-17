@@ -133,7 +133,9 @@ class ParticipantsManagement:
                 UpdateParticipantRequest(
                     room=room_name,
                     identity=identity,
-                    metadata=json.dumps(metadata),
+                    # LiveKit skips an empty metadata, a serialized None would
+                    # overwrite the participant's metadata with "null".
+                    metadata=json.dumps(metadata) if metadata is not None else None,
                     permission=permission,
                     attributes=attributes,
                     name=name,
