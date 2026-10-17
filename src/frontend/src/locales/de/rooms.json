@@ -840,6 +840,21 @@
       "cancel": "Abbrechen",
       "raiseHand": "Hand heben",
       "microphoneRequired": "Erlauben Sie das Mikrofon, um die Hand zu heben."
+    },
+    "promote": {
+      "label": "Wort erteilen",
+      "ariaLabel": "{{name}} das Wort erteilen"
+    },
+    "becomeViewer": {
+      "label": "Zuschauer werden",
+      "self": "Zuschauer werden",
+      "ariaLabel": "{{name}} zum Zuschauer machen",
+      "lastAuthenticated": "Letzter angemeldeter Teilnehmer: bleibt Teilnehmer"
+    },
+    "section": {
+      "heading": "Zuschauer",
+      "search": "Zuschauer suchen",
+      "empty": "Kein Zuschauer gefunden"
     }
   }
 }

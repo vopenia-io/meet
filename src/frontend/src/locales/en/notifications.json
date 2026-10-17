@@ -68,5 +68,9 @@
       "member": "Member"
     }
   },
-  "openMenu": "Open menu"
+  "openMenu": "Open menu",
+  "viewerRoleChanged": {
+    "participant": "You are a participant: turn your microphone on to speak.",
+    "viewer": "You are a viewer again."
+  }
 }

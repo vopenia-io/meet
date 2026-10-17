@@ -840,6 +840,21 @@
       "cancel": "Annuleren",
       "raiseHand": "Hand opsteken",
       "microphoneRequired": "Sta de microfoon toe om uw hand op te steken."
+    },
+    "promote": {
+      "label": "Het woord geven",
+      "ariaLabel": "{{name}} het woord geven"
+    },
+    "becomeViewer": {
+      "label": "Toeschouwer worden",
+      "self": "Toeschouwer worden",
+      "ariaLabel": "{{name}} toeschouwer maken",
+      "lastAuthenticated": "Laatste aangemelde deelnemer: blijft deelnemer"
+    },
+    "section": {
+      "heading": "Toeschouwers",
+      "search": "Een toeschouwer zoeken",
+      "empty": "Geen toeschouwer gevonden"
     }
   }
 }

@@ -30,6 +30,7 @@ and this project adheres to
 - ✨(frontend) tell people about to join that they will be viewers
 - ✨(backend) let viewers speak and participants go back to viewers
 - ✨(frontend) let viewers ask to speak once their microphone works
+- ✨(frontend) let participants promote viewers and send them back
 
 ### Changed
 

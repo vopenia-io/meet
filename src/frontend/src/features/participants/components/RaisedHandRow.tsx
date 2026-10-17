@@ -11,6 +11,9 @@ import { RiHand } from '@remixicon/react'
 import { Button } from '@/primitives'
 import { AdminOrOwnerOnly } from '@/features/rooms/components/AdminOrOwnerOnly'
 import { ParticipantName } from './ParticipantName'
+import { useIsViewer } from '@/features/rooms/livekit/hooks/useIsViewer'
+import { useCanLetViewersSpeak } from '@/features/viewers/hooks/useCanLetViewersSpeak'
+import { PromoteViewerButton } from '@/features/viewers/components/PromoteViewerButton'
 
 const ActionButton = ({
   participant,
@@ -43,6 +46,8 @@ type HandRaisedListItemProps = {
 
 export const RaisedHandRow = ({ participant }: HandRaisedListItemProps) => {
   const name = participant.name || participant.identity
+  const canLetViewersSpeak = useCanLetViewersSpeak()
+  const isViewer = useIsViewer(participant)
   return (
     <HStack
       role="listitem"
@@ -59,6 +64,9 @@ export const RaisedHandRow = ({ participant }: HandRaisedListItemProps) => {
         <ParticipantName displayedName={name} isLocal={isLocal(participant)} />
       </HStack>
       <HStack flexShrink={0}>
+        {isViewer && canLetViewersSpeak && (
+          <PromoteViewerButton participant={participant} />
+        )}
         <AdminOrOwnerOnly>
           <ActionButton participant={participant} name={name} />
         </AdminOrOwnerOnly>

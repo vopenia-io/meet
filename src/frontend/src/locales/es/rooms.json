@@ -835,6 +835,21 @@
       "cancel": "Cancelar",
       "raiseHand": "Levantar la mano",
       "microphoneRequired": "Permita el micrófono para levantar la mano."
+    },
+    "promote": {
+      "label": "Dar la palabra",
+      "ariaLabel": "Dar la palabra a {{name}}"
+    },
+    "becomeViewer": {
+      "label": "Pasar a espectador",
+      "self": "Pasar a espectador",
+      "ariaLabel": "Pasar a {{name}} a espectador",
+      "lastAuthenticated": "Último participante conectado: sigue siendo participante"
+    },
+    "section": {
+      "heading": "Espectadores",
+      "search": "Buscar un espectador",
+      "empty": "Ningún espectador encontrado"
     }
   }
 }

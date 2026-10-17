@@ -840,6 +840,21 @@
       "cancel": "Cancel",
       "raiseHand": "Raise your hand",
       "microphoneRequired": "Allow the microphone to raise your hand."
+    },
+    "promote": {
+      "label": "Let speak",
+      "ariaLabel": "Let {{name}} speak"
+    },
+    "becomeViewer": {
+      "label": "Become a viewer",
+      "self": "Become a viewer",
+      "ariaLabel": "Make {{name}} a viewer",
+      "lastAuthenticated": "Last signed-in participant: stays a participant"
+    },
+    "section": {
+      "heading": "Viewers",
+      "search": "Search a viewer",
+      "empty": "No viewer found"
     }
   }
 }

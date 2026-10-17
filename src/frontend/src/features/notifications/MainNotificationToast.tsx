@@ -202,7 +202,18 @@ export const MainNotificationToast = () => {
       changedAttributes: Record<string, string>,
       participant: Participant
     ) => {
-      if (!participant.isLocal || !('room_role' in changedAttributes)) return
+      if (!participant.isLocal) return
+      if ('viewer' in changedAttributes) {
+        toastQueue.add(
+          {
+            participant,
+            type: NotificationType.ViewerRoleChanged,
+            isViewer: changedAttributes['viewer'] === 'true',
+          },
+          { timeout: NotificationDuration.VIEWER_ROLE_CHANGED }
+        )
+      }
+      if (!('room_role' in changedAttributes)) return
       const newRole = changedAttributes['room_role']
       toastQueue.add(
         {

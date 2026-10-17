@@ -68,5 +68,9 @@
       "member": "Mitglied"
     }
   },
-  "openMenu": "Menü öffnen"
+  "openMenu": "Menü öffnen",
+  "viewerRoleChanged": {
+    "participant": "Sie sind Teilnehmer: Schalten Sie Ihr Mikrofon ein, um zu sprechen.",
+    "viewer": "Sie sind wieder Zuschauer."
+  }
 }

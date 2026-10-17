@@ -68,5 +68,9 @@
       "member": "Membre"
     }
   },
-  "openMenu": "Ouvrir le menu"
+  "openMenu": "Ouvrir le menu",
+  "viewerRoleChanged": {
+    "participant": "Vous êtes participant : activez votre micro pour parler.",
+    "viewer": "Vous êtes de nouveau spectateur."
+  }
 }

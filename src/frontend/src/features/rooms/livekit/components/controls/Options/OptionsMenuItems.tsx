@@ -10,10 +10,15 @@ import { TranscriptMenuItem } from './TranscriptMenuItem'
 import { ScreenRecordingMenuItem } from './ScreenRecordingMenuItem'
 import { PictureInPictureMenuItem } from '@/features/rooms/livekit/components/controls/Options/PictureInPictureMenuItem'
 import { useIsViewer } from '@/features/rooms/livekit/hooks/useIsViewer'
+import { useRoomContext } from '@livekit/components-react'
+import { useRoomHasViewers } from '@/features/viewers/hooks/useRoomHasViewers'
+import { BecomeViewerMenuItem } from '@/features/viewers/components/BecomeViewerMenuItem'
 
 // @todo try refactoring it to use MenuList component
 export const OptionsMenuItems = () => {
   const isViewer = useIsViewer()
+  const hasViewers = useRoomHasViewers()
+  const room = useRoomContext()
   return (
     <RACMenu
       style={{
@@ -27,6 +32,12 @@ export const OptionsMenuItems = () => {
         <ScreenRecordingMenuItem />
         <FullScreenMenuItem />
         {!isViewer && <EffectsMenuItem />}
+        {hasViewers && !isViewer && (
+          <BecomeViewerMenuItem
+            participant={room.localParticipant}
+            variant="dark"
+          />
+        )}
       </MenuSection>
       <Separator />
       <MenuSection>

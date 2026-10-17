@@ -12,6 +12,9 @@ import { LowerAllHandsButton } from './LowerAllHandsButton'
 import { MuteEveryoneButton } from './MuteEveryoneButton'
 import { WaitingParticipantsSection } from './WaitingParticipantsSection'
 import { RaisedHandRow } from './RaisedHandRow'
+import { useRoomHasViewers } from '@/features/viewers/hooks/useRoomHasViewers'
+import { ViewersSection } from '@/features/viewers/components/ViewersSection'
+import { getParticipantIsViewer } from '@/features/rooms/utils/getParticipantIsViewer'
 
 const JoinedParticipantsSections = () => {
   const room = useRoomContext()
@@ -39,6 +42,16 @@ const JoinedParticipantsSections = () => {
       (a.name || a.identity).localeCompare(b.name || b.identity)
     ),
   ]
+
+  // In a room with viewers, they get their own section.
+  const hasViewers = useRoomHasViewers()
+  const viewers = hasViewers
+    ? allParticipants.filter(getParticipantIsViewer)
+    : []
+  const speakers = hasViewers
+    ? allParticipants.filter((p) => !getParticipantIsViewer(p))
+    : allParticipants
+  const remoteSpeakers = speakers.filter((p) => !p.isLocal)
 
   const participantsWithRaisedHands = allParticipants
     .filter((p) => !!p.attributes.handRaisedAt)
@@ -68,13 +81,14 @@ const JoinedParticipantsSections = () => {
       )}
       <ParticipantsCollapsibleSection
         heading={t('contributors')}
-        count={allParticipants.length}
-        action={<MuteEveryoneButton participants={remoteParticipants} />}
+        count={speakers.length}
+        action={<MuteEveryoneButton participants={remoteSpeakers} />}
       >
-        {allParticipants.map((p) => (
+        {speakers.map((p) => (
           <ParticipantRow key={p.identity} participant={p} />
         ))}
       </ParticipantsCollapsibleSection>
+      {viewers.length > 0 && <ViewersSection viewers={viewers} />}
     </>
   )
 }

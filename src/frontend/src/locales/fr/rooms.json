@@ -840,6 +840,21 @@
       "cancel": "Annuler",
       "raiseHand": "Lever la main",
       "microphoneRequired": "Autorisez le micro pour lever la main."
+    },
+    "promote": {
+      "label": "Faire intervenir",
+      "ariaLabel": "Faire intervenir {{name}}"
+    },
+    "becomeViewer": {
+      "label": "Passer spectateur",
+      "self": "Passer spectateur",
+      "ariaLabel": "Faire passer {{name}} spectateur",
+      "lastAuthenticated": "Dernier participant connecté : reste participant"
+    },
+    "section": {
+      "heading": "Spectateurs",
+      "search": "Rechercher un spectateur",
+      "empty": "Aucun spectateur trouvé"
     }
   }
 }

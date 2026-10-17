@@ -68,5 +68,9 @@
       "member": "Lid"
     }
   },
-  "openMenu": "Menu openen"
+  "openMenu": "Menu openen",
+  "viewerRoleChanged": {
+    "participant": "U bent deelnemer: zet uw microfoon aan om te spreken.",
+    "viewer": "U bent weer toeschouwer."
+  }
 }
