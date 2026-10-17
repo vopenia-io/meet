@@ -11,6 +11,7 @@ import { ReactionsToggle } from '@/features/reactions/components/ReactionsToggle
 import { PipOptionsMenu } from './controls/PipOptionsMenu'
 import { usePipElementSize } from '../hooks/usePipElementSize'
 import { useMemo, useRef } from 'react'
+import { useIsViewer } from '@/features/rooms/livekit/hooks/useIsViewer'
 
 export const CollapsibleControls = {
   HAND: 'hand',
@@ -61,9 +62,11 @@ export const PipControlBar = ({
     keyPrefix: 'pictureInPicture',
   })
 
+  const isViewer = useIsViewer()
+  const canShareScreen = showScreenShare && !isViewer
   const hidden = useMemo(
-    () => getHiddenControls(width, showScreenShare),
-    [width, showScreenShare]
+    () => getHiddenControls(width, canShareScreen),
+    [width, canShareScreen]
   )
 
   return (
@@ -74,10 +77,10 @@ export const PipControlBar = ({
       aria-label={t('controlBar')}
     >
       <PipControlsCenter>
-        <AudioDevicesControl hideMenu />
-        <VideoDeviceControl hideMenu />
+        {!isViewer && <AudioDevicesControl hideMenu />}
+        {!isViewer && <VideoDeviceControl hideMenu />}
         {!hidden.has(CollapsibleControls.REACTIONS) && <ReactionsToggle />}
-        {showScreenShare && !hidden.has(CollapsibleControls.SCREEN_SHARE) && (
+        {canShareScreen && !hidden.has(CollapsibleControls.SCREEN_SHARE) && (
           <ScreenShareToggle />
         )}
         {!hidden.has(CollapsibleControls.HAND) && <HandToggle />}

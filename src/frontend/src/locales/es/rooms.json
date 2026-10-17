@@ -819,5 +819,8 @@
   },
   "participantTile": {
     "screenShare": "Pantalla de {{name}}"
+  },
+  "viewers": {
+    "badge": "Es espectador"
   }
 }

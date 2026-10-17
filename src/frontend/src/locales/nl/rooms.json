@@ -824,5 +824,8 @@
   },
   "participantTile": {
     "screenShare": "{{name}} scherm"
+  },
+  "viewers": {
+    "badge": "U bent toeschouwer"
   }
 }

@@ -34,6 +34,7 @@ import { useSize } from '../../hooks/useResizeObserver'
 import { useRegisterKeyboardShortcut } from '@/features/shortcuts/useRegisterKeyboardShortcut'
 import { useRaisedHand } from '@/features/rooms/livekit/hooks/useRaisedHand'
 import { useRoomContext } from '@livekit/components-react'
+import { useIsViewer } from '../../hooks/useIsViewer'
 
 // Hand collapses first, then reactions; hidden toggles move into the menu.
 const COLLAPSIBLE_COUNT = 2
@@ -100,6 +101,7 @@ export function MobileControlBar({
   })
 
   const { data } = useConfig()
+  const isViewer = useIsViewer()
 
   const closeMenu = () => setIsMenuOpened(false)
 
@@ -122,18 +124,22 @@ export function MobileControlBar({
           <ControlBarRegion mobile>
             <div ref={barRef} className={measuredRow}>
               <LeaveButton />
-              <AudioDevicesControl
-                onDeviceError={(error) =>
-                  onDeviceError?.({ source: Track.Source.Microphone, error })
-                }
-                hideMenu={true}
-              />
-              <VideoDeviceControl
-                onDeviceError={(error) =>
-                  onDeviceError?.({ source: Track.Source.Camera, error })
-                }
-                hideMenu={true}
-              />
+              {!isViewer && (
+                <AudioDevicesControl
+                  onDeviceError={(error) =>
+                    onDeviceError?.({ source: Track.Source.Microphone, error })
+                  }
+                  hideMenu={true}
+                />
+              )}
+              {!isViewer && (
+                <VideoDeviceControl
+                  onDeviceError={(error) =>
+                    onDeviceError?.({ source: Track.Source.Camera, error })
+                  }
+                  hideMenu={true}
+                />
+              )}
               {/* Unmounted when empty so it doesn't leave a stray gap. */}
               {!hideReactions && (
                 <div ref={collapsibleRef} className={measuredRow}>
@@ -188,7 +194,7 @@ export function MobileControlBar({
                 onPress={closeMenu}
               />
             )}
-            {browserSupportsScreenSharing && (
+            {browserSupportsScreenSharing && !isViewer && (
               <ScreenShareToggle
                 onDeviceError={(error) =>
                   onDeviceError?.({ source: Track.Source.ScreenShare, error })
@@ -201,18 +207,20 @@ export function MobileControlBar({
             <ChatToggle description={true} onPress={closeMenu} />
             <ParticipantsToggle description={true} onPress={closeMenu} />
             <ToolsToggle description={true} onPress={closeMenu} />
-            <Button
-              onPress={() => {
-                toggleEffects()
-                closeMenu()
-              }}
-              variant="primaryTextDark"
-              aria-label={t('options.items.effects')}
-              tooltip={t('options.items.effects')}
-              description={true}
-            >
-              <RiAccountBoxLine size={20} />
-            </Button>
+            {!isViewer && (
+              <Button
+                onPress={() => {
+                  toggleEffects()
+                  closeMenu()
+                }}
+                variant="primaryTextDark"
+                aria-label={t('options.items.effects')}
+                tooltip={t('options.items.effects')}
+                description={true}
+              >
+                <RiAccountBoxLine size={20} />
+              </Button>
+            )}
             {data?.feedback?.url && (
               <LinkButton
                 href={data?.feedback?.url}
@@ -238,7 +246,7 @@ export function MobileControlBar({
             >
               <RiSettings3Line size={20} />
             </Button>
-            <CameraSwitchButton onPress={closeMenu} />
+            {!isViewer && <CameraSwitchButton onPress={closeMenu} />}
           </div>
         </div>
       </ResponsiveMenu>

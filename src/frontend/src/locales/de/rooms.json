@@ -824,5 +824,8 @@
   },
   "participantTile": {
     "screenShare": "{{name}}’s Bildschirm"
+  },
+  "viewers": {
+    "badge": "Sie sind Zuschauer"
   }
 }

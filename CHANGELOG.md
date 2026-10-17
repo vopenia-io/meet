@@ -24,6 +24,7 @@ and this project adheres to
 - 🔒️(backend) keep viewers from muting, subtitling or letting people in
 - ⚡️(agents) transcribe only the people who can speak
 - ✨(frontend) let people join a full room as viewers
+- ✨(frontend) give viewers a control bar without publishing controls
 
 ### Changed
 

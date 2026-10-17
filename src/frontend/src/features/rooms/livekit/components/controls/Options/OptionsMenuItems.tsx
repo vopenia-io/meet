@@ -9,9 +9,11 @@ import { DocumentationMenuItem } from './DocumentationMenuItem'
 import { TranscriptMenuItem } from './TranscriptMenuItem'
 import { ScreenRecordingMenuItem } from './ScreenRecordingMenuItem'
 import { PictureInPictureMenuItem } from '@/features/rooms/livekit/components/controls/Options/PictureInPictureMenuItem'
+import { useIsViewer } from '@/features/rooms/livekit/hooks/useIsViewer'
 
 // @todo try refactoring it to use MenuList component
 export const OptionsMenuItems = () => {
+  const isViewer = useIsViewer()
   return (
     <RACMenu
       style={{
@@ -24,7 +26,7 @@ export const OptionsMenuItems = () => {
         <TranscriptMenuItem />
         <ScreenRecordingMenuItem />
         <FullScreenMenuItem />
-        <EffectsMenuItem />
+        {!isViewer && <EffectsMenuItem />}
       </MenuSection>
       <Separator />
       <MenuSection>

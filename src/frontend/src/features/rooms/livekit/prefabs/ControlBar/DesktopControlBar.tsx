@@ -16,6 +16,8 @@ import { VideoDeviceControl } from '../../components/controls/Device/VideoDevice
 import { AudioDevicesControl } from '../../components/controls/Device/AudioDevicesControl'
 import { ReactionsToggle } from '@/features/reactions/components/ReactionsToggle'
 import { ControlBarRegion } from '@/features/layout/components/ControlBarRegion'
+import { ViewerBadge } from '../../components/ViewerBadge'
+import { useIsViewer } from '../../hooks/useIsViewer'
 
 export function DesktopControlBar({
   onDeviceError,
@@ -44,6 +46,8 @@ export function DesktopControlBar({
     },
   })
 
+  const isViewer = useIsViewer()
+
   useRegisterKeyboardShortcut({
     id: 'fullscreen',
     handler: toggleFullScreen,
@@ -68,20 +72,26 @@ export function DesktopControlBar({
           gap: '0.5rem',
           marginLeft: '0.5rem',
         })}
-      />
+      >
+        <ViewerBadge />
+      </div>
       <ControlBarRegion>
-        <AudioDevicesControl
-          onDeviceError={(error) =>
-            onDeviceError?.({ source: Track.Source.Microphone, error })
-          }
-        />
-        <VideoDeviceControl
-          onDeviceError={(error) =>
-            onDeviceError?.({ source: Track.Source.Camera, error })
-          }
-        />
+        {!isViewer && (
+          <AudioDevicesControl
+            onDeviceError={(error) =>
+              onDeviceError?.({ source: Track.Source.Microphone, error })
+            }
+          />
+        )}
+        {!isViewer && (
+          <VideoDeviceControl
+            onDeviceError={(error) =>
+              onDeviceError?.({ source: Track.Source.Camera, error })
+            }
+          />
+        )}
         <ReactionsToggle />
-        {browserSupportsScreenSharing && (
+        {browserSupportsScreenSharing && !isViewer && (
           <ScreenShareToggle
             onDeviceError={(error) =>
               onDeviceError?.({ source: Track.Source.ScreenShare, error })
