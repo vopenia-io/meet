@@ -472,12 +472,26 @@ class RoomViewSet(  # pylint: disable=too-many-public-methods
         """Tell whether the requester would join the room as a viewer.
 
         Shown before joining: beyond the threshold, arrivals join as viewers,
-        except owners.
+        except owners, and except the requester holding a seat already, for
+        instance after reloading their tab within the grace period. The tab is
+        given as in request-entry.
         """
         room = self.get_object()
-        full = SeatService().is_full(room) and not models.RoleChoices.check_owner_role(
+        seat_service = SeatService()
+        full = seat_service.is_full(room) and not models.RoleChoices.check_owner_role(
             room.get_role(request.user)
         )
+        if full:
+            if request.user.is_authenticated:
+                identity = str(request.user.sub)
+            else:
+                lobby_service = LobbyService()
+                tab = request.query_params.get("tab")
+                identity = lobby_service.get_tab_participant_id(
+                    lobby_service.get_browser_id(request),
+                    tab if tab and len(tab) <= 64 else None,
+                )
+            full = not seat_service.has_seat(room.pk, identity)
         return drf_response.Response({"full": full, "threshold": get_threshold(room)})
 
     @decorators.action(

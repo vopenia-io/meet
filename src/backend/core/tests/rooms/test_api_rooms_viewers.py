@@ -235,6 +235,36 @@ def test_api_rooms_viewers_seats_follow_arrivals(viewers_enabled):
     assert client.get(f"/api/v1.0/rooms/{room.id}/seats/").json()["full"] is False
 
 
+def test_api_rooms_viewers_seats_tab_holding_seat(viewers_enabled):
+    """A tab holding a seat, for instance reloaded, is not told the room is full."""
+    room = RoomFactory(
+        access_level=RoomAccessLevel.PUBLIC, configuration={"viewers_threshold": 1}
+    )
+    browser = APIClient()
+    assert request_entry(browser, room, tab="tab-1")["role"] == "participant"
+    url = f"/api/v1.0/rooms/{room.id}/seats/"
+
+    assert browser.get(url, {"tab": "tab-1"}).json()["full"] is False
+    # Another tab of the same browser, or another browser, would be a viewer.
+    assert browser.get(url, {"tab": "tab-2"}).json()["full"] is True
+    assert APIClient().get(url, {"tab": "tab-1"}).json()["full"] is True
+
+
+def test_api_rooms_viewers_seats_authenticated_holding_seat(viewers_enabled):
+    """A signed-in user holding a seat is not told the room is full."""
+    user = UserFactory()
+    room = RoomFactory(
+        access_level=RoomAccessLevel.PUBLIC, configuration={"viewers_threshold": 1}
+    )
+    client = APIClient()
+    client.force_login(user)
+    assert request_entry(client, room)["role"] == "participant"
+
+    url = f"/api/v1.0/rooms/{room.id}/seats/"
+    assert client.get(url).json()["full"] is False
+    assert APIClient().get(url).json()["full"] is True
+
+
 def test_api_rooms_viewers_seats_owner(viewers_enabled):
     """Owners never join as viewers."""
     user = UserFactory()
