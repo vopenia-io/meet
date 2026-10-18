@@ -174,6 +174,23 @@ def test_api_rooms_viewers_seats_not_full(viewers_enabled):
     assert response.json() == {"full": False, "threshold": 2}
 
 
+def test_api_rooms_viewers_seats_follow_arrivals(viewers_enabled):
+    """The join screen tells at once when the last seat is taken or freed."""
+    room = RoomFactory(configuration={"viewers_threshold": 2})
+    client = APIClient()
+    SeatService().allocate(room.id, "a", 2)
+
+    assert client.get(f"/api/v1.0/rooms/{room.id}/seats/").json()["full"] is False
+
+    SeatService().allocate(room.id, "b", 2)
+
+    assert client.get(f"/api/v1.0/rooms/{room.id}/seats/").json()["full"] is True
+
+    SeatService().remove(room.id, "b")
+
+    assert client.get(f"/api/v1.0/rooms/{room.id}/seats/").json()["full"] is False
+
+
 @pytest.mark.parametrize("role", ["administrator", "owner"])
 def test_api_rooms_viewers_seats_privileged(viewers_enabled, role):
     """Owners and administrators never join as viewers."""
