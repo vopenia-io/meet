@@ -37,7 +37,7 @@ A seat is:
 * **active** while its holder is connected;
 * **kept** for `VIEWERS_RECONNECT_GRACE_PERIOD` once its holder disconnects, so that a reconnection or a reload gets it back. A participant removed from the meeting loses it at once.
 
-Owners and phone callers always speak: their seat is counted when they join, even beyond the threshold. Administrators take a seat like anyone else: joining a full meeting, they are viewers, and keep their other administrator rights. Letting a viewer speak is also allowed beyond the threshold.
+Owners and phone callers always speak: their seat is counted when they join, even beyond the threshold. Administrators take a seat like anyone else: joining a full meeting, they are viewers. As viewers, they keep all their moderation rights, letting viewers speak included, themselves too. Letting a viewer speak is also allowed beyond the threshold.
 
 Anyone else joining with a participant token but no seat, for instance a token used after its pending seat expired or a reconnection after the grace period, takes a seat if one is left, and becomes a viewer otherwise.
 
