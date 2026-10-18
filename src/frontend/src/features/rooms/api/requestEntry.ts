@@ -25,7 +25,7 @@ const TAB_ID_KEY = 'meet-tab-id'
  * Id of this browser tab, kept across reloads. Each tab joins as its own
  * participant: two tabs sharing an identity would disconnect each other.
  */
-const getTabId = (): string | undefined => {
+export const getTabId = (): string | undefined => {
   try {
     let tabId = sessionStorage.getItem(TAB_ID_KEY)
     if (!tabId) {
