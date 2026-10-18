@@ -66,11 +66,10 @@ def test_api_rooms_viewers_retrieve_anonymous(viewers_enabled):
     assert "pin_code" in content
 
 
-@pytest.mark.parametrize("role", ["administrator", "owner"])
-def test_api_rooms_viewers_retrieve_privileged(viewers_enabled, role):
-    """Owners and administrators read a room with a participant token."""
+def test_api_rooms_viewers_retrieve_owner(viewers_enabled):
+    """Owners read a room with a participant token, even beyond the threshold."""
     user = UserFactory()
-    room = RoomFactory(users=[(user, role)], configuration={"viewers_threshold": 1})
+    room = RoomFactory(users=[(user, "owner")], configuration={"viewers_threshold": 1})
     SeatService().allocate(room.id, "someone", 1)
     client = APIClient()
     client.force_login(user)
@@ -82,6 +81,19 @@ def test_api_rooms_viewers_retrieve_privileged(viewers_enabled, role):
     claims = decode_token(livekit["token"])
     assert claims["attributes"]["viewer"] == "false"
     assert claims["video"]["canPublish"] is True
+
+
+def test_api_rooms_viewers_retrieve_administrator(viewers_enabled):
+    """Administrators join through request-entry, like anyone but owners."""
+    user = UserFactory()
+    room = RoomFactory(users=[(user, "administrator")])
+    client = APIClient()
+    client.force_login(user)
+
+    response = client.get(f"/api/v1.0/rooms/{room.id}/")
+
+    assert response.status_code == 200
+    assert "livekit" not in response.json()
 
 
 def test_api_rooms_viewers_request_entry_beyond_threshold(viewers_enabled):
@@ -117,13 +129,12 @@ def test_api_rooms_viewers_request_entry_authenticated(viewers_enabled):
     assert SeatService().has_seat(room.id, str(user.sub))
 
 
-@pytest.mark.parametrize("role", ["administrator", "owner"])
-def test_api_rooms_viewers_request_entry_privileged(viewers_enabled, role):
-    """Owners and administrators join as participants even beyond the threshold."""
+def test_api_rooms_viewers_request_entry_owner(viewers_enabled):
+    """Owners join as participants even beyond the threshold."""
     user = UserFactory()
     room = RoomFactory(
         access_level=random.choice(list(RoomAccessLevel)),
-        users=[(user, role)],
+        users=[(user, "owner")],
         configuration={"viewers_threshold": 1},
     )
     SeatService().allocate(room.id, "someone", 1)
@@ -131,6 +142,39 @@ def test_api_rooms_viewers_request_entry_privileged(viewers_enabled, role):
     client.force_login(user)
 
     assert request_entry(client, room)["role"] == "participant"
+
+
+def test_api_rooms_viewers_request_entry_administrator_full_room(viewers_enabled):
+    """An administrator joining a full room is a viewer, like anyone but owners."""
+    user = UserFactory()
+    room = RoomFactory(
+        access_level=random.choice(list(RoomAccessLevel)),
+        users=[(user, "administrator")],
+        configuration={"viewers_threshold": 1},
+    )
+    SeatService().allocate(room.id, "someone", 1)
+    client = APIClient()
+    client.force_login(user)
+
+    assert client.get(f"/api/v1.0/rooms/{room.id}/seats/").json()["full"] is True
+    livekit = request_entry(client, room)
+    assert livekit["role"] == "viewer"
+    assert decode_token(livekit["token"])["video"]["canPublishSources"] == []
+    assert not SeatService().has_seat(room.id, str(user.sub))
+
+
+def test_api_rooms_viewers_request_entry_administrator_seat_left(viewers_enabled):
+    """An administrator takes a seat when one is left."""
+    user = UserFactory()
+    room = RoomFactory(
+        users=[(user, "administrator")], configuration={"viewers_threshold": 2}
+    )
+    SeatService().allocate(room.id, "someone", 2)
+    client = APIClient()
+    client.force_login(user)
+
+    assert request_entry(client, room)["role"] == "participant"
+    assert SeatService().has_seat(room.id, str(user.sub))
 
 
 def test_api_rooms_viewers_request_entry_disabled(settings):
@@ -191,11 +235,10 @@ def test_api_rooms_viewers_seats_follow_arrivals(viewers_enabled):
     assert client.get(f"/api/v1.0/rooms/{room.id}/seats/").json()["full"] is False
 
 
-@pytest.mark.parametrize("role", ["administrator", "owner"])
-def test_api_rooms_viewers_seats_privileged(viewers_enabled, role):
-    """Owners and administrators never join as viewers."""
+def test_api_rooms_viewers_seats_owner(viewers_enabled):
+    """Owners never join as viewers."""
     user = UserFactory()
-    room = RoomFactory(users=[(user, role)], configuration={"viewers_threshold": 1})
+    room = RoomFactory(users=[(user, "owner")], configuration={"viewers_threshold": 1})
     SeatService().allocate(room.id, "a", 1)
     client = APIClient()
     client.force_login(user)

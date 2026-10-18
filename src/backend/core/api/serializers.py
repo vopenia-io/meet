@@ -206,9 +206,10 @@ class RoomSerializer(serializers.ModelSerializer):
 
         viewer = None
         if is_viewers_enabled(instance):
-            if not is_admin_or_owner:
+            if not models.RoleChoices.check_owner_role(role):
                 # Seats are only given when joining through request-entry:
                 # a token issued on every read would hold a seat for nothing.
+                # Owners speak beyond the threshold, they need no seat.
                 return output
             viewer = False
 

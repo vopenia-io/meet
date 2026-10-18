@@ -32,7 +32,14 @@ from .room_management import (
     RoomManagementException,
     RoomNotFoundException,
 )
-from .seats import SeatService, is_publisher, livekit_permission, seat_info
+from .seats import (
+    SeatService,
+    get_threshold,
+    is_owner,
+    is_publisher,
+    livekit_permission,
+    seat_info,
+)
 from .sip_management import SIPException, SIPManagement
 
 logger = getLogger(__name__)
@@ -344,8 +351,11 @@ class LiveKitEventsService:
     def _handle_participant_joined(self, data):
         """Handle 'participant_joined': mark the participant's seat as active.
 
-        Phone callers, owners and administrators get a seat even beyond the
-        threshold. Egress and agents never hold one.
+        Phone callers and owners get a seat even beyond the threshold. Anyone
+        else joining with a participant token but no seat, such as a token
+        older than its pending seat or a reconnection after the grace period,
+        takes a seat if one is left and becomes a viewer otherwise. Egress and
+        agents never hold one.
         """
         room_id = self._get_viewers_room_id(data.room.name)
         participant = data.participant
@@ -366,7 +376,39 @@ class LiveKitEventsService:
                 self._restore_participant(room_id, participant.identity)
 
         elif not joined_as_viewer:
-            self.seats.activate(room_id, participant.identity, info, force=True)
+            if is_owner(participant):
+                self.seats.activate(room_id, participant.identity, info, force=True)
+            else:
+                self._seat_or_viewer(room_id, participant, info)
+
+    def _seat_or_viewer(self, room_id, participant, info):
+        """Give a seat to a participant who joined without one, if one is left.
+
+        Otherwise they become a viewer: beyond the threshold, only the owners
+        and the phone callers speak.
+        """
+        try:
+            room = models.Room.objects.get(pk=room_id)
+        except models.Room.DoesNotExist:
+            return
+
+        # No reconciliation here: it gives a seat to every participant LiveKit
+        # reports as a publisher, this one included.
+        identity = participant.identity
+        allocation = {"auth": info["auth"], "sip": info["sip"]}
+        if self.seats.allocate(room_id, identity, get_threshold(room), **allocation):
+            self.seats.activate(room_id, identity, info)
+            return
+
+        try:
+            ParticipantsManagement().update(
+                room_name=str(room_id),
+                identity=identity,
+                attributes={"viewer": "true"},
+                permission=livekit_permission(room, viewer=True),
+            )
+        except ParticipantsManagementException:
+            logger.exception("Could not make participant %s a viewer", identity)
 
     @staticmethod
     def _restore_participant(room_id, identity):

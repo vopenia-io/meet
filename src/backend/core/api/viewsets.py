@@ -472,11 +472,11 @@ class RoomViewSet(  # pylint: disable=too-many-public-methods
         """Tell whether the requester would join the room as a viewer.
 
         Shown before joining: beyond the threshold, arrivals join as viewers,
-        except owners and administrators.
+        except owners.
         """
         room = self.get_object()
-        full = SeatService().is_full(room) and not room.is_administrator_or_owner(
-            request.user
+        full = SeatService().is_full(room) and not models.RoleChoices.check_owner_role(
+            room.get_role(request.user)
         )
         return drf_response.Response({"full": full, "threshold": get_threshold(room)})
 

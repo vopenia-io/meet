@@ -259,18 +259,29 @@ def test_seats_clear(seats, room_id):
     assert not seats.has_seat(room_id, "b")
 
 
-@pytest.mark.parametrize("role", ["owner", "administrator"])
-def test_seats_assign_role_privileged(seats, role):
-    """Owners and administrators always join as participants."""
+def test_seats_assign_role_owner(seats):
+    """Owners always join as participants."""
     room = RoomFactory(configuration={"viewers_threshold": 1})
     seats.allocate(room.id, "someone", 1)
 
     assert (
-        seats.assign_role(room, "owner-identity", UserFactory(), role)
+        seats.assign_role(room, "owner-identity", UserFactory(), "owner")
         == JoinRole.PARTICIPANT
     )
     # Their seat is only counted once they join.
     assert not seats.has_seat(room.id, "owner-identity")
+
+
+def test_seats_assign_role_administrator_when_full(seats):
+    """Administrators take a seat like anyone else: beyond it, they are viewers."""
+    room = RoomFactory(configuration={"viewers_threshold": 1})
+    seats.allocate(room.id, "someone", 1)
+
+    with mock.patch.object(SeatService, "_list_participants", return_value=None):
+        role = seats.assign_role(room, "admin-identity", UserFactory(), "administrator")
+
+    assert role == JoinRole.VIEWER
+    assert not seats.has_seat(room.id, "admin-identity")
 
 
 def test_seats_assign_role_viewer_when_full(seats):

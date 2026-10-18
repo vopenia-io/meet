@@ -70,17 +70,74 @@ def test_joined_viewer_takes_no_seat(service, seats):
     assert not seats.has_seat(room_id, "someone")
 
 
-def test_joined_participant_without_seat_is_counted(service, seats):
-    """Owners, administrators and older tokens are counted beyond the threshold."""
-    room_id = uuid4()
-    seats.allocate(room_id, "first", 1)
+def test_joined_owner_without_seat_is_counted(service, seats):
+    """The owner of the room speaks beyond the threshold."""
+    room = RoomFactory(configuration={"viewers_threshold": 1})
+    seats.allocate(room.id, "first", 1)
 
     service._handle_participant_joined(
-        event("participant_joined", room_id, "owner", attributes={"viewer": "false"})
+        event(
+            "participant_joined",
+            room.id,
+            "owner",
+            attributes={"viewer": "false", "room_role": "owner"},
+        )
     )
 
-    assert seats.has_seat(room_id, "owner")
-    assert not seats.allocate(room_id, "late", 2)
+    assert seats.has_seat(room.id, "owner")
+    assert not seats.allocate(room.id, "late", 2)
+
+
+@pytest.mark.parametrize("room_role", ["", "member", "administrator"])
+@mock.patch.object(ParticipantsManagement, "update")
+def test_joined_without_seat_beyond_threshold_becomes_viewer(
+    mock_update, service, seats, room_role
+):
+    """An older participant token gives no seat beyond the threshold.
+
+    For instance a token used after its pending seat expired, or a reconnection
+    after the grace period: only owners and phone callers speak beyond the
+    threshold, administrators included.
+    """
+    room = RoomFactory(configuration={"viewers_threshold": 1})
+    seats.allocate(room.id, "first", 1)
+
+    service._handle_participant_joined(
+        event(
+            "participant_joined",
+            room.id,
+            "late",
+            attributes={"viewer": "false", "room_role": room_role},
+        )
+    )
+
+    assert not seats.has_seat(room.id, "late")
+    mock_update.assert_called_once_with(
+        room_name=str(room.id),
+        identity="late",
+        attributes={"viewer": "true"},
+        permission={
+            "can_subscribe": True,
+            "can_publish": False,
+            "can_publish_data": True,
+            "can_publish_sources": [],
+        },
+    )
+
+
+@mock.patch.object(ParticipantsManagement, "update")
+def test_joined_without_seat_takes_one_left(mock_update, service, seats):
+    """An older participant token takes a seat when one is left."""
+    room = RoomFactory(configuration={"viewers_threshold": 2})
+    seats.allocate(room.id, "first", 2)
+
+    service._handle_participant_joined(
+        event("participant_joined", room.id, "late", attributes={"viewer": "false"})
+    )
+
+    assert seats.has_seat(room.id, "late")
+    assert not seats.allocate(room.id, "next", 2)
+    mock_update.assert_not_called()
 
 
 def test_joined_phone_caller_is_counted(service, seats):

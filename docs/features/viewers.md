@@ -37,7 +37,9 @@ A seat is:
 * **active** while its holder is connected;
 * **kept** for `VIEWERS_RECONNECT_GRACE_PERIOD` once its holder disconnects, so that a reconnection or a reload gets it back. A participant removed from the meeting loses it at once.
 
-Owners, administrators and phone callers always speak: their seat is counted when they join, even beyond the threshold. Letting a viewer speak is also allowed beyond the threshold.
+Owners and phone callers always speak: their seat is counted when they join, even beyond the threshold. Administrators take a seat like anyone else: joining a full meeting, they are viewers, and keep their other administrator rights. Letting a viewer speak is also allowed beyond the threshold.
+
+Anyone else joining with a participant token but no seat, for instance a token used after its pending seat expired or a reconnection after the grace period, takes a seat if one is left, and becomes a viewer otherwise.
 
 ### Joining
 
@@ -57,7 +59,7 @@ sequenceDiagram
     Backend->>Backend: Mark the seat active
 ```
 
-In a room with viewers, reading a room only gives a token to its owners and administrators: a token issued on every read would hold a seat for nothing. Everyone else joins through `request-entry`, which admits them at once unless they have to wait in the lobby.
+In a room with viewers, reading a room only gives a token to its owners, who need no seat: a token issued on every read would hold a seat for nothing. Everyone else joins through `request-entry`, which admits them at once unless they have to wait in the lobby.
 
 The identity of a signed-out person is derived from the signed lobby cookie and an id each tab keeps in its session storage: each tab of a browser joins as its own participant, and a tab reloaded within the grace period gets its seat back.
 

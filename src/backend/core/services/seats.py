@@ -242,6 +242,11 @@ def get_threshold(room) -> int:
     return configuration.get("viewers_threshold") or settings.VIEWERS_DEFAULT_THRESHOLD
 
 
+def is_owner(participant) -> bool:
+    """Whether a LiveKit participant owns the room, from their token attributes."""
+    return models.RoleChoices.check_owner_role(participant.attributes.get("room_role"))
+
+
 def is_publisher(participant) -> bool:
     """Whether a LiveKit participant should hold a seat.
 
@@ -489,12 +494,10 @@ class SeatService:
     ) -> JoinRole:
         """Decide whether a person joining the room can speak.
 
-        Owners and administrators always can: their seat is counted when they
-        join, even beyond the threshold.
+        Owners always can: their seat is counted when they join, even beyond
+        the threshold. Administrators take a seat like anyone else.
         """
-        if models.RoleChoices.check_owner_role(
-            role
-        ) or models.RoleChoices.check_administrator_role(role):
+        if models.RoleChoices.check_owner_role(role):
             return JoinRole.PARTICIPANT
 
         threshold = get_threshold(room)
