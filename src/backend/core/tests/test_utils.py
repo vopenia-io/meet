@@ -17,7 +17,12 @@ from asgiref.sync import async_to_sync
 from livekit.api import TwirpError
 
 from core.factories import UserFactory
-from core.services.room_management import RoomManagement
+from core.services.participants_management import (
+    ParticipantsManagement,
+    ParticipantsManagementException,
+)
+from core.services.room_management import RoomManagement, RoomManagementException
+from core.services.sip_management import SIPException, SIPManagement
 from core.utils import (
     NotificationError,
     create_livekit_client,
@@ -152,7 +157,7 @@ def test_create_livekit_client_gives_up_on_a_quiet_livekit(fake_livekit, setting
     def delete_room():
         try:
             RoomManagement.delete_room("room-abc")
-        except TimeoutError as error:
+        except RoomManagementException as error:
             raised.append(error)
 
     # A thread, so a call that never gives up fails the test rather than hangs it.
@@ -162,6 +167,7 @@ def test_create_livekit_client_gives_up_on_a_quiet_livekit(fake_livekit, setting
 
     assert not call.is_alive()
     assert len(raised) == 1
+    assert isinstance(raised[0].__cause__, TimeoutError)
 
 
 @pytest.mark.parametrize(
@@ -179,6 +185,92 @@ def test_create_livekit_client_lets_an_answer_through(fake_livekit, settings):
     settings.LIVEKIT_API_TIMEOUT_SECONDS = 1
 
     RoomManagement.delete_room("room-abc")
+
+
+class TimingOutClient:
+    """A LiveKit client whose every call times out."""
+
+    def __getattr__(self, name):
+        return self
+
+    async def __call__(self, *args, **kwargs):
+        raise TimeoutError
+
+    async def aclose(self):
+        """Nothing to close."""
+
+
+def delete_dispatch_rule():
+    """Reach the delete call, past the listing that comes first."""
+    with mock.patch.object(
+        SIPManagement, "_list_dispatch_rules_ids", mock.AsyncMock(return_value=["r"])
+    ):
+        SIPManagement().delete_dispatch_rule("room")
+
+
+@pytest.mark.parametrize(
+    ("call", "expected"),
+    [
+        pytest.param(
+            lambda: ParticipantsManagement().mute("room", "id", "track"),
+            ParticipantsManagementException,
+            id="mute",
+        ),
+        pytest.param(
+            lambda: ParticipantsManagement().remove("room", "id"),
+            ParticipantsManagementException,
+            id="remove",
+        ),
+        pytest.param(
+            lambda: ParticipantsManagement().update("room", "id", name="n"),
+            ParticipantsManagementException,
+            id="update",
+        ),
+        pytest.param(
+            lambda: ParticipantsManagement().check_if_in_meeting("room", "id"),
+            ParticipantsManagementException,
+            id="check_if_in_meeting",
+        ),
+        pytest.param(
+            lambda: RoomManagement.update_metadata("room", {}),
+            RoomManagementException,
+            id="update_metadata",
+        ),
+        pytest.param(
+            lambda: RoomManagement.delete_room("room"),
+            RoomManagementException,
+            id="delete_room",
+        ),
+        pytest.param(
+            lambda: SIPManagement().create_dispatch_rule(
+                mock.Mock(pk="room", pin_code="1")
+            ),
+            SIPException,
+            id="create_dispatch_rule",
+        ),
+        pytest.param(
+            lambda: SIPManagement().has_dispatch_rule("room"),
+            SIPException,
+            id="has_dispatch_rule",
+        ),
+        pytest.param(delete_dispatch_rule, SIPException, id="delete_dispatch_rule"),
+        pytest.param(
+            lambda: notify_participants("room", {}),
+            NotificationError,
+            id="notify_participants",
+        ),
+    ],
+)
+def test_a_livekit_timeout_raises_the_service_exception(call, expected):
+    """A timed-out call fails the way a LiveKit error does, so callers handle it."""
+    with (
+        mock.patch("core.utils.create_livekit_client", return_value=TimingOutClient()),
+        pytest.raises(expected) as error,
+    ):
+        call()
+
+    assert error.type is expected
+    assert isinstance(error.value.__cause__, TimeoutError)
 
 
 @pytest.mark.parametrize("verify_ssl", [True, False])

@@ -80,8 +80,8 @@ class RoomManagement:
                 )
             )
 
-        except TwirpError as e:
-            if e.code == "not_found":
+        except (TwirpError, TimeoutError) as e:
+            if isinstance(e, TwirpError) and e.code == "not_found":
                 raise RoomNotFoundException("Room does not exist") from e
 
             logger.exception(
@@ -108,8 +108,8 @@ class RoomManagement:
         try:
             await lkapi.room.delete_room(DeleteRoomRequest(room=room_name))
             logger.info("Deleted LiveKit room %s", room_name)
-        except TwirpError as e:
-            if e.code == "not_found":
+        except (TwirpError, TimeoutError) as e:
+            if isinstance(e, TwirpError) and e.code == "not_found":
                 logger.warning(
                     "Room %s not found in LiveKit, skipping deletion",
                     room_name,

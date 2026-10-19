@@ -52,8 +52,8 @@ class ParticipantsManagement:
                 )
             )
 
-        except TwirpError as e:
-            if e.code == "not_found":
+        except (TwirpError, TimeoutError) as e:
+            if isinstance(e, TwirpError) and e.code == "not_found":
                 logger.warning(
                     "Participant %s not found in room %s, skipping muting",
                     identity,
@@ -95,8 +95,8 @@ class ParticipantsManagement:
             await lkapi.room.remove_participant(
                 RoomParticipantIdentity(room=room_name, identity=identity)
             )
-        except TwirpError as e:
-            if e.code == "not_found":
+        except (TwirpError, TimeoutError) as e:
+            if isinstance(e, TwirpError) and e.code == "not_found":
                 logger.warning(
                     "Participant %s not found in room %s, skipping removing",
                     identity,
@@ -140,8 +140,8 @@ class ParticipantsManagement:
                 )
             )
 
-        except TwirpError as e:
-            if e.code == "not_found":
+        except (TwirpError, TimeoutError) as e:
+            if isinstance(e, TwirpError) and e.code == "not_found":
                 logger.warning(
                     "Participant %s not found in room %s, skipping update",
                     identity,
@@ -203,8 +203,8 @@ class ParticipantsManagement:
                     identity=identity,
                 )
             )
-        except TwirpError as e:
-            if e.code == "not_found":
+        except (TwirpError, TimeoutError) as e:
+            if isinstance(e, TwirpError) and e.code == "not_found":
                 raise ParticipantNotFoundException("Participant does not exist") from e
 
             logger.exception(

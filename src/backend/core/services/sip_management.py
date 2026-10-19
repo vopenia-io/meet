@@ -54,8 +54,8 @@ class SIPManagement:
 
         try:
             await lkapi.sip.create_sip_dispatch_rule(create=request)
-        except TwirpError as e:
-            if e.code == TwirpErrorCode.ALREADY_EXISTS:
+        except (TwirpError, TimeoutError) as e:
+            if isinstance(e, TwirpError) and e.code == TwirpErrorCode.ALREADY_EXISTS:
                 raise DispatchRuleConflictError("Dispatch rule already exists") from e
             logger.exception(
                 "Unexpected error creating dispatch rule for room %s", room.id
@@ -83,7 +83,7 @@ class SIPManagement:
             existing_rules = await lkapi.sip.list_sip_dispatch_rule(
                 list=ListSIPDispatchRuleRequest()
             )
-        except TwirpError as e:
+        except (TwirpError, TimeoutError) as e:
             logger.exception("Failed to list dispatch rules for room %s", room_id)
             raise SIPException("Could not list dispatch rules") from e
         finally:
@@ -155,7 +155,7 @@ class SIPManagement:
 
             return True
 
-        except TwirpError as e:
+        except (TwirpError, TimeoutError) as e:
             logger.exception("Failed to delete dispatch rules for room %s", room_id)
             raise SIPException("Could not delete dispatch rules") from e
 

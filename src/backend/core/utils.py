@@ -280,7 +280,7 @@ async def notify_participants(room_name: str, notification_data: dict):
                 kind="RELIABLE",
             )
         )
-    except TwirpError as e:
+    except (TwirpError, TimeoutError) as e:
         raise NotificationError("Failed to notify room participants") from e
     finally:
         await lkapi.aclose()
