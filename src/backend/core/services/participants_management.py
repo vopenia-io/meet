@@ -13,6 +13,7 @@ from livekit.api import (
     MuteRoomTrackRequest,
     RoomParticipantIdentity,
     TwirpError,
+    TwirpErrorCode,
     UpdateParticipantRequest,
 )
 from livekit.protocol.models import ParticipantInfo
@@ -53,7 +54,7 @@ class ParticipantsManagement:
             )
 
         except (TwirpError, TimeoutError) as e:
-            if isinstance(e, TwirpError) and e.code == "not_found":
+            if isinstance(e, TwirpError) and e.code == TwirpErrorCode.NOT_FOUND:
                 logger.warning(
                     "Participant %s not found in room %s, skipping muting",
                     identity,
@@ -96,7 +97,7 @@ class ParticipantsManagement:
                 RoomParticipantIdentity(room=room_name, identity=identity)
             )
         except (TwirpError, TimeoutError) as e:
-            if isinstance(e, TwirpError) and e.code == "not_found":
+            if isinstance(e, TwirpError) and e.code == TwirpErrorCode.NOT_FOUND:
                 logger.warning(
                     "Participant %s not found in room %s, skipping removing",
                     identity,
@@ -141,7 +142,7 @@ class ParticipantsManagement:
             )
 
         except (TwirpError, TimeoutError) as e:
-            if isinstance(e, TwirpError) and e.code == "not_found":
+            if isinstance(e, TwirpError) and e.code == TwirpErrorCode.NOT_FOUND:
                 logger.warning(
                     "Participant %s not found in room %s, skipping update",
                     identity,
@@ -204,7 +205,7 @@ class ParticipantsManagement:
                 )
             )
         except (TwirpError, TimeoutError) as e:
-            if isinstance(e, TwirpError) and e.code == "not_found":
+            if isinstance(e, TwirpError) and e.code == TwirpErrorCode.NOT_FOUND:
                 raise ParticipantNotFoundException("Participant does not exist") from e
 
             logger.exception(
