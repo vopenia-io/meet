@@ -1,0 +1,38 @@
+# The LiveKit egress (recordings) in the cluster (P0-120). It joins the rooms through the façade
+# like a participant, and shares LiveKit's Redis with the LiveKit nodes. Chart 1.8.4 has no
+# ingress: nothing to annotate for Traefik.
+{{- $v := .Values }}
+replicaCount: 1
+terminationGracePeriodSeconds: 18000
+
+image:
+  # The version Meet's dev environments run.
+  tag: v1.11.0
+
+egress:
+  log_level: info
+  ws_url: wss://{{ $v.hosts.livekit }}
+  enable_chrome_sandbox: true
+  {{- range $key, $secret := $v.livekit.keys }}
+  api_key: {{ $key }}
+  api_secret: {{ $secret | quote }}
+  {{- end }}
+  redis:
+    address: {{ $v.redis.livekit }}
+    password: {{ $v.redis.password | quote }}
+  s3:
+    access_key: {{ $v.s3.accessKey | quote }}
+    secret: {{ $v.s3.secretKey | quote }}
+    region: {{ $v.s3.region }}
+    bucket: {{ $v.s3.bucket }}
+    endpoint: {{ $v.s3.endpoint }}
+    force_path_style: true
+
+autoscaling:
+  enabled: false
+
+nodeSelector: {}
+resources:
+  requests:
+    cpu: "2"
+    memory: 4Gi

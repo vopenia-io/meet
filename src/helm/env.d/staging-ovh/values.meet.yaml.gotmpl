@@ -1,0 +1,202 @@
+# Meet on the staging/load platform of OVH (P0-120), behind Traefik. Standalone: the dev
+# environments' common.yaml.gotmpl (root containers, nip.io, Garage, Keycloak) is not loaded here.
+# Sign-in through Authentik: Meet's code does not change, only the OIDC URLs.
+{{- $v := .Values }}
+{{- $meet := $v.hosts.meet }}
+{{- $id := $v.hosts.id }}
+{{- $ak := printf "https://%s/application/o" $id }}
+{{- $ns := $v.namespace }}
+{{- $redisMeet := printf "redis://:%s@%s" $v.redis.password $v.redis.meet }}
+
+image:
+  repository: {{ $v.images.registry }}/meet-backend
+  pullPolicy: IfNotPresent
+  tag: {{ $v.images.meetBackendTag | quote }}
+
+backend:
+  replicas: 2
+  envVars:
+    DJANGO_CONFIGURATION: Production
+    DJANGO_SETTINGS_MODULE: meet.settings
+    DJANGO_ALLOWED_HOSTS: {{ $meet }}
+    DJANGO_CSRF_TRUSTED_ORIGINS: https://{{ $meet }}
+    DJANGO_SECRET_KEY: {{ $v.djangoSecretKey | quote }}
+    DJANGO_EMAIL_DOMAIN: {{ $meet }}
+    DJANGO_EMAIL_APP_BASE_URL: https://{{ $meet }}
+    # OIDC: Authentik (decision of 06/11) in place of Keycloak. Authentik's provider endpoints;
+    # the JWKS and logout are per application (its slug).
+    OIDC_OP_JWKS_ENDPOINT: {{ $ak }}/{{ $v.authentik.slug }}/jwks/
+    OIDC_OP_AUTHORIZATION_ENDPOINT: {{ $ak }}/authorize/
+    OIDC_OP_TOKEN_ENDPOINT: {{ $ak }}/token/
+    OIDC_OP_USER_ENDPOINT: {{ $ak }}/userinfo/
+    OIDC_OP_LOGOUT_ENDPOINT: {{ $ak }}/{{ $v.authentik.slug }}/end-session/
+    OIDC_RP_CLIENT_ID: {{ $v.oidc.clientId | quote }}
+    OIDC_RP_CLIENT_SECRET: {{ $v.oidc.clientSecret | quote }}
+    # RS256 needs a signing key set on Authentik's provider (without one it signs HS256).
+    OIDC_RP_SIGN_ALGO: RS256
+    OIDC_RP_SCOPES: "openid email profile"
+    OIDC_REDIRECT_ALLOWED_HOSTS: https://{{ $meet }}
+    # No acr_values eidas1: a ProConnect parameter Authentik does not know.
+    OIDC_AUTH_REQUEST_EXTRA_PARAMS: "{}"
+    LOGIN_REDIRECT_URL: https://{{ $meet }}
+    LOGIN_REDIRECT_URL_FAILURE: https://{{ $meet }}
+    LOGOUT_REDIRECT_URL: https://{{ $meet }}
+    OIDC_USERINFO_FULLNAME_FIELDS: name
+    OIDC_USERINFO_SHORTNAME_FIELD: given_name
+    # The managed PostgreSQL of staging/base, over the private network, TLS required (libpq).
+    DB_HOST: {{ $v.postgresql.host }}
+    DB_PORT: {{ $v.postgresql.port | quote }}
+    DB_NAME: meet
+    DB_USER: {{ $v.postgresql.meetUser | quote }}
+    DB_PASSWORD: {{ $v.postgresql.meetPassword | quote }}
+    PGSSLMODE: {{ $v.postgresql.sslmode | default "require" }}
+    REDIS_URL: {{ $redisMeet }}/1
+    CELERY_ENABLED: True
+    CELERY_BROKER_URL: {{ $redisMeet }}/1
+    # The SFU behind the façade: LiveKit or Ilimo, the same name and the same key (the switch).
+    {{- range $key, $secret := $v.livekit.keys }}
+    LIVEKIT_API_KEY: {{ $key }}
+    LIVEKIT_API_SECRET: {{ $secret | quote }}
+    {{- end }}
+    LIVEKIT_API_URL: https://{{ $v.hosts.livekit }}/
+    LIVEKIT_FORCE_WSS_PROTOCOL: True
+    LIVEKIT_WEBHOOK_EVENTS_FILTER_REGEX: "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+    FRONTEND_SILENCE_LIVEKIT_DEBUG: True
+    # Recordings: the egress writes to the bucket, Meet signs the downloads.
+    RECORDING_ENABLE: True
+    RECORDING_DOWNLOAD_BASE_URL: https://{{ $meet }}/media
+    AWS_S3_ENDPOINT_URL: {{ $v.s3.endpoint }}
+    AWS_S3_REGION_NAME: {{ $v.s3.region }}
+    AWS_S3_ACCESS_KEY_ID: {{ $v.s3.accessKey | quote }}
+    AWS_S3_SECRET_ACCESS_KEY: {{ $v.s3.secretKey | quote }}
+    AWS_STORAGE_BUCKET_NAME: {{ $v.s3.bucket }}
+    AWS_S3_SIGNATURE_VERSION: s3v4
+    MEDIA_BASE_URL: https://{{ $meet }}
+    # Traefik's ForwardAuth sends the original URI as X-Forwarded-Uri, nginx's auth-url as
+    # X-Original-URL: Meet reads the header this names.
+    MEDIA_AUTH_ORIGINAL_URL_HEADER: HTTP_X_FORWARDED_URI
+    # No transcription, summary nor agents on the load platform (outside P0-120).
+    ROOM_SUBTITLE_ENABLED: False
+    METADATA_COLLECTOR_ENABLED: False
+    ROOM_TELEPHONY_ENABLED: False
+    ALLOW_UNREGISTERED_ROOMS: False
+
+  migrate:
+    command: ["/bin/sh", "-c", "python manage.py migrate --no-input"]
+    restartPolicy: Never
+
+frontend:
+  replicas: 2
+  image:
+    repository: {{ $v.images.registry }}/meet-frontend
+    pullPolicy: IfNotPresent
+    tag: {{ $v.images.meetFrontendTag | quote }}
+
+# Transcription, summary and agents: not deployed on the load platform.
+summary:
+  replicas: 0
+celeryTranscribe:
+  replicas: 0
+celerySummarize:
+  replicas: 0
+celerySummaryBackend:
+  replicas: 0
+agentMetadata:
+  replicas: 0
+agentSubtitles:
+  replicas: 0
+
+# ---- Ingresses: Traefik, one certificate per name from cert-manager ----
+
+.traefikIngress: &traefikIngress
+  className: {{ $v.ingressClass }}
+  tls:
+    enabled: true
+  annotations:
+    cert-manager.io/cluster-issuer: {{ $v.clusterIssuer }}
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+
+ingress:
+  <<: *traefikIngress
+  enabled: true
+  host: {{ $meet }}
+
+ingressAdmin:
+  <<: *traefikIngress
+  enabled: true
+  host: {{ $meet }}
+
+ingressWebhook:
+  <<: *traefikIngress
+  enabled: true
+  host: {{ $meet }}
+
+posthog:
+  ingress:
+    enabled: false
+  ingressAssets:
+    enabled: false
+
+# The recordings' downloads: the nginx annotations (auth-url, upstream-vhost, rewrite-target)
+# become three Traefik middlewares, in extraManifests below. A prefix, not nginx's regex.
+ingressMedia:
+  enabled: true
+  host: {{ $meet }}
+  path: /media/
+  className: {{ $v.ingressClass }}
+  tls:
+    enabled: true
+  annotations:
+    cert-manager.io/cluster-issuer: {{ $v.clusterIssuer }}
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.middlewares: {{ $ns }}-media-auth@kubernetescrd,{{ $ns }}-media-rewrite@kubernetescrd,{{ $ns }}-media-host@kubernetescrd
+    # The chart's nginx defaults, removed (null drops a key of the chart's values).
+    nginx.ingress.kubernetes.io/use-regex: null
+    nginx.ingress.kubernetes.io/auth-url: null
+    nginx.ingress.kubernetes.io/auth-response-headers: null
+    nginx.ingress.kubernetes.io/upstream-vhost: null
+    nginx.ingress.kubernetes.io/configuration-snippet: null
+
+serviceMedia:
+  host: {{ $v.s3.host }}
+  port: 443
+  annotations:
+    # The bucket answers in HTTPS only.
+    traefik.ingress.kubernetes.io/service.serversscheme: https
+
+ingressMediaFiles:
+  enabled: false
+
+extraManifests:
+  - apiVersion: traefik.io/v1alpha1
+    kind: Middleware
+    metadata:
+      name: media-auth
+    spec:
+      forwardAuth:
+        address: https://{{ $meet }}/api/v1.0/recordings/media-auth/
+        trustForwardHeader: false
+        authResponseHeaders:
+          - Authorization
+          - X-Amz-Date
+          - X-Amz-Content-SHA256
+  - apiVersion: traefik.io/v1alpha1
+    kind: Middleware
+    metadata:
+      name: media-rewrite
+    spec:
+      replacePathRegex:
+        regex: ^/media/(.*)
+        replacement: /{{ $v.s3.bucket }}/$1
+  - apiVersion: traefik.io/v1alpha1
+    kind: Middleware
+    metadata:
+      name: media-host
+    spec:
+      headers:
+        customRequestHeaders:
+          Host: {{ $v.s3.host }}
+        # nginx's configuration-snippet in the chart's defaults: nothing a media file could run.
+        contentSecurityPolicy: "default-src 'none'"

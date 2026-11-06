@@ -1,0 +1,16 @@
+# The staging/load environment on OVH (P0-120): the names, versioned. Proposal of P0-120 step 0,
+# not decided: Meet at app.<domain>, the rest under the same prefix. Addresses known only after
+# the applies go in values.local.yaml, secrets in values.secrets.yaml: neither is versioned.
+version: 0.0.1
+namespace: meet
+domain: dev.openvisio.fr
+hosts:
+  meet: app.dev.openvisio.fr
+  id: id.dev.openvisio.fr
+  livekit: livekit.dev.openvisio.fr
+# Traefik is the façade's ingress controller (decision 5); cert-manager's issuer.
+ingressClass: traefik
+clusterIssuer: letsencrypt-prod
+# The Authentik application Meet signs in through: its slug is in the JWKS and logout URLs.
+authentik:
+  slug: meet

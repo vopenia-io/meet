@@ -1,0 +1,61 @@
+# Authentik, the identity provider of the platform in place of Keycloak (decision of 06/11), on
+# the managed PostgreSQL of staging/base (its database `keycloak` there becomes `authentik`).
+# Chart 2026.8.5: no Redis (Authentik no longer uses one).
+#
+# Its connections are bounded by its processes and threads: Authentik has no pool size.
+#   server: workers × threads = 2 × 4 = 8, worker: processes × threads = 1 × 2 = 2, plus the
+#   worker's LISTEN connection: about 11, under the 20 that Keycloak's pool was bounded to in
+#   the db1-4 budget (about 100 connections, about 80 used).
+# The secret key and the database password come from the Secret authentik-secrets
+# (AUTHENTIK_SECRET_KEY, AUTHENTIK_POSTGRESQL__PASSWORD), made out of band like the database
+# users (db-users.sh): never in these values.
+{{- $v := .Values }}
+authentik:
+  log_level: info
+  error_reporting:
+    enabled: false
+  postgresql:
+    host: {{ $v.postgresql.host }}
+    port: {{ $v.postgresql.port }}
+    name: authentik
+    user: authentik
+
+global:
+  env:
+    - name: AUTHENTIK_POSTGRESQL__SSLMODE
+      value: {{ $v.postgresql.sslmode | default "require" }}
+    # Persistent connections, bounded by the threads below.
+    - name: AUTHENTIK_POSTGRESQL__CONN_MAX_AGE
+      value: "60"
+    - name: AUTHENTIK_POSTGRESQL__CONN_HEALTH_CHECKS
+      value: "true"
+    - name: AUTHENTIK_WEB__WORKERS
+      value: "2"
+    - name: AUTHENTIK_WEB__THREADS
+      value: "4"
+    - name: AUTHENTIK_WORKER__PROCESSES
+      value: "1"
+    - name: AUTHENTIK_WORKER__THREADS
+      value: "2"
+  envFrom:
+    - secretRef:
+        name: authentik-secrets
+
+server:
+  replicas: 1
+  ingress:
+    enabled: true
+    ingressClassName: {{ $v.ingressClass }}
+    annotations:
+      cert-manager.io/cluster-issuer: {{ $v.clusterIssuer }}
+      traefik.ingress.kubernetes.io/router.entrypoints: websecure
+      traefik.ingress.kubernetes.io/router.tls: "true"
+    hosts:
+      - {{ $v.hosts.id }}
+    tls:
+      - secretName: authentik-tls
+        hosts:
+          - {{ $v.hosts.id }}
+
+worker:
+  replicas: 1
