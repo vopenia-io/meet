@@ -7,6 +7,13 @@ environments:
     values:
       - version: 0.0.1
       - env.d/dev-dinum/values.secrets.yaml
+  # The staging/load platform on OVH (P0-120): names in values.yaml, addresses and secrets in two
+  # files that are not versioned (their .example beside them).
+  staging-ovh:
+    values:
+      - env.d/staging-ovh/values.yaml
+      - env.d/staging-ovh/values.local.yaml
+      - env.d/staging-ovh/values.secrets.yaml
 
 ---
 repositories:
@@ -15,6 +22,9 @@ repositories:
 
 - name: dev-backends
   url: https://suitenumerique.github.io/helm-dev-backend
+
+- name: authentik
+  url: https://charts.goauthentik.io
 
 releases:
 - name: extra
@@ -91,7 +101,9 @@ releases:
   missingFileHandler: Warn
   chart: ./meet
   values:
+  {{- if ne .Environment.Name "staging-ovh" }}
   - env.d/common.yaml.gotmpl
+  {{- end }}
   - env.d/{{ .Environment.Name }}/values.meet.yaml.gotmpl
   - env.d/{{ .Environment.Name }}/values.secrets.yaml
   secrets:
@@ -109,12 +121,25 @@ releases:
   - env.d/{{ .Environment.Name }}/secrets.enc.yaml
 
 - name: livekit-egress
-  installed: {{ regexMatch "^dev.*" .Environment.Name }}
+  installed: {{ or (regexMatch "^dev.*" .Environment.Name) (eq .Environment.Name "staging-ovh") }}
   missingFileHandler: Warn
   namespace: {{ .Namespace }}
   chart: livekit/egress
+  {{- if eq .Environment.Name "staging-ovh" }}
+  version: 1.8.4
+  {{- end }}
   values:
   - env.d/{{ .Environment.Name }}/values.egress.yaml.gotmpl
   - env.d/{{ .Environment.Name }}/values.secrets.yaml
   secrets:
   - env.d/{{ .Environment.Name }}/secrets.enc.yaml
+
+# Authentik in place of Keycloak on the staging/load platform (decision of 06/11). Keycloak stays
+# with the dev environments (dev-backend), which staging-ovh does not install.
+- name: authentik
+  installed: {{ eq .Environment.Name "staging-ovh" }}
+  namespace: {{ .Namespace }}
+  chart: authentik/authentik
+  version: 2026.8.5
+  values:
+  - env.d/{{ .Environment.Name }}/values.authentik.yaml.gotmpl

@@ -1,0 +1,20 @@
+# Copy to values.local.yaml (not versioned) once the applies are done: addresses of P0-120's
+# terraform outputs and of the Helm releases. Documentation values (RFC 5737, example.org).
+images:
+  registry: registry.example.org/p120
+  meetBackendTag: "set-me"
+  meetFrontendTag: "set-me"
+postgresql:
+  # staging/base, output postgresql: the managed instance's private host and port.
+  host: postgresql-xxxx.database.cloud.ovh.net
+  port: 20184
+  sslmode: require
+redis:
+  # Meet's Redis (cache, sessions, Celery) and LiveKit's (rooms routing, egress), in the cluster.
+  meet: meet-redis-master:6379
+  livekit: livekit-redis-master:6379
+s3:
+  endpoint: https://s3.gra.io.cloud.ovh.net
+  host: s3.gra.io.cloud.ovh.net
+  region: gra
+  bucket: p120-recordings

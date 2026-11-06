@@ -1,0 +1,3 @@
+# Not versioned: addresses after the applies, and the secrets.
+values.local.yaml
+values.secrets.yaml
