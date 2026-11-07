@@ -7,6 +7,7 @@
 {{- $ak := printf "https://%s/application/o" $id }}
 {{- $ns := $v.namespace }}
 {{- $redisMeet := printf "redis://:%s@%s" $v.redis.password $v.redis.meet }}
+{{- if not (has $v.sfu.active (list "livekit" "ilimo")) }}{{ fail (printf "sfu.active is livekit or ilimo, not %v" $v.sfu.active) }}{{ end }}
 
 image:
   repository: {{ $v.images.registry }}/meet-backend
@@ -53,12 +54,13 @@ backend:
     REDIS_URL: {{ $redisMeet }}/1
     CELERY_ENABLED: True
     CELERY_BROKER_URL: {{ $redisMeet }}/1
-    # The SFU behind the façade: LiveKit or Ilimo, the same name and the same key (the switch).
+    # The SFU behind the façade: LiveKit or Ilimo, the same name (sfu.<domain>, the route below
+    # follows sfu.active) and the same key (the switch).
     {{- range $key, $secret := $v.livekit.keys }}
     LIVEKIT_API_KEY: {{ $key }}
     LIVEKIT_API_SECRET: {{ $secret | quote }}
     {{- end }}
-    LIVEKIT_API_URL: https://{{ $v.hosts.livekit }}/
+    LIVEKIT_API_URL: https://{{ $v.hosts.sfu }}/
     LIVEKIT_FORCE_WSS_PROTOCOL: True
     LIVEKIT_WEBHOOK_EVENTS_FILTER_REGEX: "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
     FRONTEND_SILENCE_LIVEKIT_DEBUG: True
@@ -200,3 +202,68 @@ extraManifests:
           Host: {{ $v.s3.host }}
         # nginx's configuration-snippet in the chart's defaults: nothing a media file could run.
         contentSecurityPolicy: "default-src 'none'"
+  # ---- The SFU pools behind Traefik (decision of bsenard, 07/11/2026) ----
+  # LiveKit and Ilimo stay on instances: their signalling reaches them through Traefik, a
+  # Service without selector and its EndpointSlice per pool, the nodes' public addresses from
+  # staging/env (sfuRoutes, values.local.yaml); the node firewalls let the cluster's gateway in
+  # on the signal port. The media never passes here: it goes direct to the nodes, for both SFU
+  # alike (decision 1: compare two SFU, not two architectures); STUNner is only the TURN of
+  # clients without UDP. sfu.<domain> follows sfu.active; livekit.<domain> and ilimo.<domain>
+  # always reach their pool (decision 8: the bench measures both).
+{{- range $pool := list "livekit" "ilimo" }}
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: sfu-{{ $pool }}
+    spec:
+      ports:
+        - name: signal
+          port: {{ $v.sfuRoutes.port }}
+          targetPort: {{ $v.sfuRoutes.port }}
+          protocol: TCP
+  - apiVersion: discovery.k8s.io/v1
+    kind: EndpointSlice
+    metadata:
+      name: sfu-{{ $pool }}-nodes
+      labels:
+        kubernetes.io/service-name: sfu-{{ $pool }}
+        # Not the EndpointSlice controller's: it leaves a slice of another manager alone.
+        endpointslice.kubernetes.io/managed-by: p120-staging-ovh
+    addressType: IPv4
+    ports:
+      - name: signal
+        port: {{ $v.sfuRoutes.port }}
+        protocol: TCP
+    endpoints:
+    {{- range $ip := index $v.sfuRoutes $pool }}
+      - addresses: [{{ $ip | quote }}]
+        conditions:
+          ready: true
+    {{- end }}
+{{- end }}
+{{- range $host, $pool := dict $v.hosts.livekit "livekit" $v.hosts.ilimo "ilimo" $v.hosts.sfu $v.sfu.active }}
+  - apiVersion: networking.k8s.io/v1
+    kind: Ingress
+    metadata:
+      name: sfu-route-{{ $host | replace "." "-" }}
+      annotations:
+        cert-manager.io/cluster-issuer: {{ $v.clusterIssuer }}
+        traefik.ingress.kubernetes.io/router.entrypoints: websecure
+        traefik.ingress.kubernetes.io/router.tls: "true"
+    spec:
+      ingressClassName: {{ $v.ingressClass }}
+      tls:
+        - hosts: [{{ $host }}]
+          secretName: sfu-route-{{ $host | replace "." "-" }}-tls
+      rules:
+        - host: {{ $host }}
+          http:
+            paths:
+              - path: /
+                pathType: Prefix
+                backend:
+                  service:
+                    name: sfu-{{ $pool }}
+                    port:
+                      name: signal
+{{- end }}
