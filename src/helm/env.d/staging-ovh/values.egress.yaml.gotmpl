@@ -1,6 +1,7 @@
 # The LiveKit egress (recordings) in the cluster (P0-120). It joins the rooms through the façade
 # like a participant, and shares LiveKit's Redis with the LiveKit nodes. Chart 1.8.4 has no
-# ingress: nothing to annotate for Traefik.
+# ingress: nothing to annotate for Traefik. Installed in phase A only (sfu.active livekit):
+# LiveKit's Redis is a release of phase A (ilimo-deploy, platform/staging-ovh).
 {{- $v := .Values }}
 replicaCount: 1
 terminationGracePeriodSeconds: 18000
@@ -19,7 +20,7 @@ egress:
   {{- end }}
   redis:
     address: {{ $v.redis.livekit }}
-    password: {{ $v.redis.password | quote }}
+    password: {{ $v.redis.livekitPassword | quote }}
   s3:
     access_key: {{ $v.s3.accessKey | quote }}
     secret: {{ $v.s3.secretKey | quote }}

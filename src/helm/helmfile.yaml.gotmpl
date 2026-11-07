@@ -121,7 +121,8 @@ releases:
   - env.d/{{ .Environment.Name }}/secrets.enc.yaml
 
 - name: livekit-egress
-  installed: {{ or (regexMatch "^dev.*" .Environment.Name) (eq .Environment.Name "staging-ovh") }}
+  # staging-ovh: phase A only, with LiveKit's Redis (P0-120 step 1).
+  installed: {{ or (regexMatch "^dev.*" .Environment.Name) (and (eq .Environment.Name "staging-ovh") (eq (.Values | get "sfu.active" "") "livekit")) }}
   missingFileHandler: Warn
   namespace: {{ .Namespace }}
   chart: livekit/egress

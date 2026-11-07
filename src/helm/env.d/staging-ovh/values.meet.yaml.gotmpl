@@ -8,11 +8,23 @@
 {{- $ns := $v.namespace }}
 {{- $redisMeet := printf "redis://:%s@%s" $v.redis.password $v.redis.meet }}
 {{- if not (has $v.sfu.active (list "livekit" "ilimo")) }}{{ fail (printf "sfu.active is livekit or ilimo, not %v" $v.sfu.active) }}{{ end }}
+{{- /* Two frontend images, one backend (P0-120 step 1): the browser's client follows the SFU. */}}
+{{- $frontendTag := index $v.images.meetFrontendTags $v.sfu.active | required (printf "images.meetFrontendTags.%s is not set" $v.sfu.active) }}
+{{- /* The egress records through LiveKit's Redis: phase A only (recordings on Ilimo accepted lost, 01/11). */}}
+{{- $recording := eq $v.sfu.active "livekit" }}
 
 image:
   repository: {{ $v.images.registry }}/meet-backend
   pullPolicy: IfNotPresent
   tag: {{ $v.images.meetBackendTag | quote }}
+  # GHCR stays private until the launch (bsenard, 07/11/2026; ilimo, docs/publication.md): every
+  # pod of the chart pulls with the Secret that ilimo-deploy's k8s-secrets.sh makes from
+  # secrets/ghcr-read-token. A name only: the chart's own generator, which would carry the token
+  # in these values, is not used.
+  {{- with $v.images.pullSecret }}
+  credentials:
+    name: {{ . }}
+  {{- end }}
 
 backend:
   replicas: 2
@@ -64,8 +76,9 @@ backend:
     LIVEKIT_FORCE_WSS_PROTOCOL: True
     LIVEKIT_WEBHOOK_EVENTS_FILTER_REGEX: "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
     FRONTEND_SILENCE_LIVEKIT_DEBUG: True
-    # Recordings: the egress writes to the bucket, Meet signs the downloads.
-    RECORDING_ENABLE: True
+    # Recordings: the egress writes to the bucket, Meet signs the downloads. Phase A only: the
+    # egress needs LiveKit's Redis, which phase B does not run.
+    RECORDING_ENABLE: {{ ternary "True" "False" $recording }}
     RECORDING_DOWNLOAD_BASE_URL: https://{{ $meet }}/media
     AWS_S3_ENDPOINT_URL: {{ $v.s3.endpoint }}
     AWS_S3_REGION_NAME: {{ $v.s3.region }}
@@ -92,7 +105,9 @@ frontend:
   image:
     repository: {{ $v.images.registry }}/meet-frontend
     pullPolicy: IfNotPresent
-    tag: {{ $v.images.meetFrontendTag | quote }}
+    # Image A (task/P0-120-image-a, livekit-client 2.21.0) for LiveKit, image B (the branch,
+    # the @ilimo/client fork) for Ilimo: sfu.active moves the signalling and the client together.
+    tag: {{ $frontendTag | quote }}
 
 # Transcription, summary and agents: not deployed on the load platform.
 summary:
@@ -234,7 +249,8 @@ extraManifests:
       - name: signal
         port: {{ $v.sfuRoutes.port }}
         protocol: TCP
-    endpoints:
+    # The pool not standing in this phase has no node: no endpoint, Traefik answers 503.
+    endpoints: {{- if not (index $v.sfuRoutes $pool) }} []{{ end }}
     {{- range $ip := index $v.sfuRoutes $pool }}
       - addresses: [{{ $ip | quote }}]
         conditions:

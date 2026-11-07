@@ -1,9 +1,12 @@
 # Copy to values.local.yaml (not versioned) once the applies are done: addresses of P0-120's
 # terraform outputs and of the Helm releases. Documentation values (RFC 5737, example.org).
+# images: what ilimo-deploy's platform/staging-ovh/build-images.sh prints. One backend for both
+# phases, one frontend per SFU (sfu.active picks it). The registry is in values.yaml (GHCR).
 images:
-  registry: registry.example.org/p120
   meetBackendTag: "set-me"
-  meetFrontendTag: "set-me"
+  meetFrontendTags:
+    livekit: "p120-a-set-me"
+    ilimo: "p120-b-set-me"
 postgresql:
   # staging/base, output postgresql: the managed instance's private host and port.
   host: postgresql-xxxx.database.cloud.ovh.net
@@ -11,8 +14,9 @@ postgresql:
   sslmode: require
 redis:
   # Meet's Redis (cache, sessions, Celery) and LiveKit's (rooms routing, egress), in the cluster.
-  meet: meet-redis-master:6379
-  livekit: livekit-redis-master:6379
+  # The releases redis-meet and redis-livekit of ilimo-deploy's platform/staging-ovh, namespace meet.
+  meet: redis-meet:6379
+  livekit: redis-livekit:6379
 s3:
   endpoint: https://s3.gra.io.cloud.ovh.net
   host: s3.gra.io.cloud.ovh.net
@@ -20,8 +24,9 @@ s3:
   # staging/keep, output recordings: the egress's container, which no destroy removes.
   bucket: fr-openvisio-keep-dev-recordings
 # staging/env, output sfu_endpoints: the public IPv4 of each pool's nodes, for Traefik's route
-# to the instances (decision of 07/11/2026). Rewritten at each rebuild of a pool.
+# to the instances (decision of 07/11/2026). Rewritten at each rebuild of a pool. One pool
+# standing at a time (07/11): the other's list is empty, [] (phase A below).
 sfuRoutes:
   port: 7880
-  livekit: [203.0.113.21, 203.0.113.22, 203.0.113.23, 203.0.113.24]
-  ilimo: [203.0.113.11, 203.0.113.12, 203.0.113.13, 203.0.113.14]
+  livekit: [203.0.113.21, 203.0.113.22]
+  ilimo: []

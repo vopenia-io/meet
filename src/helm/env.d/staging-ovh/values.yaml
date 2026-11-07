@@ -14,6 +14,12 @@ hosts:
 # Which pool sfu.<domain> reaches: livekit or ilimo. Both keep their direct name for the bench.
 sfu:
   active: livekit
+# The images (bsenard, 07/11/2026): GHCR, the project's convention (ilimo, docs/publication.md;
+# ilimo-deploy, charts/ilimo). Private until the launch: pulled with the Secret ghcr-pull. The
+# tags, which change with every build, are in values.local.yaml.
+images:
+  registry: ghcr.io/vopenia-io
+  pullSecret: ghcr-pull
 # Traefik is the façade's ingress controller (decision 5); cert-manager's issuer.
 ingressClass: traefik
 clusterIssuer: letsencrypt-prod
