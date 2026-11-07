@@ -18,7 +18,7 @@ s3:
   host: s3.gra.io.cloud.ovh.net
   region: gra
   # staging/keep, output recordings: the egress's container, which no destroy removes.
-  bucket: openvisio-keep-recordings
+  bucket: fr-openvisio-keep-dev-recordings
 # staging/env, output sfu_endpoints: the public IPv4 of each pool's nodes, for Traefik's route
 # to the instances (decision of 07/11/2026). Rewritten at each rebuild of a pool.
 sfuRoutes:
