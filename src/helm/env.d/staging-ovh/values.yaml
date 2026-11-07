@@ -8,6 +8,12 @@ hosts:
   meet: app.dev.openvisio.fr
   id: id.dev.openvisio.fr
   livekit: livekit.dev.openvisio.fr
+  ilimo: ilimo.dev.openvisio.fr
+  # Meet's one SFU URL: the switch moves this route, nothing else (P0-120 plan, decisions 5, 8).
+  sfu: sfu.dev.openvisio.fr
+# Which pool sfu.<domain> reaches: livekit or ilimo. Both keep their direct name for the bench.
+sfu:
+  active: livekit
 # Traefik is the façade's ingress controller (decision 5); cert-manager's issuer.
 ingressClass: traefik
 clusterIssuer: letsencrypt-prod

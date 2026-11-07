@@ -6,9 +6,13 @@
 #   server: workers × threads = 2 × 4 = 8, worker: processes × threads = 1 × 2 = 2, plus the
 #   worker's LISTEN connection: about 11, under the 20 that Keycloak's pool was bounded to in
 #   the db1-4 budget (about 100 connections, about 80 used).
-# The secret key and the database password come from the Secret authentik-secrets
-# (AUTHENTIK_SECRET_KEY, AUTHENTIK_POSTGRESQL__PASSWORD), made out of band like the database
-# users (db-users.sh): never in these values.
+# The secret key, the database password and Meet's client secret come from the Secret
+# authentik-secrets (AUTHENTIK_SECRET_KEY, AUTHENTIK_POSTGRESQL__PASSWORD,
+# AUTHENTIK_MEET_CLIENT_SECRET), made out of band like the database users (db-users.sh): never in
+# these values. Meet's signing key is the Secret authentik-meet-signing (tls.crt, tls.key).
+#
+# Authentik's configuration for Meet is the blueprint blueprints/meet.yaml (P0-120 step 0b),
+# versioned, in a ConfigMap the worker applies: a new instance gets it without a dump.
 {{- $v := .Values }}
 authentik:
   log_level: info
@@ -37,6 +41,9 @@ global:
       value: "1"
     - name: AUTHENTIK_WORKER__THREADS
       value: "2"
+    # Read by the blueprint (!Env MEET_HOST): Meet's redirect URIs.
+    - name: MEET_HOST
+      value: {{ $v.hosts.meet }}
   envFrom:
     - secretRef:
         name: authentik-secrets
@@ -59,3 +66,26 @@ server:
 
 worker:
   replicas: 1
+  # Meet's signing key, discovered by the worker as the key pair "meet-signing" (the folder's
+  # name; the Secret's ..data links are hidden files, which the discovery skips).
+  volumes:
+    - name: meet-signing
+      secret:
+        secretName: authentik-meet-signing
+  volumeMounts:
+    - name: meet-signing
+      mountPath: /certs/meet-signing
+      readOnly: true
+
+blueprints:
+  configMaps:
+    - authentik-blueprint-meet
+
+additionalObjects:
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: authentik-blueprint-meet
+    data:
+      meet.yaml: |
+{{ readFile "env.d/staging-ovh/blueprints/meet.yaml" | indent 8 }}
