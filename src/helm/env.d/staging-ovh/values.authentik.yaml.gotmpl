@@ -80,6 +80,8 @@ worker:
 blueprints:
   configMaps:
     - authentik-blueprint-meet
+    # ConfigMap separe : on peut retirer les comptes de dev sans toucher au blueprint de Meet.
+    - authentik-blueprint-dev-users
 
 additionalObjects:
   - apiVersion: v1
@@ -88,4 +90,19 @@ additionalObjects:
       name: authentik-blueprint-meet
     data:
       meet.yaml: |
-{{ readFile "env.d/staging-ovh/blueprints/meet.yaml" | indent 8 }}
+{{/* readFile resout depuis le repertoire du fichier de values, pas depuis la racine du
+     helmfile : le chemin complet donnait env.d/staging-ovh/env.d/staging-ovh/blueprints/...
+     Trouve au premier rendu de staging-ovh, le 08/11/2026 18:16Z -- readFile n est utilise
+     dans aucun autre environnement, ce code n avait donc jamais ete exerce. */}}
+{{ readFile "blueprints/meet.yaml" | indent 8 }}
+
+  # Les comptes de dev (bsenard, 08/11/2026) : rejoues a chaque demarrage du worker, donc
+  # presents meme sur une base Authentik vierge. Leur mot de passe n est PAS ici : le
+  # serializer d Authentik n expose pas ce champ, dev-users-password.sh s en charge.
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: authentik-blueprint-dev-users
+    data:
+      dev-users.yaml: |
+{{ readFile "blueprints/dev-users.yaml" | indent 8 }}

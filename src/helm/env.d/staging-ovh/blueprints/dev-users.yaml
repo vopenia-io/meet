@@ -1,0 +1,84 @@
+# yaml-language-server: $schema=https://goauthentik.io/blueprints/schema.json
+# Les comptes de dev de l'environnement dev (P0-120, staging-ovh), demandes par bsenard le
+# 08/11/2026. Rejoues par le worker a chaque demarrage : ils reviennent meme sur une base
+# Authentik vierge, sans dependre d'un dump. C'est le point de la demande -- "automatiquement
+# reinjectes quand on remonte l'env".
+#
+# AUCUN MOT DE PASSE ICI, et ce n'est pas un oubli : le serializer UserRequest d'Authentik
+# n'expose pas de champ password (verifie sur /api/v3/schema/ le 08/11/2026). Le mot de passe se
+# pose par /core/users/{id}/set_password/, donc par dev-users-password.sh, qui lit
+# secrets/dev-users-password. Ce fichier-ci est versionne ; le mot de passe ne l'est jamais.
+#
+# Ces comptes sont volontairement generiques et partagent un mot de passe simple (decision de
+# bsenard, 08/11/2026), sur un domaine PUBLIC avec un certificat valide : ils sont donc
+# devinables depuis Internet. Ils n'ont aucun droit d'administration, et le groupe dev-users
+# permet de les desactiver ou de les retirer d'un seul geste. A retirer avant toute donnee reelle.
+version: 1
+metadata:
+  name: P0-120 dev users
+  labels:
+    blueprints.goauthentik.io/instantiate: "true"
+
+entries:
+  # Le groupe sert a les tenir ensemble : un seul geste pour tout desactiver ou supprimer.
+  - model: authentik_core.group
+    id: dev-users-group
+    identifiers:
+      name: dev-users
+    attrs:
+      is_superuser: false
+
+  - model: authentik_core.user
+    identifiers:
+      username: dev1
+    attrs:
+      name: Dev 1
+      email: dev1@dev.openvisio.fr
+      is_active: true
+      path: users/dev
+      groups:
+        - !KeyOf dev-users-group
+
+  - model: authentik_core.user
+    identifiers:
+      username: dev2
+    attrs:
+      name: Dev 2
+      email: dev2@dev.openvisio.fr
+      is_active: true
+      path: users/dev
+      groups:
+        - !KeyOf dev-users-group
+
+  - model: authentik_core.user
+    identifiers:
+      username: dev3
+    attrs:
+      name: Dev 3
+      email: dev3@dev.openvisio.fr
+      is_active: true
+      path: users/dev
+      groups:
+        - !KeyOf dev-users-group
+
+  - model: authentik_core.user
+    identifiers:
+      username: dev4
+    attrs:
+      name: Dev 4
+      email: dev4@dev.openvisio.fr
+      is_active: true
+      path: users/dev
+      groups:
+        - !KeyOf dev-users-group
+
+  - model: authentik_core.user
+    identifiers:
+      username: dev5
+    attrs:
+      name: Dev 5
+      email: dev5@dev.openvisio.fr
+      is_active: true
+      path: users/dev
+      groups:
+        - !KeyOf dev-users-group
