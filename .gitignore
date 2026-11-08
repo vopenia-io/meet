@@ -90,3 +90,9 @@ docker/livekit/rootCA.pem
 # NixOS
 .devenv
 .pre-commit-config.yaml
+
+# P0-120 step 3: the helmfile's environments, never their addresses nor their secrets, even if
+# an env.d's own .gitignore is lost (staging-ovh has one). dev-dinum's and dev-keycloak's
+# values.secrets.yaml were versioned before this rule and stay so (placeholders upstream).
+/src/helm/env.d/*/values.local.yaml
+/src/helm/env.d/*/values.secrets.yaml
