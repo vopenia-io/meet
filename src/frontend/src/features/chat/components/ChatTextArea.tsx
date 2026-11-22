@@ -4,10 +4,14 @@ import React, { useCallback, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSnapshot } from 'valtio'
 import {
+  appendLocalNote,
   chatStore,
   clearTextAreaValue,
   persistTextAreaValue,
 } from '@/stores/chat'
+import { ApiError } from '@/api/ApiError'
+import { useMoveMe } from '@/features/rooms/api/moveMe'
+import { parseMoveMe } from '../commands'
 import { ChatSubmitButton } from './ChatSubmitButton'
 
 const StyledContainer = styled('div', {
@@ -40,13 +44,36 @@ export const ChatTextArea = () => {
     return () => cancelAnimationFrame(raf)
   }, [])
 
+  const { moveMe } = useMoveMe()
+  const { t: tCommands } = useTranslation('rooms', {
+    keyPrefix: 'controls.chat.commands',
+  })
+
   const handleSubmit = useCallback(async () => {
     const text = chatStore.textAreaValue
     if (!send || !text) return
+    // A command is answered here, and never sent to the room.
+    const move = parseMoveMe(text)
+    if (move) {
+      clearTextAreaValue()
+      try {
+        const moved = await moveMe(move.region)
+        appendLocalNote(tCommands('moveme.requested', moved))
+      } catch (error) {
+        const unavailable =
+          error instanceof ApiError &&
+          (error.statusCode === 404 || error.statusCode === 409)
+        appendLocalNote(
+          tCommands(unavailable ? 'moveme.unavailable' : 'moveme.failed')
+        )
+      }
+      inputRef?.current?.focus({ preventScroll: true })
+      return
+    }
     await send(text)
     inputRef?.current?.focus({ preventScroll: true })
     clearTextAreaValue()
-  }, [send, inputRef])
+  }, [send, inputRef, moveMe, tCommands])
 
   const isDisabled = !textAreaValue.trim() || isSending
 

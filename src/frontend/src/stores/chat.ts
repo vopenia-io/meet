@@ -55,6 +55,22 @@ export function appendRow(msg: ReceivedChatMessage) {
   })
 }
 
+/**
+ * A line only this participant sees, such as the answer to a command typed
+ * in the chat: it is not a message of the room.
+ */
+export function appendLocalNote(message: string) {
+  const timestamp = Date.now()
+  chatStore.rows.push({
+    id: `note-${timestamp}-${chatStore.rows.length}`,
+    identity: undefined,
+    isLocal: true,
+    message,
+    timestamp,
+    hideMetadata: true,
+  })
+}
+
 export const persistTextAreaValue = (value: string) => {
   chatStore.textAreaValue = value
 }

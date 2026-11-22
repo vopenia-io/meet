@@ -264,6 +264,13 @@
         "button": {
           "label": "Enviar un mensaje"
         }
+      },
+      "commands": {
+        "moveme": {
+          "requested": "Traslado solicitado a {{node}} ({{region}}).",
+          "unavailable": "No hay otro servidor al que trasladarse.",
+          "failed": "No se pudo solicitar el traslado."
+        }
       }
     },
     "info": {

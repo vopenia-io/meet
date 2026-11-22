@@ -264,6 +264,13 @@
         "button": {
           "label": "Stuur bericht"
         }
+      },
+      "commands": {
+        "moveme": {
+          "requested": "Verplaatsing aangevraagd naar {{node}} ({{region}}).",
+          "unavailable": "Geen andere server om naar te verplaatsen.",
+          "failed": "De verplaatsing kon niet worden aangevraagd."
+        }
       }
     },
     "info": {

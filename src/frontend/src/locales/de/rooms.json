@@ -264,6 +264,13 @@
         "button": {
           "label": "Nachricht senden"
         }
+      },
+      "commands": {
+        "moveme": {
+          "requested": "Wechsel zu {{node}} ({{region}}) angefordert.",
+          "unavailable": "Kein anderer Server für den Wechsel verfügbar.",
+          "failed": "Der Wechsel konnte nicht angefordert werden."
+        }
       }
     },
     "info": {

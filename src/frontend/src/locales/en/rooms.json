@@ -264,6 +264,13 @@
         "button": {
           "label": "Send message"
         }
+      },
+      "commands": {
+        "moveme": {
+          "requested": "Move requested to {{node}} ({{region}}).",
+          "unavailable": "No other server to move to.",
+          "failed": "The move could not be requested."
+        }
       }
     },
     "info": {
