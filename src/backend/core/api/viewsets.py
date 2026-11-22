@@ -19,6 +19,7 @@ from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
 from django_filters import rest_framework as django_filters
+from asgiref.sync import async_to_sync
 from rest_framework import (
     decorators,
     filters,
@@ -63,6 +64,7 @@ from core.recording.worker.factories import (
 from core.recording.worker.mediator import (
     WorkerServiceMediator,
 )
+from core.services import ilimo_callservice
 from core.services.invitation import InvitationService
 from core.services.jwt_token import JwtTokenService
 from core.services.livekit_events import (
@@ -960,6 +962,55 @@ class RoomViewSet(  # pylint: disable=too-many-public-methods
 
         return drf_response.Response(
             {"status": "success"}, status=drf_status.HTTP_200_OK
+        )
+
+    @decorators.action(
+        detail=True,
+        methods=["post"],
+        url_path="move-me",
+        url_name="move-me",
+        permission_classes=[permissions.HasLiveKitRoomAccess],
+        authentication_classes=[LiveKitTokenAuthentication],
+    )
+    def move_me(self, request, pk=None):  # pylint: disable=unused-argument
+        """Move the current participant to another SFU node (`/moveme [region]`).
+
+        The SFU chooses the node: one of the region asked for, or another one
+        of the region the participant is in when none is named or found.
+        """
+        if not settings.ROOM_MOVE_ME_ENABLED:
+            raise drf_exceptions.NotFound()
+
+        room = self.get_object()
+
+        serializer = serializers.MoveMeSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            moved = async_to_sync(ilimo_callservice.move_participant)(
+                room_name=str(room.pk),
+                identity=request.auth.identity,
+                region=serializer.validated_data["region"],
+            )
+        except ilimo_callservice.MoveParticipantNotFound:
+            return drf_response.Response(
+                {"error": "Participant not found"},
+                status=drf_status.HTTP_404_NOT_FOUND,
+            )
+        except ilimo_callservice.MoveUnavailable:
+            return drf_response.Response(
+                {"error": "No other node to move to"},
+                status=drf_status.HTTP_409_CONFLICT,
+            )
+        except ilimo_callservice.MoveError:
+            return drf_response.Response(
+                {"error": "Failed to move participant"},
+                status=drf_status.HTTP_502_BAD_GATEWAY,
+            )
+
+        return drf_response.Response(
+            {"status": "success", "node": moved["node"], "region": moved["region"]},
+            status=drf_status.HTTP_200_OK,
         )
 
     @decorators.action(

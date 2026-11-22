@@ -672,6 +672,18 @@ class RaiseHandSerializer(BaseValidationOnlySerializer):
     raised = serializers.BooleanField()
 
 
+class MoveMeSerializer(BaseValidationOnlySerializer):
+    """Serializer for a participant asking to be moved to another SFU node."""
+
+    region = serializers.RegexField(
+        r"^[A-Za-z0-9_.-]*$",
+        max_length=64,
+        required=False,
+        allow_blank=True,
+        default="",
+    )
+
+
 class RenameParticipantSerializer(BaseValidationOnlySerializer):
     """Serializer for renaming a participant in a room."""
 

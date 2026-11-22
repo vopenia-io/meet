@@ -1058,6 +1058,14 @@ class Base(Configuration):
         environ_prefix=None,
     )
 
+    # `/moveme [region]` in the chat: a participant asks the SFU (Ilimo) to
+    # move it to another node. A test command, off unless enabled.
+    ROOM_MOVE_ME_ENABLED = values.BooleanValue(
+        False,
+        environ_name="ROOM_MOVE_ME_ENABLED",
+        environ_prefix=None,
+    )
+
     # SIP Telephony
     ROOM_TELEPHONY_ENABLED = values.BooleanValue(
         False,
