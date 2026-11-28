@@ -12,6 +12,7 @@ and this project adheres to
 
 ### Changed
 
+- ⬆️(frontend) upgrade livekit-client to 2.23.0
 - 🔖(helm) release chart 0.0.28
 
 ### Fixed
